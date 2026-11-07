@@ -146,6 +146,80 @@ final class ClipboardStore {
         }
     }
 
+    /// Copies an image item from an imported archive into the local image cache,
+    /// giving it a fresh file identity so imports can never overwrite existing assets.
+    func importImageItem(
+        _ item: ClipboardItem,
+        fromImagesDirectory sourceDirectory: URL
+    ) throws -> ClipboardItem? {
+        guard item.type == .image, let sourceFileName = item.imageFileName else {
+            return nil
+        }
+
+        let sourceName = URL(fileURLWithPath: sourceFileName).lastPathComponent
+        let sourceURL = sourceDirectory.appendingPathComponent(sourceName, isDirectory: false)
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
+            return nil
+        }
+
+        let newID = UUID()
+        let newFileName = "\(newID.uuidString).png"
+        let newThumbnailName = "\(newID.uuidString)-thumb.png"
+        let fullURL = imageURL(named: newFileName)
+        let thumbnailURL = imageURL(named: newThumbnailName)
+
+        do {
+            try FileManager.default.copyItem(at: sourceURL, to: fullURL)
+
+            let fullData = try Data(contentsOf: fullURL)
+            guard let actualDimensions = ImageProcessor.dimensions(of: fullData) else {
+                try? FileManager.default.removeItem(at: fullURL)
+                return nil
+            }
+
+            var thumbnailAvailable = false
+
+            if let sourceThumbnailName = item.thumbnailFileName {
+                let sourceThumbnail = sourceDirectory.appendingPathComponent(
+                    URL(fileURLWithPath: sourceThumbnailName).lastPathComponent,
+                    isDirectory: false
+                )
+                if FileManager.default.fileExists(atPath: sourceThumbnail.path) {
+                    do {
+                        try FileManager.default.copyItem(at: sourceThumbnail, to: thumbnailURL)
+                        thumbnailAvailable = true
+                    } catch {
+                        thumbnailAvailable = false
+                    }
+                }
+            }
+
+            if !thumbnailAvailable, let prepared = ImageProcessor.prepare(from: fullData) {
+                try? prepared.thumbnailData.write(to: thumbnailURL, options: .atomic)
+                thumbnailAvailable = FileManager.default.fileExists(atPath: thumbnailURL.path)
+            }
+
+            let dimensions = item.imageDimensions ?? actualDimensions
+            return ClipboardItem(
+                id: newID,
+                type: .image,
+                content: newFileName,
+                plainText: item.plainText.isEmpty ? "图片 \(dimensions.displayText)" : item.plainText,
+                isPinned: item.isPinned,
+                createdAt: item.createdAt,
+                sourceApp: item.sourceApp,
+                contentHash: item.contentHash,
+                imageFileName: newFileName,
+                thumbnailFileName: thumbnailAvailable ? newThumbnailName : nil,
+                imageDimensions: dimensions
+            )
+        } catch {
+            try? FileManager.default.removeItem(at: fullURL)
+            try? FileManager.default.removeItem(at: thumbnailURL)
+            throw error
+        }
+    }
+
     var imagesDirectoryURL: URL {
         imagesURL
     }

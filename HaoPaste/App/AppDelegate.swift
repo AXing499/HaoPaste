@@ -41,6 +41,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         #if DEBUG
+        if runArchiveCommandIfRequested() {
+            return
+        }
+
         if renderPreviewIfRequested() {
             return
         }
@@ -189,6 +193,54 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     #if DEBUG
+    private func runArchiveCommandIfRequested() -> Bool {
+        let arguments = CommandLine.arguments
+
+        func value(after flag: String) -> String? {
+            guard
+                let index = arguments.firstIndex(of: flag),
+                arguments.indices.contains(index + 1)
+            else {
+                return nil
+            }
+            return arguments[index + 1]
+        }
+
+        if let path = value(after: "--export-history") {
+            do {
+                let summary = try manager.exportHistory(
+                    to: URL(fileURLWithPath: path)
+                )
+                NSLog(
+                    "HaoPaste: exported \(summary.itemCount) items and \(summary.imageCount) images"
+                )
+            } catch {
+                NSLog("HaoPaste: export failed — \(error.localizedDescription)")
+            }
+            manager.shutdown()
+            NSApp.terminate(nil)
+            return true
+        }
+
+        if let path = value(after: "--import-history") {
+            do {
+                let summary = try manager.importHistory(
+                    from: URL(fileURLWithPath: path)
+                )
+                NSLog(
+                    "HaoPaste: imported \(summary.importedCount), merged pins \(summary.mergedPinnedCount), skipped \(summary.skippedCount), trimmed \(summary.trimmedCount)"
+                )
+            } catch {
+                NSLog("HaoPaste: import failed — \(error.localizedDescription)")
+            }
+            manager.shutdown()
+            NSApp.terminate(nil)
+            return true
+        }
+
+        return false
+    }
+
     /// `--render <path>` and `--render-settings <path>` produce off-screen
     /// screenshots for design review.
     private func renderPreviewIfRequested() -> Bool {

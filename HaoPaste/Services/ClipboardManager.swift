@@ -21,6 +21,7 @@ final class ClipboardManager {
 
     @ObservationIgnored private let store: ClipboardStore
     @ObservationIgnored private let monitor: ClipboardMonitor
+    @ObservationIgnored private lazy var archiveService = HistoryArchiveService(store: store)
     @ObservationIgnored private var hasStarted = false
 
     /// Supplied by AppSettings. Evaluated before reading pasteboard data and
@@ -181,6 +182,104 @@ final class ClipboardManager {
             store.removeImageAssets(for: removed)
         }
         store.scheduleSave(items)
+    }
+
+    // MARK: - Backup
+
+    func exportHistory(to url: URL) throws -> HistoryArchiveService.ExportSummary {
+        try archiveService.export(items: items, to: url)
+    }
+
+    func importHistory(from url: URL) throws -> HistoryArchiveService.ImportSummary {
+        let archive = try archiveService.unpack(from: url)
+        defer {
+            try? FileManager.default.removeItem(at: archive.temporaryDirectory)
+        }
+
+        var importedCount = 0
+        var mergedPinnedCount = 0
+        var skippedCount = 0
+        var newItems: [ClipboardItem] = []
+        var seenHashes = Set(items.map(\.contentHash))
+
+        for imported in archive.items {
+            guard !imported.contentHash.isEmpty else {
+                skippedCount += 1
+                continue
+            }
+
+            if let existingIndex = items.firstIndex(where: {
+                $0.contentHash == imported.contentHash
+            }) {
+                if imported.isPinned, !items[existingIndex].isPinned {
+                    items[existingIndex].isPinned = true
+                    mergedPinnedCount += 1
+                } else {
+                    skippedCount += 1
+                }
+                continue
+            }
+
+            guard !seenHashes.contains(imported.contentHash) else {
+                skippedCount += 1
+                continue
+            }
+            seenHashes.insert(imported.contentHash)
+
+            if imported.type == .image {
+                guard let imagesDirectory = archive.imagesDirectory else {
+                    skippedCount += 1
+                    continue
+                }
+
+                do {
+                    guard let importedImage = try store.importImageItem(
+                        imported,
+                        fromImagesDirectory: imagesDirectory
+                    ) else {
+                        skippedCount += 1
+                        continue
+                    }
+                    newItems.append(importedImage)
+                } catch {
+                    NSLog("HaoPaste: could not import image item — \(error.localizedDescription)")
+                    skippedCount += 1
+                    continue
+                }
+            } else {
+                newItems.append(
+                    ClipboardItem(
+                        id: UUID(),
+                        type: imported.type,
+                        content: imported.content,
+                        plainText: imported.plainText,
+                        isPinned: imported.isPinned,
+                        createdAt: imported.createdAt,
+                        sourceApp: imported.sourceApp,
+                        contentHash: imported.contentHash
+                    )
+                )
+            }
+
+            importedCount += 1
+        }
+
+        items.append(contentsOf: newItems)
+        let removed = trimHistory()
+        if !removed.isEmpty {
+            store.removeImageAssets(for: removed)
+        }
+
+        if importedCount > 0 || mergedPinnedCount > 0 {
+            store.scheduleSave(items)
+        }
+
+        return HistoryArchiveService.ImportSummary(
+            importedCount: importedCount,
+            mergedPinnedCount: mergedPinnedCount,
+            skippedCount: skippedCount,
+            trimmedCount: removed.count
+        )
     }
 
     var storageDirectoryURL: URL {

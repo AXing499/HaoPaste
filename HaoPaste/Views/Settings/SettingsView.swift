@@ -318,6 +318,30 @@ struct SettingsView: View {
             .padding(14)
         }
 
+        SettingsCard("备份与迁移") {
+            actionRow(
+                title: "导出历史",
+                subtitle: "将记录与图片打包为未加密的 .zip，可用于备份或迁移到另一台 Mac",
+                buttonTitle: "导出…",
+                systemImage: "square.and.arrow.up",
+                isEnabled: !manager.items.isEmpty
+            ) {
+                exportHistory()
+            }
+
+            SettingsDivider()
+
+            actionRow(
+                title: "导入历史",
+                subtitle: "合并到现有历史；重复内容会自动跳过，置顶状态会保留",
+                buttonTitle: "导入…",
+                systemImage: "square.and.arrow.down",
+                isEnabled: true
+            ) {
+                importHistory()
+            }
+        }
+
         SettingsCard("清理") {
             destructiveRow(
                 title: "清空未置顶记录",
@@ -555,6 +579,87 @@ struct SettingsView: View {
         settings.addExcludedApplications(applications)
     }
 
+    private func exportHistory() {
+        let panel = NSSavePanel()
+        panel.title = "导出历史"
+        panel.message = "备份包含历史记录、置顶状态和图片，可迁移到另一台 Mac。"
+        panel.prompt = "导出"
+        panel.allowedContentTypes = [.zip]
+        panel.canCreateDirectories = true
+        panel.isExtensionHidden = false
+        panel.nameFieldStringValue = "HaoPaste-历史-\(archiveDateStamp()).zip"
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            let summary = try manager.exportHistory(to: url)
+            showArchiveAlert(
+                title: "导出完成",
+                message: "已导出 \(summary.itemCount) 条记录、\(summary.imageCount) 张图片。\n\n\(url.path)",
+                style: .informational
+            )
+        } catch {
+            showArchiveAlert(
+                title: "导出失败",
+                message: error.localizedDescription,
+                style: .warning
+            )
+        }
+    }
+
+    private func importHistory() {
+        let panel = NSOpenPanel()
+        panel.title = "导入历史"
+        panel.message = "选择由 HaoPaste 导出的 .zip 备份文件。导入会合并到当前历史。"
+        panel.prompt = "导入"
+        panel.allowedContentTypes = [.zip]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            let summary = try manager.importHistory(from: url)
+
+            var message = "新增 \(summary.importedCount) 条，合并 \(summary.mergedPinnedCount) 条置顶，跳过 \(summary.skippedCount) 条重复或不可用内容。"
+            if summary.trimmedCount > 0 {
+                message += " 受当前历史上限影响，清理了 \(summary.trimmedCount) 条最早记录。"
+            }
+
+            showArchiveAlert(
+                title: "导入完成",
+                message: message,
+                style: .informational
+            )
+        } catch {
+            showArchiveAlert(
+                title: "导入失败",
+                message: error.localizedDescription,
+                style: .warning
+            )
+        }
+    }
+
+    private func showArchiveAlert(
+        title: String,
+        message: String,
+        style: NSAlert.Style
+    ) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.alertStyle = style
+        alert.addButton(withTitle: "好")
+        alert.runModal()
+    }
+
+    private func archiveDateStamp() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: .now)
+    }
+
     // MARK: - Bindings
 
     private var launchAtLoginBinding: Binding<Bool> {
@@ -572,6 +677,37 @@ struct SettingsView: View {
     }
 
     // MARK: - Helpers
+
+    private func actionRow(
+        title: String,
+        subtitle: String,
+        buttonTitle: String,
+        systemImage: String,
+        isEnabled: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(.body, design: .rounded))
+                Text(subtitle)
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 10)
+
+            Button(action: action) {
+                Label(buttonTitle, systemImage: systemImage)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .disabled(!isEnabled)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+    }
 
     private func destructiveRow(
         title: String,
