@@ -21,7 +21,7 @@ run: build
 # Launch with a throwaway history so the sample content is deterministic.
 demo: build
 	rm -rf "$(DEMO_STORAGE)"
-	HAOPASTE_STORAGE_DIR="$(DEMO_STORAGE)" "$(APP_PATH)/Contents/MacOS/$(APP_NAME)" --demo --show &
+	open -n "$(APP_PATH)" --args --demo --show --storage "$(DEMO_STORAGE)"
 
 clean:
 	rm -rf "$(DERIVED_DATA)"

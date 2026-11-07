@@ -79,10 +79,12 @@ make demo
     └── <UUID>-thumb.png  # 列表缩略图
 ```
 
-开发与测试可以通过环境变量覆盖存储位置：
+开发与测试可以通过环境变量或启动参数覆盖存储位置：
 
 ```bash
 HAOPASTE_STORAGE_DIR=/tmp/haopaste-dev ./HaoPaste.app/Contents/MacOS/HaoPaste
+# 或
+open -n HaoPaste.app --args --storage /tmp/haopaste-dev
 ```
 
 核心模型：
@@ -154,15 +156,15 @@ Debug 构建内置两个仅用于视觉验收的参数：
 
 ```bash
 # 离屏渲染面板截图（需要先通过 Launch Services 启动）
-open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/panel.png
+open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/panel.png --storage /tmp/haopaste-preview
 
 # 深色外观渲染
 launchctl setenv HAOPASTE_RENDER_APPEARANCE dark
-open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/panel-dark.png
+open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/panel-dark.png --storage /tmp/haopaste-preview-dark
 launchctl unsetenv HAOPASTE_RENDER_APPEARANCE
 ```
 
-`make demo` 等价于以 `--demo --show` 启动一个带有临时存储目录的 Debug 实例。
+`make demo` 等价于以 `--demo --show --storage /tmp/haopaste-demo` 启动一个 Debug 实例。
 
 ## 已知边界 / Roadmap
 
