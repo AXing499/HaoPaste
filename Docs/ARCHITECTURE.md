@@ -87,7 +87,8 @@ ContentView / ItemRowView (SwiftUI)
 | `ClipboardMonitor.swift` | 350ms 轮询 `changeCount`，过滤隐藏类型，生成 `CapturedClipboard` |
 | `ClipboardManager.swift` | 核心业务：去重、置顶、删除、清空、复制回剪贴板、FIFO 裁剪、历史容量 |
 | `AppSettings.swift` | 用户偏好、快捷键、历史上限、登录项状态、排除应用、图片记录开关 |
-| `ClipboardStore.swift` | JSON 历史记录、图片资产、防抖写入、目录管理 |
+| `ClipboardStore.swift` | JSON 历史记录、图片资产、防抖写入、目录管理、导入图片资产 |
+| `HistoryArchiveService.swift` | zip 备份导出、解包、manifest 与合并导入 |
 | `ContentClassifier.swift` | 文本、URL、HEX、JSON、代码的启发式分类 |
 | `ContentHasher.swift` | 加类型盐的 SHA-256 去重指纹 |
 | `ImageProcessor.swift` | 解码、PNG 归一化、获取像素尺寸、生成最大 560px 缩略图 |
@@ -169,12 +170,22 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 通用页：登录时自动启动（`SMAppService.mainApp`）、全局快捷键录制、暂停监听。
 - 历史页：未置顶记录上限（100 / 200 / 500 / 1000）、清空未置顶 / 全部、在 Finder 中显示数据目录。
 - 隐私页：图片记录开关、按应用排除列表（通过 `NSOpenPanel` 选择 `.app`，记录 Bundle ID / 名称）。
+- 历史页：除容量和清理外，支持导出 / 导入 `.zip` 备份。
 - 设置保存在 `UserDefaults`；应用启动时读取并将历史上限同步给 `ClipboardManager`。
 - 历史上限调低后立即执行一次 FIFO 裁剪，置顶记录始终保留。
 - 排除规则在 `ClipboardMonitor` 读取剪贴板内容之前判断，从源头避免被排除应用的复制内容进入处理流程；`ClipboardManager` 再做一次防御性过滤。
 - 登录项状态以 `SMAppService.mainApp.status` 为准；如果系统要求批准，设置页提供打开系统登录项设置的入口。
 
-### 6.5 键盘事件
+### 6.5 备份与迁移
+
+- 导出包结构：`HaoPasteBackup/manifest.json`、`history.json`、`Images/`。
+- manifest 记录 schema 版本、应用版本、导出时间、记录数和图片数；`history.json` 使用与本地存储相同的毫秒时间戳编码。
+- 使用 `/usr/bin/ditto` 打包 / 解包，无第三方依赖。
+- 导入为**合并**语义：按 `contentHash` 去重；导入项若为置顶而本地项未置顶，会合并置顶状态。
+- 图片导入会生成新的本地文件 ID 与缩略图，避免覆盖现有资产；重复导入不会重复入库。
+- 导入后按当前历史上限裁剪，置顶记录保留；备份包未加密，包含完整剪贴板内容。
+
+### 6.6 键盘事件
 
 `PanelController` 使用 `NSEvent.addLocalMonitorForEvents(matching: .keyDown)` 在面板为 key window 时处理：
 
@@ -239,6 +250,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 自定义快捷键持久化、注册与显示；
 - 历史上限、清空与存储目录入口；
 - 按应用排除实际不入库；图片记录开关关闭 / 开启的实际行为；
+- 备份导出 → 空库导入 → 再次导入去重的完整往返；
 - 文本、URL、代码、HEX、图片的采集、持久化与重启恢复；
 - 隐藏类型过滤；
 - 文本和图片去重；
