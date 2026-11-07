@@ -7,6 +7,10 @@ import AppKit
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    private enum LaunchDefaults {
+        static let hasCompletedFirstLaunch = "hasCompletedFirstLaunch"
+    }
+
     private var manager: ClipboardManager!
     private var panelController: PanelController!
     private var statusBarController: StatusBarController!
@@ -45,11 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         #endif
 
-        if CommandLine.arguments.contains("--show") || CommandLine.arguments.contains("--demo") {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
-                self?.panelController.show()
-            }
-        }
+        showPanelOnLaunchIfNeeded()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -58,6 +58,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
+    }
+
+    /// Double-clicking the app again while it is already running should reveal
+    /// the panel instead of appearing to do nothing (there is no Dock icon).
+    func applicationShouldHandleReopen(
+        _ sender: NSApplication,
+        hasVisibleWindows flag: Bool
+    ) -> Bool {
+        panelController?.show()
+        return false
+    }
+
+    private func showPanelOnLaunchIfNeeded() {
+        let arguments = CommandLine.arguments
+        let isDebugPresentation = arguments.contains("--show") || arguments.contains("--demo")
+
+        if isDebugPresentation {
+            schedulePanelPresentation()
+            return
+        }
+
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: LaunchDefaults.hasCompletedFirstLaunch) else {
+            return
+        }
+
+        // A menu-bar-only app can look like it did not start. Show the panel
+        // once on first launch, then rely on ⌥⌘V and the status item afterwards.
+        defaults.set(true, forKey: LaunchDefaults.hasCompletedFirstLaunch)
+        schedulePanelPresentation()
+    }
+
+    private func schedulePanelPresentation() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+            self?.panelController.show()
+        }
     }
 
     #if DEBUG
