@@ -23,6 +23,11 @@ final class ClipboardManager {
     @ObservationIgnored private let monitor: ClipboardMonitor
     @ObservationIgnored private var hasStarted = false
 
+    /// Supplied by AppSettings. Evaluated before reading pasteboard data and
+    /// again before saving, so excluded sources never enter history.
+    @ObservationIgnored var isSourceExcluded: ((SourceApplication) -> Bool)?
+    @ObservationIgnored var isImageCaptureEnabled: (() -> Bool)?
+
     /// Pinned items are never removed automatically. The limit is mirrored from
     /// user settings; 200 is the default for a fresh install.
     private(set) var maxUnpinnedItems = 200
@@ -40,6 +45,12 @@ final class ClipboardManager {
 
         items = store.loadItems()
 
+        monitor.isSourceExcluded = { [weak self] source in
+            self?.isSourceExcluded?(source) ?? false
+        }
+        monitor.isImageCaptureEnabled = { [weak self] in
+            self?.isImageCaptureEnabled?() ?? true
+        }
         monitor.onCapture = { [weak self] capture in
             self?.handleCapture(capture)
         }
@@ -187,6 +198,14 @@ final class ClipboardManager {
     // MARK: - Capture pipeline
 
     private func handleCapture(_ capture: CapturedClipboard) {
+        if let source = capture.sourceApp, isSourceExcluded?(source) == true {
+            return
+        }
+
+        if case .image = capture.payload, isImageCaptureEnabled?() == false {
+            return
+        }
+
         // De-duplication: an identical entry is moved to the top, keeping its
         // pinned state and identity.
         if let existingIndex = items.firstIndex(where: { $0.contentHash == capture.contentHash }) {

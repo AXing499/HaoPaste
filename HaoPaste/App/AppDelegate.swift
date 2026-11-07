@@ -28,6 +28,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settings.refreshLaunchAtLoginStatus()
 
         manager = ClipboardManager()
+        manager.isSourceExcluded = { [weak settings] source in
+            settings?.isSourceExcluded(source) ?? false
+        }
+        manager.isImageCaptureEnabled = { [weak settings] in
+            settings?.capturesImages ?? true
+        }
         manager.start()
         manager.updateMaxUnpinnedItems(settings.maxUnpinnedItems)
         settings.onHistoryLimitChange = { [weak self] limit in

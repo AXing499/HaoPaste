@@ -31,6 +31,8 @@ final class ClipboardMonitor {
 
     private(set) var isPaused = false
     var onCapture: ((CapturedClipboard) -> Void)?
+    var isSourceExcluded: ((SourceApplication) -> Bool)?
+    var isImageCaptureEnabled: (() -> Bool)?
 
     init(pasteboard: NSPasteboard = .general) {
         self.pasteboard = pasteboard
@@ -87,7 +89,13 @@ final class ClipboardMonitor {
         lastChangeCount = changeCount
 
         guard !containsConcealedData else { return }
-        guard let capture = makeCapture() else { return }
+
+        let sourceApp = currentSourceApplication()
+        if let sourceApp, isSourceExcluded?(sourceApp) == true {
+            return
+        }
+
+        guard let capture = makeCapture(sourceApp: sourceApp) else { return }
         onCapture?(capture)
     }
 
@@ -105,8 +113,11 @@ final class ClipboardMonitor {
         }
     }
 
-    private func makeCapture() -> CapturedClipboard? {
-        let imageData = pasteboard.data(forType: .png) ?? pasteboard.data(forType: .tiff)
+    private func makeCapture(sourceApp: SourceApplication?) -> CapturedClipboard? {
+        let imagesEnabled = isImageCaptureEnabled?() ?? true
+        let imageData = imagesEnabled
+            ? (pasteboard.data(forType: .png) ?? pasteboard.data(forType: .tiff))
+            : nil
         let string = pasteboard.string(forType: .string)
         let trimmedString = string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
@@ -118,7 +129,7 @@ final class ClipboardMonitor {
                 payload: .image(imageData, dimensions: dimensions),
                 plainText: "图片 \(dimensions.displayText)",
                 contentHash: ContentHasher.imageData(imageData),
-                sourceApp: currentSourceApplication()
+                sourceApp: sourceApp
             )
         }
 
@@ -129,7 +140,7 @@ final class ClipboardMonitor {
             payload: .text(string, type: type),
             plainText: string,
             contentHash: ContentHasher.text(string, type: type),
-            sourceApp: currentSourceApplication()
+            sourceApp: sourceApp
         )
     }
 

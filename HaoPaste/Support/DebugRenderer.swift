@@ -70,6 +70,7 @@ enum DebugRenderer {
         let tab: SettingsTab
         switch tabName {
         case "history": tab = .history
+        case "privacy": tab = .privacy
         case "about": tab = .about
         default: tab = .general
         }

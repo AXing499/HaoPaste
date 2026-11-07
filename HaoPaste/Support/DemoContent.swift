@@ -72,8 +72,7 @@ enum DemoContent {
         let json = """
         {
           "name": "HaoPaste",
-          "version": "0.2.0",
-          "features": ["search", "pin", "quick-copy"]
+          "features": ["search", "pin", "quick-copy", "app-exclusions"]
         }
         """
         items.append(

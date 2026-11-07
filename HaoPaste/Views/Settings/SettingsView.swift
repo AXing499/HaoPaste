@@ -8,10 +8,12 @@
 import AppKit
 import Combine
 import SwiftUI
+import UniformTypeIdentifiers
 
 enum SettingsTab: String, CaseIterable, Identifiable {
     case general
     case history
+    case privacy
     case about
 
     var id: String { rawValue }
@@ -20,6 +22,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "通用"
         case .history: return "历史"
+        case .privacy: return "隐私"
         case .about: return "关于"
         }
     }
@@ -28,6 +31,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "启动、快捷键与监听"
         case .history: return "记录容量、存储位置与清理"
+        case .privacy: return "应用排除与内容类型"
         case .about: return "版本与隐私信息"
         }
     }
@@ -36,6 +40,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "slider.horizontal.3"
         case .history: return "clock.arrow.circlepath"
+        case .privacy: return "hand.raised"
         case .about: return "info.circle"
         }
     }
@@ -167,6 +172,8 @@ struct SettingsView: View {
                     generalPage
                 case .history:
                     historyPage
+                case .privacy:
+                    privacyPage
                 case .about:
                     aboutPage
                 }
@@ -335,6 +342,113 @@ struct SettingsView: View {
     }
 
     @ViewBuilder
+    private var privacyPage: some View {
+        SettingsCard("内容") {
+            SettingsRow(
+                "记录图片",
+                subtitle: "关闭后，新复制的图片不会加入历史或生成缓存；已有图片不受影响"
+            ) {
+                Toggle("", isOn: $settings.capturesImages)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .tint(Color.accentColor)
+            }
+        }
+
+        SettingsCard("排除的应用") {
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("来自这些应用的复制内容不会写入历史")
+                        .font(.system(.body, design: .rounded))
+                    Text("只影响新的剪贴板内容；已记录的历史不会自动删除。")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 10)
+
+                Button {
+                    chooseExcludedApplications()
+                } label: {
+                    Label("添加应用…", systemImage: "plus")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(14)
+
+            SettingsDivider()
+
+            if settings.excludedApplications.isEmpty {
+                HStack(spacing: 9) {
+                    Image(systemName: "checkmark.shield")
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.secondary)
+                    Text("尚未排除任何应用")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(14)
+            } else {
+                ForEach(Array(settings.excludedApplications.enumerated()), id: \.element.id) { index, application in
+                    if index > 0 {
+                        SettingsDivider()
+                    }
+
+                    HStack(spacing: 10) {
+                        Image(systemName: "app")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28, height: 28)
+                            .background {
+                                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                    .fill(Color.primary.opacity(0.05))
+                            }
+
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(application.name)
+                                .font(.system(.body, design: .rounded))
+                            Text(application.bundleIdentifier ?? "按应用名称匹配")
+                                .font(.system(size: 9.5, design: .monospaced))
+                                .foregroundStyle(.tertiary)
+                                .lineLimit(1)
+                        }
+
+                        Spacer(minLength: 10)
+
+                        Button {
+                            settings.removeExcludedApplication(application)
+                        } label: {
+                            Image(systemName: "trash")
+                                .font(.system(size: 11, weight: .semibold))
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(.secondary)
+                                .frame(width: 24, height: 24)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .focusable(false)
+                        .help("从排除列表移除")
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 9)
+                }
+            }
+
+            SettingsDivider()
+
+            Text("隐藏类型、临时类型和常见密码管理器的过滤始终开启。")
+                .font(.system(size: 10.5, design: .rounded))
+                .foregroundStyle(.tertiary)
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    @ViewBuilder
     private var aboutPage: some View {
         HStack(spacing: 16) {
             Image(nsImage: NSApplication.shared.applicationIconImage)
@@ -409,6 +523,36 @@ struct SettingsView: View {
             .controlSize(.small)
         }
         .padding(.top, 2)
+    }
+
+    // MARK: - Actions
+
+    private func chooseExcludedApplications() {
+        let panel = NSOpenPanel()
+        panel.title = "排除应用"
+        panel.message = "选择不希望记录剪贴板内容的应用，可多选。"
+        panel.prompt = "排除"
+        panel.allowedContentTypes = [.application]
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = false
+        panel.treatsFilePackagesAsDirectories = false
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+
+        guard panel.runModal() == .OK else { return }
+
+        let applications = panel.urls.map { url -> ExcludedApplication in
+            let bundle = Bundle(url: url)
+            let name = bundle?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+                ?? bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String
+                ?? url.deletingPathExtension().lastPathComponent
+
+            return ExcludedApplication(
+                bundleIdentifier: bundle?.bundleIdentifier,
+                name: name
+            )
+        }
+
+        settings.addExcludedApplications(applications)
     }
 
     // MARK: - Bindings
