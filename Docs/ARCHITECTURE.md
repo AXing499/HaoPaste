@@ -59,7 +59,7 @@ NSApplication (accessory / LSUIElement)
 │   │   └── Carbon RegisterEventHotKey (default ⌥⌘V, configurable)
 │   │
 │   └── SettingsWindowController
-│       └── SettingsView (general / history / about)
+│       └── SettingsView (general / history / privacy / about)
 │           └── AppSettings (UserDefaults + SMAppService)
 │
 ContentView / ItemRowView (SwiftUI)
@@ -86,7 +86,7 @@ ContentView / ItemRowView (SwiftUI)
 | --- | --- |
 | `ClipboardMonitor.swift` | 350ms 轮询 `changeCount`，过滤隐藏类型，生成 `CapturedClipboard` |
 | `ClipboardManager.swift` | 核心业务：去重、置顶、删除、清空、复制回剪贴板、FIFO 裁剪、历史容量 |
-| `AppSettings.swift` | 用户偏好、快捷键、历史上限、登录项状态 |
+| `AppSettings.swift` | 用户偏好、快捷键、历史上限、登录项状态、排除应用、图片记录开关 |
 | `ClipboardStore.swift` | JSON 历史记录、图片资产、防抖写入、目录管理 |
 | `ContentClassifier.swift` | 文本、URL、HEX、JSON、代码的启发式分类 |
 | `ContentHasher.swift` | 加类型盐的 SHA-256 去重指纹 |
@@ -103,8 +103,9 @@ ContentView / ItemRowView (SwiftUI)
 | `PanelFooterView.swift` | 监听状态与键盘提示 |
 | `PanelViewState.swift` | 搜索、分类、选中项、焦点触发器 |
 | `HotKeyConfiguration.swift` | Carbon 键码 / 修饰符、显示文案与校验 |
+| `ExcludedApplication.swift` | 按应用的隐私排除规则 |
 | `Theme.swift` | 圆角、间距、弹簧动效、描边颜色、字体辅助 |
-| `SettingsView.swift` | 设置窗口：通用、历史、关于 |
+| `SettingsView.swift` | 设置窗口：通用、历史、隐私、关于 |
 | `ShortcutRecorderView.swift` | 快捷键捕获与冲突错误展示 |
 
 ## 5. 数据模型
@@ -145,7 +146,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 5. 计算 SHA-256；与已有项比较：
    - 命中：更新时间、更新来源、保留置顶状态并移到内部数组顶部；
    - 未命中：创建记录；图片写入 PNG 和缩略图。
-6. 若未置顶记录超过 200 条，按 `createdAt` 从旧到新淘汰（置顶永不淘汰）。
+6. 若未置顶记录超过设置上限，按 `createdAt` 从旧到新淘汰（置顶永不淘汰）。
 7. 通过 400ms 防抖将整个历史写入 JSON。
 
 ### 6.2 复制历史条目
@@ -167,8 +168,10 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 - 通用页：登录时自动启动（`SMAppService.mainApp`）、全局快捷键录制、暂停监听。
 - 历史页：未置顶记录上限（100 / 200 / 500 / 1000）、清空未置顶 / 全部、在 Finder 中显示数据目录。
+- 隐私页：图片记录开关、按应用排除列表（通过 `NSOpenPanel` 选择 `.app`，记录 Bundle ID / 名称）。
 - 设置保存在 `UserDefaults`；应用启动时读取并将历史上限同步给 `ClipboardManager`。
 - 历史上限调低后立即执行一次 FIFO 裁剪，置顶记录始终保留。
+- 排除规则在 `ClipboardMonitor` 读取剪贴板内容之前判断，从源头避免被排除应用的复制内容进入处理流程；`ClipboardManager` 再做一次防御性过滤。
 - 登录项状态以 `SMAppService.mainApp.status` 为准；如果系统要求批准，设置页提供打开系统登录项设置的入口。
 
 ### 6.5 键盘事件
@@ -221,6 +224,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 隐藏类型过滤遵循 NSPasteboard 社区约定，但属于尽力而为：
   - 密码管理器若不设置隐藏类型，内容仍可能被记录；
   - 用户可在菜单栏随时暂停监听或清空未置顶记录。
+- 隐私设置支持按应用排除：来源应用会在读取剪贴板内容之前被检查，排除应用的复制内容不会进入历史。
+- 可关闭图片记录：新图片不会被保存或生成缓存；已有图片保持不动。
 - App Sandbox 未启用（没有 entitlements），以便本地通用剪贴板与全局快捷键完整工作；因此不计划提交 Mac App Store。若未来上架，需要重新评估沙盒和分发策略。
 - 分发构建使用 ad-hoc 签名；对外分发必须替换为 Developer ID 签名与公证。
 
@@ -230,9 +235,10 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 - Debug / Release 构建通过；
 - 面板在实际窗口服务器中可见；
-- 设置窗口三个标签页的离屏渲染；
+- 设置窗口四个标签页的离屏渲染；
 - 自定义快捷键持久化、注册与显示；
 - 历史上限、清空与存储目录入口；
+- 按应用排除实际不入库；图片记录开关关闭 / 开启的实际行为；
 - 文本、URL、代码、HEX、图片的采集、持久化与重启恢复；
 - 隐藏类型过滤；
 - 文本和图片去重；
