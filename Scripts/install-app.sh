@@ -36,5 +36,10 @@ if ! codesign --verify --deep --strict "$TARGET_APP" >/dev/null 2>&1; then
     codesign --force --deep --sign - "$TARGET_APP"
 fi
 
+# Refresh Launch Services and Spotlight so exactly one installed copy is visible.
+LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+"$LSREGISTER" -f "$TARGET_APP" >/dev/null 2>&1 || true
+mdimport "$TARGET_APP" >/dev/null 2>&1 || true
+
 echo "Installed: $TARGET_APP"
 open "$TARGET_APP"

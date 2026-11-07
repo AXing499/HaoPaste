@@ -6,7 +6,7 @@
 
 ### 方式 A：DMG（推荐给日常使用）
 
-1. 打开 `dist/HaoPaste-0.1.0.dmg`（仓库开发目录中，执行 `make dmg` 生成）。
+1. 打开 `dist/HaoPaste-0.2.0.dmg`（仓库开发目录中，执行 `make dmg` 生成）。
 2. 将左侧的 **HaoPaste** 拖入右侧的 **Applications / 应用程序** 文件夹。
 3. 从“应用程序”、Launchpad 或 Spotlight 启动 **HaoPaste**。
 4. 首次启动会自动展示一次面板；之后它会驻留在菜单栏。
@@ -39,7 +39,7 @@ HaoPaste 的 `LSUIElement = true`，因此**不会出现在 Dock**。启动成�
 
 | 操作 | 行为 |
 | --- | --- |
-| `⌥⌘V` | 全局呼出 / 收起悬浮面板 |
+| `⌥⌘V`（默认，可在设置中修改） | 全局呼出 / 收起悬浮面板 |
 | 左键点击菜单栏图标 | 呼出 / 收起 |
 | 右键点击菜单栏图标 | 打开功能菜单 |
 
@@ -64,7 +64,30 @@ HaoPaste 的 `LSUIElement = true`，因此**不会出现在 Dock**。启动成�
 
 > 复制只会写入系统剪贴板，不会自动粘贴到上一个应用，因此 HaoPaste 不需要辅助功能权限。回到目标应用后按 `⌘V` 即可粘贴。
 
-## 4. 日常操作
+## 4. 设置
+
+打开方式：
+
+- 右键点击菜单栏图标 → **设置…**
+- 或在 HaoPaste 有窗口焦点时按 `⌘,`
+
+### 通用
+
+- **登录时自动启动**：使用 `SMAppService` 注册为登录项。若系统要求批准，会显示“打开系统登录项设置…”按钮。
+- **全局快捷键**：点击快捷键控件后直接按下新的组合键。必须包含至少一个 `⌘`、`⌥` 或 `⌃`；`esc` 取消录制。若新快捷键已被其他应用占用，HaoPaste 会提示并恢复为之前的快捷键。
+- **监听剪贴板**：可以临时暂停 / 恢复监听，暂停期间不会记录新内容。
+
+### 历史
+
+- **未置顶记录上限**：100 / 200 / 500 / 1000 条。置顶记录不占用上限，也不会被自动清理。
+- **清空未置顶记录** / **清空全部记录**：清空全部会同时删除图片缓存，均需二次确认。
+- **数据目录**：在 Finder 中显示 `~/Library/Application Support/HaoPaste/`。
+
+### 关于
+
+查看版本号、当前快捷键、隐私说明，以及退出应用。
+
+## 5. 日常操作
 
 - **搜索**：打开面板后直接输入，按内容、来源应用、类型或格式过滤。
 - **分类**：全部 / 文本 / 代码 / 图片 / 链接。颜色值归入「文本」分类。
@@ -76,7 +99,7 @@ HaoPaste 的 `LSUIElement = true`，因此**不会出现在 Dock**。启动成�
 - **暂停监听**：右键菜单栏图标 →「暂停监听」。暂停期间不会记录新内容。
 - **清空记录**：右键菜单栏图标 →「清空未置顶记录」。置顶记录会保留。
 
-## 5. 数据与隐私
+## 6. 数据与隐私
 
 | 项目 | 位置 |
 | --- | --- |
@@ -101,13 +124,14 @@ HaoPaste 的 `LSUIElement = true`，因此**不会出现在 Dock**。启动成�
 defaults delete com.hao.HaoPaste hasCompletedFirstLaunch
 ```
 
-## 6. 卸载
+## 7. 卸载
 
 1. 退出 HaoPaste；
-2. 将 `/Applications/HaoPaste.app`（或 `~/Applications/HaoPaste.app`）移到废纸篓；
-3. 如需要，删除 `~/Library/Application Support/HaoPaste/` 和 `~/Library/Preferences/com.hao.HaoPaste.plist`。
+2. 如果启用了“登录时自动启动”，先在 HaoPaste 设置中关闭，或在“系统设置 → 通用 → 登录项”中移除；
+3. 将 `/Applications/HaoPaste.app`（或 `~/Applications/HaoPaste.app`）移到废纸篓；
+4. 如需要，删除 `~/Library/Application Support/HaoPaste/` 和 `~/Library/Preferences/com.hao.HaoPaste.plist`。
 
-## 7. 常见问题
+## 8. 常见问题
 
 **为什么没有 Dock 图标？**
 HaoPaste 是 `LSUIElement` 菜单栏应用。请查看屏幕右上角菜单栏中的剪贴板图标。
@@ -142,12 +166,12 @@ HaoPaste 是 `LSUIElement` 菜单栏应用。请查看屏幕右上角菜单栏�
 本安装包使用本地 ad-hoc 签名，未做 Apple 公证。可在 Finder 中右键 HaoPaste → **打开**，或前往“系统设置 → 隐私与安全性”允许打开。
 
 **快捷键没有反应？**
-可能被其他应用占用。请先退出占用 `⌥⌘V` 的应用后重启 HaoPaste。自定义快捷键在 Roadmap 中。
+打开 **设置 → 通用**，检查快捷键是否被其他应用占用；重新录入一个组合键即可。HaoPaste 会在注册失败时提示并保留之前的可用快捷键。
 
 **剪贴板监听会记录密码吗？**
 HaoPaste 会过滤标注了隐藏 / 临时类型的剪贴板内容以及常见密码管理器类型；但并非所有应用都会正确标注。请自行评估在敏感环境中的使用。
 
-## 8. 系统要求
+## 9. 系统要求
 
 - macOS 14 Sonoma 或更高版本
 - Apple Silicon 或 Intel Mac

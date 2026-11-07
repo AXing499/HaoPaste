@@ -20,7 +20,9 @@ HaoPaste 是本地优先的 macOS 剪切板管理器，目标是在 Raycast / Pa
 | 最低系统 | macOS 14.0 |
 | UI | SwiftUI（`@Observable`、`@Bindable`、`@FocusState`、`ImageRenderer` 调试） |
 | 窗口 / 状态栏 | AppKit：`NSPanel`、`NSHostingView`、`NSStatusItem`、`NSMenu` |
-| 全局快捷键 | Carbon `RegisterEventHotKey` |
+| 全局快捷键 | Carbon `RegisterEventHotKey`，快捷键可配置 |
+| 设置存储 | `UserDefaults` + `@Observable AppSettings` |
+| 开机启动 | ServiceManagement `SMAppService.mainApp` |
 | 剪贴板 | `NSPasteboard.general` + `changeCount` 轮询 |
 | 去重 | CryptoKit `SHA256` |
 | 图片处理 | ImageIO / CoreGraphics / AppKit，PNG 归一化 + 缩略图 |
@@ -53,8 +55,12 @@ NSApplication (accessory / LSUIElement)
 │   ├── StatusBarController
 │   │   └── NSStatusItem + NSMenu
 │   │
-│   └── GlobalHotKey
-│       └── Carbon RegisterEventHotKey (⌥⌘V)
+│   ├── GlobalHotKey
+│   │   └── Carbon RegisterEventHotKey (default ⌥⌘V, configurable)
+│   │
+│   └── SettingsWindowController
+│       └── SettingsView (general / history / about)
+│           └── AppSettings (UserDefaults + SMAppService)
 │
 ContentView / ItemRowView (SwiftUI)
 ```
@@ -71,14 +77,16 @@ ContentView / ItemRowView (SwiftUI)
 | `AppDelegate.swift` | 依赖装配、主菜单、首次启动展示、应用代理生命周期 |
 | `PanelController.swift` | 无边框悬浮面板的创建 / 定位 / 显隐动画、键盘事件、焦点恢复 |
 | `StatusBarController.swift` | 菜单栏图标、左键呼出面板、右键菜单、暂停、清空、退出 |
-| `GlobalHotKey.swift` | Carbon 系统级快捷键注册和事件分发 |
+| `GlobalHotKey.swift` | Carbon 系统级快捷键注册和事件分发，失败时抛出冲突错误 |
+| `SettingsWindowController.swift` | 设置窗口托管与激活 |
 
 ### Services
 
 | 文件 | 职责 |
 | --- | --- |
 | `ClipboardMonitor.swift` | 350ms 轮询 `changeCount`，过滤隐藏类型，生成 `CapturedClipboard` |
-| `ClipboardManager.swift` | 核心业务：去重、置顶、删除、清空、复制回剪贴板、FIFO 裁剪 |
+| `ClipboardManager.swift` | 核心业务：去重、置顶、删除、清空、复制回剪贴板、FIFO 裁剪、历史容量 |
+| `AppSettings.swift` | 用户偏好、快捷键、历史上限、登录项状态 |
 | `ClipboardStore.swift` | JSON 历史记录、图片资产、防抖写入、目录管理 |
 | `ContentClassifier.swift` | 文本、URL、HEX、JSON、代码的启发式分类 |
 | `ContentHasher.swift` | 加类型盐的 SHA-256 去重指纹 |
@@ -94,7 +102,10 @@ ContentView / ItemRowView (SwiftUI)
 | `EmptyStateView.swift` | 空历史 / 无搜索结果状态 |
 | `PanelFooterView.swift` | 监听状态与键盘提示 |
 | `PanelViewState.swift` | 搜索、分类、选中项、焦点触发器 |
+| `HotKeyConfiguration.swift` | Carbon 键码 / 修饰符、显示文案与校验 |
 | `Theme.swift` | 圆角、间距、弹簧动效、描边颜色、字体辅助 |
+| `SettingsView.swift` | 设置窗口：通用、历史、关于 |
+| `ShortcutRecorderView.swift` | 快捷键捕获与冲突错误展示 |
 
 ## 5. 数据模型
 
@@ -152,7 +163,15 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 4. SwiftUI 搜索框获取焦点；列表选中第一项。
 5. 点击面板外侧、阴影留白区或其他应用时关闭。关闭时按需重新激活之前的前台应用，避免焦点丢失。
 
-### 6.4 键盘事件
+### 6.4 设置与登录项
+
+- 通用页：登录时自动启动（`SMAppService.mainApp`）、全局快捷键录制、暂停监听。
+- 历史页：未置顶记录上限（100 / 200 / 500 / 1000）、清空未置顶 / 全部、在 Finder 中显示数据目录。
+- 设置保存在 `UserDefaults`；应用启动时读取并将历史上限同步给 `ClipboardManager`。
+- 历史上限调低后立即执行一次 FIFO 裁剪，置顶记录始终保留。
+- 登录项状态以 `SMAppService.mainApp.status` 为准；如果系统要求批准，设置页提供打开系统登录项设置的入口。
+
+### 6.5 键盘事件
 
 `PanelController` 使用 `NSEvent.addLocalMonitorForEvents(matching: .keyDown)` 在面板为 key window 时处理：
 
@@ -162,6 +181,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - `esc`：清空搜索或关闭。
 
 其余按键原样交还 AppKit / 输入法，因此搜索框和中文输入法保持正常工作。
+
+全局呼出快捷键由 `AppSettings` 持有，默认 `⌥⌘V`。设置窗口中的 `ShortcutRecorderView` 用本地 key monitor 捕获新组合，要求至少包含 ⌘ / ⌥ / ⌃；`AppDelegate` 解绑旧 Carbon hotkey 后注册新组合，失败会恢复上一个可用配置并在设置页显示错误。
 
 ## 7. 界面设计规范
 
@@ -184,13 +205,13 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ## 8. 并发与性能
 
-- 所有可变 UI 与业务状态都在 `@MainActor` 上；没有跨线程访问 SwiftUI 状态。
+- 所有可变 UI 与业务状态（包括 `AppSettings`）都在 `@MainActor` 上；没有跨线程访问 SwiftUI 状态。
 - 轮询使用 `Task.sleep(350ms)`，并持有 `ProcessInfo` 活动令牌以避免 App Nap 降低监听及时性。
 - 历史写盘防抖 400ms，避免快速复制导致频繁 I/O。
 - 列表使用 `LazyVStack`，仅渲染视口附近卡片。
 - 图片列表只加载 560px 缩略图，原图只在复制时读取。
 - 去重哈希在采集线程（主线程）执行；对常规文本 / 图片足够快，超大内容可后续迁移到后台任务。
-- 当前上限为 200 条未置顶 + 任意置顶项，排序与搜索为 O(n log n) 级别，规模可控。
+- 当前默认上限为 200 条未置顶 + 任意置顶项，可在设置中调整为 100 / 200 / 500 / 1000；排序与搜索为 O(n log n) 级别，规模可控。
 
 ## 9. 隐私与安全
 
@@ -209,6 +230,9 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 - Debug / Release 构建通过；
 - 面板在实际窗口服务器中可见；
+- 设置窗口三个标签页的离屏渲染；
+- 自定义快捷键持久化、注册与显示；
+- 历史上限、清空与存储目录入口；
 - 文本、URL、代码、HEX、图片的采集、持久化与重启恢复；
 - 隐藏类型过滤；
 - 文本和图片去重；
@@ -217,7 +241,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 尚未自动化：
 
-- 全局快捷键的 UI 级自动化（当前环境无法授予发送系统按键权限）；
+- 全局快捷键的实际按键 UI 自动化（当前环境无法授予发送系统按键权限）；
+- 登录项注册在签名 / 未签名构建上的完整系统授权流程；
 - 200 条 FIFO 极限压力测试；
 - 各应用剪贴板格式矩阵；
 - 多显示器 / 多 Space / 全屏应用切换；
@@ -227,8 +252,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ## 11. 可扩展点
 
-- **设置层**：增加 `SettingsStore`（UserDefaults / JSON）与独立 Settings Scene / 窗口。
-- **快捷键抽象**：把固定 Carbon 快捷键迁移为可配置组合，并检测冲突。
+- **设置层**：继续扩展外观、隐私、按应用排除等设置页。
+- **快捷键抽象**：已迁移为可配置组合；后续可加入按键布局感知的显示名称。
 - **数据层迁移**：当前 JSON 足够轻量；规模增长后可迁移 SQLite / SwiftData，保持 Repository 接口。
 - **动作系统**：在复制之外增加打开链接、粘贴为纯文本、保存图片、运行快捷指令等动作。
 - **格式扩展**：借助 `NSPasteboard.PasteboardType` 支持 RTF、HTML、文件 URL、多选。

@@ -1,5 +1,7 @@
 # HaoPaste
 
+当前版本：**v0.2.0**
+
 一款原生、轻快、键盘优先的 macOS 剪切板管理器。用 `⌥⌘V` 从任何应用呼出无标题栏悬浮面板，搜索、选择、复制，一气呵成。
 
 > 设计目标：接近 Raycast / Paste 的精致感，同时保持 Apple Human Interface Guidelines 的原生语义与克制。
@@ -19,11 +21,11 @@
    ```bash
    make dmg
    # 输出：
-   # dist/HaoPaste-0.1.0.dmg
-   # dist/HaoPaste-0.1.0.dmg.sha256
+   # dist/HaoPaste-0.2.0.dmg
+   # dist/HaoPaste-0.2.0.dmg.sha256
    ```
 
-2. 双击打开 `dist/HaoPaste-0.1.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
+2. 双击打开 `dist/HaoPaste-0.2.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
 3. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
 4. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
 
@@ -41,7 +43,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 
 ## 功能
 
-- **系统级唤起**：`⌥⌘V` 全局快捷键，或点击菜单栏剪贴板图标。
+- **系统级唤起**：默认 `⌥⌘V` 全局快捷键，或点击菜单栏剪贴板图标；快捷键可在设置中录入修改。
 - **无标题栏悬浮面板**：`.regularMaterial` 磨砂背景、16pt 连续圆角、0.5pt 细描边、柔和阴影。
 - **即时搜索**：按内容、来源应用、类型或格式搜索。
 - **分类药丸**：全部 / 文本 / 代码 / 图片 / 链接，胶囊选中态平滑滑动。
@@ -58,6 +60,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 
 - **卡片交互**：悬停高亮、1pt 微位移、弹簧动效；悬停后显示置顶与删除按钮；支持右键菜单。
 - **点击外部关闭**：点击面板外侧、透明阴影留白区域或切换到其他应用时自动收起。
+- **设置窗口**：自定义全局快捷键、登录时自动启动、暂停监听、历史容量、清空记录、打开数据目录。
 - **智能识别**：自动区分纯文本、链接、代码 / JSON、颜色值（HEX）与图片。
 - **来源应用**：记录复制内容时最前方的应用名称。
 - **图片缩略图**：原图与缩略图分文件缓存，列表只加载缩略图。
@@ -67,6 +70,16 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 - **原生适配**：跟随系统浅色 / 深色外观与强调色，尊重“减弱动态效果”，全部图标使用 SF Symbols 分层渲染。
 
 点击条目只执行「复制」，不会自动粘贴到上一个应用，因此应用不需要辅助功能（Accessibility）权限。
+
+### 设置窗口
+
+![HaoPaste 设置窗口](Docs/screenshot-settings.png)
+
+打开方式：右键菜单栏图标 → **设置…**，或按 `⌘,`。
+
+- **通用**：登录时自动启动、录制新的全局快捷键、暂停 / 恢复监听。
+- **历史**：100 / 200 / 500 / 1000 条未置顶记录上限、清空未置顶或全部记录、在 Finder 中打开数据目录。
+- **关于**：版本、快捷键、隐私与权限信息。
 
 ## 开发运行
 
@@ -141,18 +154,22 @@ HaoPaste/
 │   ├── HaoPasteApplication.swift    # AppKit 入口，菜单栏驻留应用
 │   ├── AppDelegate.swift            # 依赖装配、主菜单、调试入口
 │   ├── PanelController.swift        # NSPanel、定位、键盘事件、焦点恢复
-│   ├── GlobalHotKey.swift           # Carbon 全局快捷键（⌥⌘V）
+│   ├── GlobalHotKey.swift           # Carbon 全局快捷键（默认 ⌥⌘V）
+│   ├── SettingsWindowController.swift # 设置窗口托管
 │   └── StatusBarController.swift    # 菜单栏图标与右键菜单
 ├── Services/
 │   ├── ClipboardMonitor.swift       # changeCount 轮询、隐藏类型过滤
 │   ├── ClipboardManager.swift       # 去重、置顶、FIFO、复制、可观察状态
 │   ├── ClipboardStore.swift         # JSON 持久化与图片资产
+│   ├── AppSettings.swift            # 快捷键 / 历史上限 / 登录项偏好
 │   ├── ContentClassifier.swift      # 文本 / URL / JSON / 代码 / HEX 识别
 │   ├── ContentHasher.swift          # SHA-256 指纹
 │   └── ImageProcessor.swift         # PNG 归一化与缩略图生成
-├── Models/ClipboardItem.swift
+├── Models/
+│   ├── ClipboardItem.swift
+│   └── HotKeyConfiguration.swift    # 快捷键键码与显示
 ├── State/PanelViewState.swift       # 搜索、筛选、选中项与焦点
-├── Views/                           # ContentView、ItemRowView 及组件
+├── Views/                           # ContentView、ItemRowView、Settings
 ├── Theme/Theme.swift                # 圆角、间距、弹簧动效、细描边
 └── Support/                         # DEMO 数据与离屏截图工具（仅 Debug）
 ```
@@ -198,9 +215,10 @@ launchctl unsetenv HAOPASTE_RENDER_APPEARANCE
 ## 已知边界
 
 - 目前仅支持文本、链接、代码 / JSON、HEX 颜色和图片；文件、富文本、多图列表尚未纳入。
-- 快捷键固定为 `⌥⌘V`，尚未提供设置窗口与自定义快捷键。
 - 点击条目只复制，不自动粘贴（不申请辅助功能权限）。
-- 未实现开机启动、iCloud 同步、按应用排除规则。
+- 未实现按应用排除、导入 / 导出、iCloud 同步。
+- 登录时启动依赖 `SMAppService`；如果系统要求批准，需要在“系统设置 → 通用 → 登录项”中允许。
+- 自定义快捷键目前使用固定键位名称映射，非美式键盘布局下显示文本可能与实际字符不同。
 - 应用为本地 ad-hoc 签名；对外分发前需配置 Developer ID 与公证流程。
 - 应用图标由 `Scripts/generate-app-icon.swift` 生成，可重复构建。
 

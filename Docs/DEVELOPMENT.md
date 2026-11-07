@@ -55,7 +55,10 @@ Release 构建输出：
 | `--storage <path>` | 指定历史 / 图片存储目录 |
 | `HAOPASTE_STORAGE_DIR=<path>` | 环境变量形式的存储覆盖 |
 | `--render <path>` | Debug：离屏渲染面板 PNG 后退出 |
+| `--render-settings <path>` | Debug：离屏渲染设置窗口 PNG 后退出 |
 | `HAOPASTE_RENDER_APPEARANCE=dark` | Debug 离屏渲染时使用深色外观 |
+| `HAOPASTE_RENDER_SETTINGS_TAB=general\|history\|about` | Debug 设置渲染的标签页 |
+| `--show-settings` | Debug：启动后直接打开设置窗口 |
 
 示例：
 
@@ -76,7 +79,7 @@ HaoPaste/
 ├── Models/        # 持久化模型
 ├── Services/      # 监听、管理、存储、分类、哈希、图片
 ├── State/         # 面板 UI 状态
-├── Views/         # SwiftUI 界面
+├── Views/         # SwiftUI 界面（面板 + Settings）
 ├── Theme/         # 设计 token
 ├── Resources/     # Assets.xcassets / AppIcon
 ├── Support/       # DEBUG：示例数据、离屏渲染
@@ -118,8 +121,8 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste-0.1.0.dmg                 # 安装包（app + Applications 快捷方式）
-dist/HaoPaste-0.1.0.dmg.sha256          # SHA-256 校验
+dist/HaoPaste-0.2.0.dmg                 # 安装包（app + Applications 快捷方式）
+dist/HaoPaste-0.2.0.dmg.sha256          # SHA-256 校验
 ```
 
 > `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
@@ -166,11 +169,11 @@ codesign --force --deep --options runtime --timestamp \
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash
-xcrun notarytool submit "dist/HaoPaste-0.1.0.dmg" \
+xcrun notarytool submit "dist/HaoPaste-0.2.0.dmg" \
   --keychain-profile "haopaste-notary" --wait
 
-xcrun stapler staple "dist/HaoPaste-0.1.0.dmg"
-xcrun stapler validate "dist/HaoPaste-0.1.0.dmg"
+xcrun stapler staple "dist/HaoPaste-0.2.0.dmg"
+xcrun stapler validate "dist/HaoPaste-0.2.0.dmg"
 ```
 
 也可以对 `.app` 先公证再打包（Apple 推荐流程根据分发方式调整）。需要 Apple Developer Program 账号。
@@ -180,8 +183,8 @@ xcrun stapler validate "dist/HaoPaste-0.1.0.dmg"
 版本号位于 `project.yml`：
 
 ```yaml
-MARKETING_VERSION: "0.1.0"
-CURRENT_PROJECT_VERSION: "1"
+MARKETING_VERSION: "0.2.0"
+CURRENT_PROJECT_VERSION: "2"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：
@@ -189,11 +192,15 @@ CURRENT_PROJECT_VERSION: "1"
 - [ ] `make release` 无警告/错误（AppIntents 元数据提示可忽略）
 - [ ] 全新用户目录（清空 App Support + UserDefaults）启动正常
 - [ ] 首次启动自动展示面板；再次打开应用会显示面板
-- [ ] `⌥⌘V`、`esc`、`↵`、`⌘1–9`、`⌘P`、`⌘⌫` 行为正确
+- [ ] 默认 / 自定义快捷键、`esc`、`↵`、`⌘1–9`、`⌘P`、`⌘⌫` 行为正确
+- [ ] 快捷键冲突时设置窗口显示错误并恢复上一组可用快捷键
 - [ ] 文本 / 链接 / 代码 / JSON / HEX / 图片采集正常
-- [ ] 去重、置顶、删除、清空未置顶正常
+- [ ] 去重、置顶、删除、清空未置顶 / 全部正常
 - [ ] 暂停监听后不再新增记录
-- [ ] 重启后历史与缩略图恢复
+- [ ] 历史上限切换生效，置顶记录不受影响
+- [ ] 登录时自动启动可注册 / 注销；被系统要求批准时有提示
+- [ ] 设置窗口的通用 / 历史 / 关于三个页面正常，窗口可关闭重开
+- [ ] 重启后历史、缩略图与设置恢复
 - [ ] 浅色 / 深色 / 减弱动态效果表现正常
 - [ ] DMG 可以拖入 Applications 并正常启动
 - [ ] `codesign --verify --deep --strict` 通过
@@ -243,6 +250,8 @@ defaults delete com.hao.HaoPaste 2>/dev/null || true
 
 - **不要用 `swift run`**：本工程是 Xcode application target，不是 Swift Package。请用 Xcode 或 `open` 启动 `.app`。
 - **修改 AppDelegate 的 first launch 行为**：调试时若不想自动弹面板，可先运行 `defaults delete com.hao.HaoPaste hasCompletedFirstLaunch`，或在 `--demo` 流程中验证。
+- **设置项存储**：快捷键与历史上限保存在 `UserDefaults`（`com.hao.HaoPaste`），没有单独的 settings 文件。登录项状态以 `SMAppService.mainApp.status` 为准。
+- **设置窗口调试**：`open -n .build/Build/Products/Debug/HaoPaste.app --args --show-settings`；或使用离屏渲染命令检查三个标签页。
 - **截图渲染**：`DebugRenderer` 使用真实的 `NSHostingView` + 窗口缓存，避免 `ImageRenderer` 对 TextField / LazyVStack 的渲染限制。不要删除这段 Debug 工具后继续使用 README 中的渲染命令。
 - **DMG 未提交到 Git**：`dist/` 被 `.gitignore` 排除。每次发布请重新运行 `make dmg`。
 - **应用图标**：修改 `Scripts/generate-app-icon.swift` 后重新生成 10 个尺寸，或直接替换 `AppIcon.appiconset` 中的 PNG。
