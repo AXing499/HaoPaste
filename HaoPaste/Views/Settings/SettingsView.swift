@@ -1,0 +1,599 @@
+//
+//  SettingsView.swift
+//  HaoPaste
+//
+//  Native settings window for personalization and history management.
+//
+
+import AppKit
+import Combine
+import SwiftUI
+
+enum SettingsTab: String, CaseIterable, Identifiable {
+    case general
+    case history
+    case about
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .general: return "通用"
+        case .history: return "历史"
+        case .about: return "关于"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .general: return "启动、快捷键与监听"
+        case .history: return "记录容量、存储位置与清理"
+        case .about: return "版本与隐私信息"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .general: return "slider.horizontal.3"
+        case .history: return "clock.arrow.circlepath"
+        case .about: return "info.circle"
+        }
+    }
+}
+
+struct SettingsView: View {
+    @Bindable var settings: AppSettings
+    let manager: ClipboardManager
+
+    @State private var selectedTab: SettingsTab = .general
+    @State private var showClearUnpinnedAlert = false
+    @State private var showClearAllAlert = false
+
+    init(
+        settings: AppSettings,
+        manager: ClipboardManager,
+        initialTab: SettingsTab = .general
+    ) {
+        self._settings = Bindable(wrappedValue: settings)
+        self.manager = manager
+        self._selectedTab = State(initialValue: initialTab)
+    }
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+            ?? "0.2.0"
+    }
+
+    private var appBuild: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            sidebar
+            Divider()
+                .overlay(Color.primary.opacity(0.06))
+            content
+        }
+        .frame(width: 720, height: 480)
+        .background(Color(nsColor: .windowBackgroundColor))
+        .alert("清空未置顶记录？", isPresented: $showClearUnpinnedAlert) {
+            Button("清空", role: .destructive) {
+                manager.clearUnpinnedItems()
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("所有未置顶记录都会被删除，此操作无法撤销。置顶记录会保留。")
+        }
+        .alert("清空全部记录？", isPresented: $showClearAllAlert) {
+            Button("清空全部", role: .destructive) {
+                manager.clearAllItems()
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("包括置顶记录与图片缓存，此操作无法撤销。")
+        }
+        .onAppear {
+            settings.refreshLaunchAtLoginStatus()
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+        ) { _ in
+            settings.refreshLaunchAtLoginStatus()
+        }
+    }
+
+    // MARK: - Sidebar
+
+    private var sidebar: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                Image(nsImage: NSApplication.shared.applicationIconImage)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: 42, height: 42)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("HaoPaste")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    Text("v\(appVersion)")
+                        .font(.system(size: 10, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 18)
+            .padding(.bottom, 18)
+
+            VStack(spacing: 3) {
+                ForEach(SettingsTab.allCases) { tab in
+                    SidebarTabButton(
+                        tab: tab,
+                        isSelected: selectedTab == tab
+                    ) {
+                        withAnimation(Theme.spring) {
+                            selectedTab = tab
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 10)
+
+            Spacer()
+
+            VStack(alignment: .leading, spacing: 4) {
+                Label("本地存储 · 无网络请求", systemImage: "lock.shield")
+                Text("呼出快捷键 \(settings.hotKey.displayString)")
+            }
+            .font(.system(size: 10, design: .rounded))
+            .foregroundStyle(.tertiary)
+            .padding(16)
+        }
+        .frame(width: 184)
+        .background(Color.primary.opacity(0.028))
+    }
+
+    // MARK: - Content
+
+    private var content: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                pageHeader
+
+                switch selectedTab {
+                case .general:
+                    generalPage
+                case .history:
+                    historyPage
+                case .about:
+                    aboutPage
+                }
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .scrollIndicators(.never)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var pageHeader: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(selectedTab.title)
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
+            Text(selectedTab.subtitle)
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.bottom, 2)
+    }
+
+    @ViewBuilder
+    private var generalPage: some View {
+        SettingsCard("启动") {
+            SettingsRow(
+                "登录时自动启动",
+                subtitle: "登录 Mac 后在菜单栏常驻，随时可用"
+            ) {
+                Toggle("", isOn: launchAtLoginBinding)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .tint(Color.accentColor)
+            }
+
+            if let error = settings.launchAtLoginError {
+                SettingsDivider()
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(error)
+                        .font(.system(size: 10.5, design: .rounded))
+                        .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if settings.launchAtLoginRequiresApproval {
+                        Button("打开系统登录项设置…") {
+                            settings.openLoginItemsSettings()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.bottom, 11)
+            }
+        }
+
+        SettingsCard("全局快捷键") {
+            SettingsRow(
+                "呼出面板",
+                subtitle: "点击后按下新的组合键；至少包含 ⌘、⌥ 或 ⌃"
+            ) {
+                ShortcutRecorderView(
+                    configuration: settings.hotKey,
+                    registrationError: settings.hotKeyRegistrationError,
+                    onRecord: { configuration in
+                        settings.hotKey = configuration
+                    },
+                    onReset: {
+                        settings.resetHotKeyToDefault()
+                    }
+                )
+            }
+        }
+
+        SettingsCard("监听") {
+            SettingsRow(
+                "监听剪贴板",
+                subtitle: "暂停后不会读取或记录新的剪贴板内容"
+            ) {
+                Toggle("", isOn: monitoringBinding)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .tint(Color.accentColor)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var historyPage: some View {
+        SettingsCard("记录上限") {
+            SettingsRow(
+                "未置顶记录上限",
+                subtitle: "置顶记录不计入上限，也不会被自动清理"
+            ) {
+                Picker("", selection: $settings.maxUnpinnedItems) {
+                    ForEach(AppSettings.historyLimitOptions, id: \.self) { limit in
+                        Text("\(limit) 条").tag(limit)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 120)
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                "当前历史",
+                subtitle: "包含文本、代码、链接、颜色与图片"
+            ) {
+                Text("\(manager.items.count) 条 · \(manager.pinnedCount) 条置顶")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+        }
+
+        SettingsCard("存储") {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("数据目录")
+                        .font(.system(.body, design: .rounded))
+                    Text(manager.storageDirectoryURL.path)
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .help(manager.storageDirectoryURL.path)
+                }
+
+                Spacer(minLength: 10)
+
+                Button("在 Finder 中显示") {
+                    NSWorkspace.shared.activateFileViewerSelecting([
+                        manager.storageDirectoryURL
+                    ])
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(14)
+        }
+
+        SettingsCard("清理") {
+            destructiveRow(
+                title: "清空未置顶记录",
+                subtitle: "保留置顶记录，删除其余历史与图片缓存",
+                buttonTitle: "清空…",
+                isEnabled: manager.hasUnpinnedItems
+            ) {
+                showClearUnpinnedAlert = true
+            }
+
+            SettingsDivider()
+
+            destructiveRow(
+                title: "清空全部记录",
+                subtitle: "删除所有历史记录，包括置顶内容",
+                buttonTitle: "清空全部…",
+                isEnabled: !manager.items.isEmpty
+            ) {
+                showClearAllAlert = true
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var aboutPage: some View {
+        HStack(spacing: 16) {
+            Image(nsImage: NSApplication.shared.applicationIconImage)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 76, height: 76)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("HaoPaste")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                Text("版本 \(appVersion)（\(appBuild)）")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+                Text("快速、原生、键盘优先的剪贴板管理器。")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+
+        SettingsCard("快捷键") {
+            SettingsRow("呼出面板", subtitle: "在任意应用上方打开 HaoPaste") {
+                Text(settings.hotKey.displayString)
+                    .font(.system(.body, design: .rounded).weight(.medium))
+                    .foregroundStyle(Color.accentColor)
+            }
+
+            SettingsDivider()
+
+            SettingsRow("快速复制", subtitle: "使用当前结果中的前九条") {
+                Text("⌘1 – ⌘9")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+        }
+
+        SettingsCard("隐私") {
+            SettingsRow("数据存储", subtitle: "历史与图片仅保存在本机") {
+                Image(systemName: "internaldrive")
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.secondary)
+            }
+
+            SettingsDivider()
+
+            SettingsRow("网络访问", subtitle: "无账号、无遥测、无网络请求") {
+                Image(systemName: "wifi.slash")
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.secondary)
+            }
+
+            SettingsDivider()
+
+            SettingsRow("辅助功能权限", subtitle: "复制后需要手动按 ⌘V，因此不申请额外权限") {
+                Image(systemName: "checkmark.shield")
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.secondary)
+            }
+        }
+
+        HStack {
+            Text("© 2026 Hao. All rights reserved.")
+                .font(.system(size: 10, design: .rounded))
+                .foregroundStyle(.tertiary)
+            Spacer()
+            Button("退出 HaoPaste") {
+                NSApp.terminate(nil)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        }
+        .padding(.top, 2)
+    }
+
+    // MARK: - Bindings
+
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { settings.launchAtLoginEnabled },
+            set: { settings.setLaunchAtLogin($0) }
+        )
+    }
+
+    private var monitoringBinding: Binding<Bool> {
+        Binding(
+            get: { !manager.isMonitoringPaused },
+            set: { manager.setMonitoringPaused(!$0) }
+        )
+    }
+
+    // MARK: - Helpers
+
+    private func destructiveRow(
+        title: String,
+        subtitle: String,
+        buttonTitle: String,
+        isEnabled: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(.body, design: .rounded))
+                Text(subtitle)
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 10)
+
+            Button(buttonTitle, action: action)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .tint(.red)
+                .disabled(!isEnabled)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+    }
+}
+
+// MARK: - Components
+
+private struct SidebarTabButton: View {
+    let tab: SettingsTab
+    let isSelected: Bool
+    let action: () -> Void
+
+    @State private var isHovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 9) {
+                Image(systemName: tab.symbolName)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .symbolRenderingMode(.hierarchical)
+                    .frame(width: 16)
+
+                Text(tab.title)
+                    .font(.system(.body, design: .rounded).weight(.medium))
+
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(foregroundColor)
+            .padding(.horizontal, 10)
+            .frame(height: 32)
+            .background {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(backgroundColor)
+            }
+            .overlay {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(Color.accentColor.opacity(0.16), lineWidth: 0.5)
+                }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .onHover { hovering in
+            isHovering = hovering
+        }
+        .animation(reduceMotion ? nil : Theme.spring, value: isHovering)
+        .animation(reduceMotion ? nil : Theme.spring, value: isSelected)
+    }
+
+    private var foregroundColor: Color {
+        if isSelected {
+            return .accentColor
+        }
+        return isHovering ? .primary : .secondary
+    }
+
+    private var backgroundColor: Color {
+        if isSelected {
+            return Color.accentColor.opacity(0.10)
+        }
+        return isHovering ? Color.primary.opacity(0.05) : .clear
+    }
+}
+
+private struct SettingsCard<Content: View>: View {
+    let title: String?
+    let content: Content
+
+    init(_ title: String? = nil, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            if let title {
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 2)
+            }
+
+            VStack(spacing: 0) {
+                content
+            }
+            .background {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.primary.opacity(0.035))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
+            }
+        }
+    }
+}
+
+private struct SettingsRow<Control: View>: View {
+    let title: String
+    let subtitle: String?
+    let control: Control
+
+    init(
+        _ title: String,
+        subtitle: String? = nil,
+        @ViewBuilder control: () -> Control
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.control = control()
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(.body, design: .rounded))
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Spacer(minLength: 12)
+            control
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+    }
+}
+
+private struct SettingsDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(Color.primary.opacity(0.06))
+            .frame(height: 0.5)
+            .padding(.leading, 14)
+    }
+}

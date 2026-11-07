@@ -14,14 +14,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var manager: ClipboardManager!
     private var panelController: PanelController!
     private var statusBarController: StatusBarController!
-    private var hotKey: GlobalHotKey!
+    private var settings: AppSettings!
+    private var settingsWindowController: SettingsWindowController?
+
+    private var hotKey: GlobalHotKey?
+    private var activeHotKeyConfiguration: HotKeyConfiguration?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         configureMainMenu()
 
+        settings = AppSettings()
+        settings.refreshLaunchAtLoginStatus()
+
         manager = ClipboardManager()
         manager.start()
+        manager.updateMaxUnpinnedItems(settings.maxUnpinnedItems)
+        settings.onHistoryLimitChange = { [weak self] limit in
+            self?.manager.updateMaxUnpinnedItems(limit)
+        }
 
         #if DEBUG
         if renderPreviewIfRequested() {
@@ -32,20 +43,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panelController = PanelController(manager: manager)
         statusBarController = StatusBarController(
             manager: manager,
-            panelController: panelController
+            panelController: panelController,
+            settings: settings,
+            onOpenSettings: { [weak self] in
+                self?.showSettings()
+            }
         )
 
-        hotKey = GlobalHotKey.makeDefault { [weak self] in
-            // The Carbon handler can run before AppKit finishes processing the
-            // key event; hop to the next main-loop turn before showing a window.
-            DispatchQueue.main.async {
-                self?.panelController.toggle()
-            }
+        settings.onHotKeyChange = { [weak self] configuration in
+            self?.applyHotKey(configuration)
         }
+        applyHotKey(settings.hotKey)
 
         #if DEBUG
         if CommandLine.arguments.contains("--demo") {
             manager.seedDemoDataIfNeeded()
+        }
+
+        if CommandLine.arguments.contains("--show-settings") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+                self?.showSettings()
+            }
+            return
         }
         #endif
 
@@ -68,6 +87,73 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     ) -> Bool {
         panelController?.show()
         return false
+    }
+
+    // MARK: - Settings
+
+    private func showSettings() {
+        panelController?.hide(restoreFocus: false)
+
+        if settingsWindowController == nil {
+            settingsWindowController = SettingsWindowController(
+                manager: manager,
+                settings: settings
+            )
+        }
+
+        settingsWindowController?.show()
+    }
+
+    @objc
+    private func openSettingsFromMenu() {
+        showSettings()
+    }
+
+    // MARK: - Hotkey
+
+    private func applyHotKey(_ configuration: HotKeyConfiguration) {
+        let fallback = activeHotKeyConfiguration ?? .default
+
+        do {
+            try installHotKey(configuration)
+            activeHotKeyConfiguration = configuration
+            settings.setHotKeyRegistrationError(nil)
+        } catch {
+            var message = "无法注册 \(configuration.displayString)：\(error.localizedDescription)"
+
+            if configuration != fallback {
+                do {
+                    try installHotKey(fallback)
+                    activeHotKeyConfiguration = fallback
+                    settings.revertHotKey(to: fallback)
+                    message += " 已恢复为 \(fallback.displayString)。"
+                } catch {
+                    activeHotKeyConfiguration = nil
+                    message += " 原快捷键也无法注册。"
+                }
+            } else {
+                activeHotKeyConfiguration = nil
+            }
+
+            settings.setHotKeyRegistrationError(message)
+            NSLog("HaoPaste: \(message)")
+        }
+
+        statusBarController?.refreshShortcutDisplay()
+    }
+
+    private func installHotKey(_ configuration: HotKeyConfiguration) throws {
+        hotKey = nil
+        hotKey = try GlobalHotKey(
+            keyCode: configuration.keyCode,
+            modifiers: configuration.carbonModifiers
+        ) { [weak self] in
+            // The Carbon handler can run before AppKit finishes processing the
+            // key event; hop to the next main-loop turn before showing a window.
+            DispatchQueue.main.async {
+                self?.panelController.toggle()
+            }
+        }
     }
 
     private func showPanelOnLaunchIfNeeded() {
@@ -97,17 +183,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     #if DEBUG
-    /// `--render <path>` produces an off-screen screenshot for design review.
+    /// `--render <path>` and `--render-settings <path>` produce off-screen
+    /// screenshots for design review.
     private func renderPreviewIfRequested() -> Bool {
-        guard
-            let flagIndex = CommandLine.arguments.firstIndex(of: "--render"),
-            CommandLine.arguments.indices.contains(flagIndex + 1)
-        else {
+        let arguments = CommandLine.arguments
+
+        func value(after flag: String) -> String? {
+            guard
+                let index = arguments.firstIndex(of: flag),
+                arguments.indices.contains(index + 1)
+            else {
+                return nil
+            }
+            return arguments[index + 1]
+        }
+
+        if let path = value(after: "--render-settings") {
+            manager.seedDemoDataIfNeeded()
+            DebugRenderer.renderSettings(
+                manager: manager,
+                settings: settings,
+                to: URL(fileURLWithPath: path)
+            ) {
+                NSApp.terminate(nil)
+            }
+            return true
+        }
+
+        guard let path = value(after: "--render") else {
             return false
         }
 
         manager.seedDemoDataIfNeeded()
-        let path = CommandLine.arguments[flagIndex + 1]
         DebugRenderer.renderPanel(
             manager: manager,
             to: URL(fileURLWithPath: path)
@@ -137,6 +244,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             keyEquivalent: ""
         )
         aboutItem.target = NSApp
+
+        let settingsItem = appMenu.addItem(
+            withTitle: "设置…",
+            action: #selector(openSettingsFromMenu),
+            keyEquivalent: ","
+        )
+        settingsItem.target = self
 
         appMenu.addItem(.separator())
 
@@ -194,6 +308,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             keyEquivalent: "a"
         )
 
+        let windowMenuItem = NSMenuItem()
+        mainMenu.addItem(windowMenuItem)
+
+        let windowMenu = NSMenu(title: "窗口")
+        windowMenuItem.submenu = windowMenu
+
+        windowMenu.addItem(
+            withTitle: "关闭",
+            action: #selector(NSWindow.performClose(_:)),
+            keyEquivalent: "w"
+        )
+        windowMenu.addItem(
+            withTitle: "最小化",
+            action: #selector(NSWindow.performMiniaturize(_:)),
+            keyEquivalent: "m"
+        )
+
+        NSApp.windowsMenu = windowMenu
         NSApp.mainMenu = mainMenu
     }
 }

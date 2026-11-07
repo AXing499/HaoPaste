@@ -150,6 +150,10 @@ final class ClipboardStore {
         imagesURL
     }
 
+    var baseDirectoryURL: URL {
+        baseURL
+    }
+
     // MARK: - Private
 
     private func write(_ items: [ClipboardItem]) {

@@ -10,18 +10,28 @@ import AppKit
 @MainActor
 final class StatusBarController: NSObject, NSMenuDelegate {
     private let manager: ClipboardManager
+    private let settings: AppSettings
     private weak var panelController: PanelController?
+    private let onOpenSettings: () -> Void
 
     private let statusItem: NSStatusItem
     private let menu = NSMenu()
 
+    private let showItem = NSMenuItem()
     private let historyInfoItem = NSMenuItem()
     private let pauseItem = NSMenuItem()
     private let clearItem = NSMenuItem()
 
-    init(manager: ClipboardManager, panelController: PanelController) {
+    init(
+        manager: ClipboardManager,
+        panelController: PanelController,
+        settings: AppSettings,
+        onOpenSettings: @escaping () -> Void
+    ) {
         self.manager = manager
+        self.settings = settings
         self.panelController = panelController
+        self.onOpenSettings = onOpenSettings
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
         super.init()
@@ -41,7 +51,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         button.target = self
         button.action = #selector(statusItemClicked(_:))
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-        button.toolTip = "HaoPaste · ⌥⌘V"
+        button.toolTip = "HaoPaste · \(settings.hotKey.displayString)"
     }
 
     @objc
@@ -70,11 +80,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.autoenablesItems = false
         menu.delegate = self
 
-        let showItem = NSMenuItem(
-            title: "打开 HaoPaste（⌥⌘V）",
-            action: #selector(showPanel),
-            keyEquivalent: ""
-        )
+        showItem.title = "打开 HaoPaste（\(settings.hotKey.displayString)）"
+        showItem.action = #selector(showPanel)
+        showItem.keyEquivalent = ""
         showItem.target = self
         showItem.image = symbolImage(named: "macwindow", pointSize: 13, weight: .regular)
         menu.addItem(showItem)
@@ -97,6 +105,15 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(clearItem)
 
         menu.addItem(.separator())
+
+        let settingsItem = NSMenuItem(
+            title: "设置…",
+            action: #selector(openSettings),
+            keyEquivalent: ""
+        )
+        settingsItem.target = self
+        settingsItem.image = symbolImage(named: "gearshape", pointSize: 13, weight: .regular)
+        menu.addItem(settingsItem)
 
         let aboutItem = NSMenuItem(
             title: "关于 HaoPaste",
@@ -121,7 +138,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         updatePresentation()
     }
 
+    func refreshShortcutDisplay() {
+        updatePresentation()
+    }
+
     private func updatePresentation() {
+        showItem.title = "打开 HaoPaste（\(settings.hotKey.displayString)）"
+
         historyInfoItem.title = manager.items.isEmpty
             ? "暂无记录"
             : "\(manager.items.count) 条记录 · \(manager.pinnedCount) 条置顶"
@@ -138,7 +161,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         statusItem.button?.appearsDisabled = manager.isMonitoringPaused
         statusItem.button?.toolTip = manager.isMonitoringPaused
             ? "HaoPaste · 监听已暂停"
-            : "HaoPaste · ⌥⌘V"
+            : "HaoPaste · \(settings.hotKey.displayString)"
     }
 
     // MARK: - Actions
@@ -146,6 +169,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     @objc
     private func showPanel() {
         panelController?.show()
+    }
+
+    @objc
+    private func openSettings() {
+        onOpenSettings()
     }
 
     @objc

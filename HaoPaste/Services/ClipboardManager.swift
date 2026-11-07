@@ -23,8 +23,9 @@ final class ClipboardManager {
     @ObservationIgnored private let monitor: ClipboardMonitor
     @ObservationIgnored private var hasStarted = false
 
-    /// Pinned items are never removed automatically.
-    @ObservationIgnored let maxUnpinnedItems = 200
+    /// Pinned items are never removed automatically. The limit is mirrored from
+    /// user settings; 200 is the default for a fresh install.
+    private(set) var maxUnpinnedItems = 200
 
     init(store: ClipboardStore? = nil, monitor: ClipboardMonitor? = nil) {
         self.store = store ?? ClipboardStore()
@@ -149,6 +150,30 @@ final class ClipboardManager {
         items.removeAll { !$0.isPinned }
         store.removeImageAssets(for: removed)
         store.scheduleSave(items)
+    }
+
+    func clearAllItems() {
+        guard !items.isEmpty else { return }
+
+        store.removeImageAssets(for: items)
+        items.removeAll()
+        store.scheduleSave(items)
+    }
+
+    func updateMaxUnpinnedItems(_ limit: Int) {
+        let clamped = max(1, limit)
+        guard clamped != maxUnpinnedItems else { return }
+
+        maxUnpinnedItems = clamped
+        let removed = trimHistory()
+        if !removed.isEmpty {
+            store.removeImageAssets(for: removed)
+        }
+        store.scheduleSave(items)
+    }
+
+    var storageDirectoryURL: URL {
+        store.baseDirectoryURL
     }
 
     func imageURL(for item: ClipboardItem) -> URL? {

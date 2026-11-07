@@ -52,11 +52,54 @@ enum DebugRenderer {
         }
         .frame(width: Theme.windowSize.width, height: Theme.windowSize.height)
 
+        render(
+            content: content,
+            size: Theme.windowSize,
+            to: url,
+            completion: completion
+        )
+    }
+
+    static func renderSettings(
+        manager: ClipboardManager,
+        settings: AppSettings,
+        to url: URL,
+        completion: @escaping @MainActor () -> Void
+    ) {
+        let tabName = ProcessInfo.processInfo.environment["HAOPASTE_RENDER_SETTINGS_TAB"] ?? "general"
+        let tab: SettingsTab
+        switch tabName {
+        case "history": tab = .history
+        case "about": tab = .about
+        default: tab = .general
+        }
+
+        let content = SettingsView(
+            settings: settings,
+            manager: manager,
+            initialTab: tab
+        )
+        .frame(width: 720, height: 480)
+
+        render(
+            content: content,
+            size: CGSize(width: 720, height: 480),
+            to: url,
+            completion: completion
+        )
+    }
+
+    private static func render<V: View>(
+        content: V,
+        size: CGSize,
+        to url: URL,
+        completion: @escaping @MainActor () -> Void
+    ) {
         let hostingView = NSHostingView(rootView: content)
-        hostingView.frame = NSRect(origin: .zero, size: Theme.windowSize)
+        hostingView.frame = NSRect(origin: .zero, size: size)
 
         let window = RenderWindow(
-            contentRect: NSRect(origin: .zero, size: Theme.windowSize),
+            contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
@@ -88,7 +131,7 @@ enum DebugRenderer {
             guard
                 let representation = hostingView.bitmapImageRepForCachingDisplay(in: hostingView.bounds)
             else {
-                NSLog("HaoPaste: could not allocate the panel preview")
+                NSLog("HaoPaste: could not allocate the preview")
                 window.orderOut(nil)
                 renderWindow = nil
                 completion()
@@ -98,7 +141,7 @@ enum DebugRenderer {
             hostingView.cacheDisplay(in: hostingView.bounds, to: representation)
 
             guard let pngData = representation.representation(using: .png, properties: [:]) else {
-                NSLog("HaoPaste: could not encode the panel preview")
+                NSLog("HaoPaste: could not encode the preview")
                 window.orderOut(nil)
                 renderWindow = nil
                 completion()
@@ -111,9 +154,9 @@ enum DebugRenderer {
                     withIntermediateDirectories: true
                 )
                 try pngData.write(to: url, options: .atomic)
-                NSLog("HaoPaste: wrote panel preview to \(url.path)")
+                NSLog("HaoPaste: wrote preview to \(url.path)")
             } catch {
-                NSLog("HaoPaste: could not write panel preview — \(error.localizedDescription)")
+                NSLog("HaoPaste: could not write preview — \(error.localizedDescription)")
             }
 
             window.orderOut(nil)

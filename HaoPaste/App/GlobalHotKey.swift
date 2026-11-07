@@ -9,8 +9,30 @@
 import AppKit
 import Carbon.HIToolbox
 
-@MainActor
 final class GlobalHotKey {
+    enum RegistrationError: LocalizedError {
+        case eventHandler(OSStatus)
+        case registration(OSStatus)
+
+        var errorDescription: String? {
+            switch self {
+            case .eventHandler:
+                return "无法安装全局快捷键事件处理器。"
+            case .registration:
+                return "这个快捷键可能已被其他应用占用，请换一个组合。"
+            }
+        }
+
+        var failureReason: String? {
+            switch self {
+            case let .eventHandler(status):
+                return "InstallEventHandler 返回错误码 \(status)。"
+            case let .registration(status):
+                return "RegisterEventHotKey 返回错误码 \(status)。"
+            }
+        }
+    }
+
     private static let signature: OSType = 0x48415053 // 'HAPS'
     private static let hotKeyID: UInt32 = 1
 
@@ -18,7 +40,7 @@ final class GlobalHotKey {
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
 
-    init(keyCode: UInt32, modifiers: UInt32, action: @escaping () -> Void) {
+    init(keyCode: UInt32, modifiers: UInt32, action: @escaping () -> Void) throws {
         self.action = action
 
         var eventType = EventTypeSpec(
@@ -36,8 +58,7 @@ final class GlobalHotKey {
         )
 
         guard status == noErr else {
-            NSLog("HaoPaste: could not install hotkey event handler (\(status))")
-            return
+            throw RegistrationError.eventHandler(status)
         }
 
         let identifier = EventHotKeyID(signature: Self.signature, id: Self.hotKeyID)
@@ -50,18 +71,13 @@ final class GlobalHotKey {
             &hotKeyRef
         )
 
-        if registerStatus != noErr {
-            NSLog("HaoPaste: could not register global hotkey (\(registerStatus))")
+        guard registerStatus == noErr else {
+            if let eventHandlerRef {
+                RemoveEventHandler(eventHandlerRef)
+                self.eventHandlerRef = nil
+            }
+            throw RegistrationError.registration(registerStatus)
         }
-    }
-
-    /// ⌥⌘V — the panel can be summoned from any app.
-    static func makeDefault(action: @escaping () -> Void) -> GlobalHotKey {
-        GlobalHotKey(
-            keyCode: UInt32(kVK_ANSI_V),
-            modifiers: UInt32(cmdKey | optionKey),
-            action: action
-        )
     }
 
     deinit {
