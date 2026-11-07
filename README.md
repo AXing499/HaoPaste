@@ -12,6 +12,33 @@
 
 ---
 
+## 安装使用（无需 Xcode）
+
+1. 构建或获取安装包：
+
+   ```bash
+   make dmg
+   # 输出：
+   # dist/HaoPaste-0.1.0.dmg
+   # dist/HaoPaste.app
+   ```
+
+2. 双击打开 `dist/HaoPaste-0.1.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
+3. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
+4. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
+
+HaoPaste 是 `LSUIElement` 菜单栏应用，**不会出现在 Dock**；启动后请查看菜单栏图标。
+
+也可以直接安装到本机并启动：
+
+```bash
+make install     # 安装到 /Applications（不可写时回退 ~/Applications）
+```
+
+DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请在 Finder 中右键应用 → **打开**。
+
+详细的安装、退出、卸载和 FAQ 见 [用户指南](Docs/USER_GUIDE.md)。
+
 ## 功能
 
 - **系统级唤起**：`⌥⌘V` 全局快捷键，或点击菜单栏剪贴板图标。
@@ -40,24 +67,24 @@
 
 点击条目只执行「复制」，不会自动粘贴到上一个应用，因此应用不需要辅助功能（Accessibility）权限。
 
-## 快速开始
+## 开发运行
 
 环境要求：macOS 14+、Xcode 15+（本工程使用 Xcode 26.5 构建验证）。
 
 ```bash
-# 直接构建并运行
-make run
+# 开发调试
+make run       # Debug 构建并打开
+make demo      # 用可复现的示例数据启动，便于查看界面
 
-# 仅构建
-make build
-
-# 用可复现的示例数据启动，便于查看界面
-make demo
+# 日常使用 / 发布
+make release   # Release 构建
+make dmg       # 生成 dist/HaoPaste-<version>.dmg
+make install   # 安装到 /Applications 并启动
 ```
 
 也可以直接打开 `HaoPaste.xcodeproj` 运行。工程由 [XcodeGen](https://github.com/yonaskolb/XcodeGen) 从 `project.yml` 生成；新增源文件后运行 `make project` 或 `xcodegen generate` 重新生成工程。
 
-首次启动后，应用会驻留在菜单栏。按 `⌥⌘V` 呼出面板。
+首次启动后，应用会驻留在菜单栏。按 `⌥⌘V` 呼出面板。详细构建、签名与公证流程见 [开发与发布文档](Docs/DEVELOPMENT.md)。
 
 ## 快捷键与交互细节
 
@@ -142,15 +169,7 @@ HaoPaste/
 
 应用自身写入剪贴板后立即同步 `changeCount`，避免把「再次复制历史条目」误采集为一条新记录。同时刷新该条目的使用时间，使下次打开面板时位于更靠前的位置。
 
-## 开发
-
-```bash
-make project   # 重新生成 Xcode 工程
-make build     # Debug 构建到 .build/
-make run       # 构建并打开
-make demo      # 使用 /tmp/haopaste-demo 的示例数据启动
-make clean
-```
+## 调试工具
 
 Debug 构建内置两个仅用于视觉验收的参数：
 
@@ -166,11 +185,22 @@ launchctl unsetenv HAOPASTE_RENDER_APPEARANCE
 
 `make demo` 等价于以 `--demo --show --storage /tmp/haopaste-demo` 启动一个 Debug 实例。
 
-## 已知边界 / Roadmap
+## 文档
+
+| 文档 | 内容 |
+| --- | --- |
+| [用户指南](Docs/USER_GUIDE.md) | 安装、启动、快捷键、菜单栏功能、卸载与 FAQ |
+| [架构与技术](Docs/ARCHITECTURE.md) | 技术栈、模块、数据流、设计规范、隐私与性能 |
+| [开发与发布](Docs/DEVELOPMENT.md) | 构建、调试参数、DMG、签名公证、测试检查单 |
+| [路线规划](Docs/ROADMAP.md) | 版本计划、优先级、技术债、版本验收标准 |
+
+## 已知边界
 
 - 目前仅支持文本、链接、代码 / JSON、HEX 颜色和图片；文件、富文本、多图列表尚未纳入。
 - 快捷键固定为 `⌥⌘V`，尚未提供设置窗口与自定义快捷键。
 - 点击条目只复制，不自动粘贴（不申请辅助功能权限）。
 - 未实现开机启动、iCloud 同步、按应用排除规则。
-- 应用为本地 ad-hoc 签名；分发前需配置自己的 Team、Hardened Runtime 与公证流程。
-- 打包资源、图标、菜单栏图标均为 SF Symbols 体系；应用图标由 `Scripts/generate-app-icon.swift` 生成，可重复构建。
+- 应用为本地 ad-hoc 签名；对外分发前需配置 Developer ID 与公证流程。
+- 应用图标由 `Scripts/generate-app-icon.swift` 生成，可重复构建。
+
+后续版本计划见 [ROADMAP.md](Docs/ROADMAP.md)。

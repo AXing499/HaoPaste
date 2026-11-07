@@ -5,8 +5,10 @@ CONFIG ?= Debug
 DERIVED_DATA := .build
 APP_PATH := $(DERIVED_DATA)/Build/Products/$(CONFIG)/$(APP_NAME).app
 DEMO_STORAGE := /tmp/haopaste-demo
+RELEASE_DERIVED_DATA := .build/release
+RELEASE_APP := $(RELEASE_DERIVED_DATA)/Build/Products/Release/$(APP_NAME).app
 
-.PHONY: project build run demo clean
+.PHONY: project build run demo release dmg install clean
 
 project:
 	xcodegen generate
@@ -23,6 +25,19 @@ demo: build
 	rm -rf "$(DEMO_STORAGE)"
 	open -n "$(APP_PATH)" --args --demo --show --storage "$(DEMO_STORAGE)"
 
+# Optimized app bundle for daily use. No Xcode needed to launch afterwards.
+release: project
+	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Release \
+		-derivedDataPath $(RELEASE_DERIVED_DATA) build -quiet
+
+# Build a double-clickable DMG in dist/ (app + Applications shortcut).
+dmg: release
+	Scripts/package-dmg.sh "$(RELEASE_APP)"
+
+# Copy the Release app into /Applications (or ~/Applications) and launch it.
+install: release
+	Scripts/install-app.sh "$(RELEASE_APP)"
+
 clean:
-	rm -rf "$(DERIVED_DATA)"
+	rm -rf "$(DERIVED_DATA)" "$(RELEASE_DERIVED_DATA)" dist
 	xcodebuild -project $(PROJECT) -scheme $(SCHEME) clean -quiet || true
