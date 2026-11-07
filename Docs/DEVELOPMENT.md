@@ -118,10 +118,11 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste.app                       # 直接可运行的 Release app
 dist/HaoPaste-0.1.0.dmg                 # 安装包（app + Applications 快捷方式）
 dist/HaoPaste-0.1.0.dmg.sha256          # SHA-256 校验
 ```
+
+> `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
 
 DMG 中包含 `安装说明.txt`，用户拖入 Applications 即可。应用本身是自包含的，不需要 Xcode、命令行或额外运行时。
 
@@ -158,10 +159,10 @@ open /Applications/HaoPaste.app
 ```bash
 codesign --force --deep --options runtime --timestamp \
   --sign "Developer ID Application: Your Name (TEAMID)" \
-  "dist/HaoPaste.app"
+  ".build/release/Build/Products/Release/HaoPaste.app"
 ```
 
-4. 重新生成 DMG；
+4. 签名后重新生成 DMG（打包脚本会保留有效签名）；
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash

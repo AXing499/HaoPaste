@@ -72,6 +72,7 @@ HaoPaste 的 `LSUIElement = true`，因此**不会出现在 Dock**。启动成�
 - **置顶**：悬停卡片后点击图钉按钮，或右键选择「置顶」；也可以在键盘选中时按 `⌘P`。
 - **删除**：悬停后点击垃圾桶，或右键选择「删除」。
 - **右键菜单**：复制、置顶 / 取消置顶、删除。
+- **关闭面板**：点击面板之外的任意位置或切换应用会自动关闭；也可以按 `esc` 或 `⌘W`。
 - **暂停监听**：右键菜单栏图标 →「暂停监听」。暂停期间不会记录新内容。
 - **清空记录**：右键菜单栏图标 →「清空未置顶记录」。置顶记录会保留。
 
@@ -113,6 +114,26 @@ HaoPaste 是 `LSUIElement` 菜单栏应用。请查看屏幕右上角菜单栏�
 
 **必须安装 Xcode 吗？**
 不需要。Xcode 只用于开发。安装 DMG 后可直接启动；只有需要重新编译源码时才需要 Xcode。
+
+**Spotlight 里为什么会有多个 `HaoPaste.app`？**
+每个 `.app` 实体都会出现在搜索结果中，常见来源有三种：
+
+- `/Applications/HaoPaste.app`：正式安装版（应该保留的那一个）；
+- Xcode Debug 构建：位于 `~/Library/Developer/Xcode/DerivedData/.../Build/Products/Debug/`；
+- 仓库 `dist/` 中的打包副本（当前版本已不再输出独立 app，只生成 DMG）。
+
+日常使用请只保留 `/Applications` 版本。停止 Xcode 调试后，可用 `xcodebuild clean` 或清理 DerivedData，并从 Launch Services 注销 Debug 产物：
+
+```bash
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+  -u ~/Library/Developer/Xcode/DerivedData/<HaoPaste-...>/Build/Products/Debug/HaoPaste.app
+```
+
+**“Developer ID 签名”和“公证”是什么？**
+- **签名**：使用 Apple Developer Program 的 Developer ID 证书为应用做密码学签名，证明“这个包来自某个开发者，且打包后未被篡改”。
+- **公证（Notarization）**：把签名后的 app / DMG 上传到 Apple Notary Service 做自动化恶意软件扫描；通过后 Apple 返回一张票据，再用 `stapler` 钉到安装包上。
+- Gatekeeper 在**其他 Mac**上打开来自互联网的下载时，会检查签名和公证票据。个人本机构建的 ad-hoc 签名应用无需公证。
+- 公证不是 App Store 上架，也不代表 Apple 审核或推荐你的应用；它只是安全扫描。需要付费的 Apple Developer Program 账号。
 
 **首次双击没有任何反应？**
 确认菜单栏是否出现图标；不要只看 Dock。应用启动后先显示一次面板，之后需要按 `⌥⌘V`。如果被系统拦截，请见下一条。

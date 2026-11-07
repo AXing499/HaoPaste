@@ -29,10 +29,6 @@ trap cleanup EXIT
 mkdir -p "$DIST"
 rm -f "$DMG" "$DMG.sha256"
 
-# A local, ready-to-run copy of the app (no DMG mounting required).
-rm -rf "$DIST/HaoPaste.app"
-ditto "$APP" "$DIST/HaoPaste.app"
-
 # Stage the classic drag-to-install DMG layout.
 ditto "$APP" "$STAGE/HaoPaste.app"
 ln -s /Applications "$STAGE/Applications"
@@ -74,5 +70,4 @@ hdiutil create \
 )
 
 echo "Created: $DMG"
-echo "Ready-to-run app: $DIST/HaoPaste.app"
 echo "SHA-256: $DIST/$(basename "$DMG").sha256"

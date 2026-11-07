@@ -27,6 +27,9 @@ final class PanelController: NSObject, NSWindowDelegate {
 
     private let panel: ClipboardPanel
     private var keyMonitor: Any?
+    private var mouseMonitor: Any?
+    private var globalMouseMonitor: Any?
+    private var deactivationObserver: NSObjectProtocol?
     private var previousApplication: NSRunningApplication?
     private var presentationGeneration = 0
     private var isHiding = false
@@ -35,7 +38,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         self.manager = manager
         self.panel = ClipboardPanel(
             contentRect: NSRect(origin: .zero, size: Theme.windowSize),
-            styleMask: [.borderless],
+            styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
@@ -44,11 +47,21 @@ final class PanelController: NSObject, NSWindowDelegate {
 
         configurePanel()
         installContent()
+        observeApplicationDeactivation()
     }
 
     deinit {
         if let keyMonitor {
             NSEvent.removeMonitor(keyMonitor)
+        }
+        if let mouseMonitor {
+            NSEvent.removeMonitor(mouseMonitor)
+        }
+        if let globalMouseMonitor {
+            NSEvent.removeMonitor(globalMouseMonitor)
+        }
+        if let deactivationObserver {
+            NotificationCenter.default.removeObserver(deactivationObserver)
         }
     }
 
@@ -112,6 +125,8 @@ final class PanelController: NSObject, NSWindowDelegate {
         let generation = presentationGeneration
 
         removeKeyMonitor()
+        removeMouseMonitor()
+        removeGlobalMouseMonitor()
 
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
 
@@ -172,6 +187,78 @@ final class PanelController: NSObject, NSWindowDelegate {
         if let keyMonitor {
             NSEvent.removeMonitor(keyMonitor)
             self.keyMonitor = nil
+        }
+    }
+
+    private func installMouseMonitor() {
+        removeMouseMonitor()
+
+        mouseMonitor = NSEvent.addLocalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown]
+        ) { [weak self] event in
+            guard
+                let self,
+                self.panel.isVisible,
+                event.window === self.panel
+            else {
+                return event
+            }
+
+            // Clicks in the transparent shadow padding belong to our window but
+            // are visually outside the panel. Treat them as outside clicks.
+            let cardRect = NSRect(
+                origin: NSPoint(x: Theme.windowPadding, y: Theme.windowPadding),
+                size: Theme.panelSize
+            )
+
+            if !cardRect.contains(event.locationInWindow) {
+                self.hide()
+                return nil
+            }
+
+            return event
+        }
+    }
+
+    private func removeMouseMonitor() {
+        if let mouseMonitor {
+            NSEvent.removeMonitor(mouseMonitor)
+            self.mouseMonitor = nil
+        }
+    }
+
+    /// Dismiss when the user clicks into any other application, even if the
+    /// panel never managed to become the active application's key window.
+    private func installGlobalMouseMonitor() {
+        removeGlobalMouseMonitor()
+
+        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown]
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.panel.isVisible, !self.isHiding else { return }
+                self.hide(restoreFocus: false)
+            }
+        }
+    }
+
+    private func removeGlobalMouseMonitor() {
+        if let globalMouseMonitor {
+            NSEvent.removeMonitor(globalMouseMonitor)
+            self.globalMouseMonitor = nil
+        }
+    }
+
+    private func observeApplicationDeactivation() {
+        deactivationObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: NSApp,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.panel.isVisible, !self.isHiding else { return }
+                self.hide(restoreFocus: false)
+            }
         }
     }
 
@@ -280,7 +367,10 @@ final class PanelController: NSObject, NSWindowDelegate {
     private func activatePanel() {
         NSApp.activate()
         panel.makeKeyAndOrderFront(nil)
+        panel.orderFrontRegardless()
         installKeyMonitor()
+        installMouseMonitor()
+        installGlobalMouseMonitor()
 
         // Let the window become key before handing focus to the search field.
         DispatchQueue.main.async { [weak self] in

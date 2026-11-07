@@ -15,7 +15,7 @@ enum Theme {
     static let hairline: CGFloat = 0.5
 
     static let panelSize = CGSize(width: 720, height: 560)
-    static let windowPadding: CGFloat = 30
+    static let windowPadding: CGFloat = 34
     static let windowSize = CGSize(
         width: panelSize.width + windowPadding * 2,
         height: panelSize.height + windowPadding * 2

@@ -147,10 +147,10 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 ### 6.3 面板呈现
 
 1. 全局快捷键 / 菜单栏左键 / 应用重新打开触发 `PanelController.show()`。
-2. 根据鼠标所在屏幕居中、靠上定位；窗口尺寸为 780×620（内容区 720×560，外围留给阴影）。
-3. 记录当前前台应用，激活 HaoPaste，使无边框 `NSPanel` 成为 key window。
+2. 根据鼠标所在屏幕居中、靠上定位；窗口尺寸为 788×628（内容区 720×560，外围留给阴影）。
+3. 记录当前前台应用；面板使用 `.nonactivatingPanel` + `orderFrontRegardless`，确保即使不抢占前台应用也能成为 key window。
 4. SwiftUI 搜索框获取焦点；列表选中第一项。
-5. 关闭时按需重新激活之前的前台应用，避免焦点丢失。
+5. 点击面板外侧、阴影留白区或其他应用时关闭。关闭时按需重新激活之前的前台应用，避免焦点丢失。
 
 ### 6.4 键盘事件
 
@@ -170,7 +170,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 | 面板圆角 | 16pt，`.continuous` |
 | 卡片 / 图标圆角 | 10pt / 9pt，`.continuous` |
 | 面板材质 | `.regularMaterial` |
-| 窗口内边距 | 30pt（容纳 22pt 柔和阴影） |
+| 窗口内边距 | 34pt（容纳 14pt 柔和阴影，避免阴影被窗口边缘裁切） |
 | 描边 | 0.5pt，`Color.primary.opacity(0.08)` |
 | 主色 | `Color.accentColor` |
 | 字体 | SF Pro Rounded：`.system(..., design: .rounded)` |
