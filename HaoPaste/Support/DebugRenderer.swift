@@ -95,6 +95,22 @@ enum DebugRenderer {
                     text: ""
                 )
             }
+        case "batch":
+            if let imageItem = manager.filteredItems(query: "", filter: .image).first,
+               let imageURL = manager.imageURL(for: imageItem) {
+                ocrService.seedBatchPreview(entries: [
+                    (
+                        "截图 1",
+                        imageURL,
+                        "HaoPaste\nClipboard, reimagined.\n复制、翻译、搜索，一切都在指尖完成。"
+                    ),
+                    (
+                        "截图 2",
+                        imageURL,
+                        "明天的评审改到下午三点，请带上最新的设计稿。"
+                    )
+                ])
+            }
         default:
             break
         }
@@ -186,6 +202,7 @@ enum DebugRenderer {
             initialTab: tab
         )
         .environment(snippetManager)
+        .environment(ocrService)
         .frame(width: 720, height: 480)
 
         render(

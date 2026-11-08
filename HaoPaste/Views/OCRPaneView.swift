@@ -207,7 +207,7 @@ struct OCRPaneView: View {
                 Text("\(service.text.count) 字符 · 可编辑")
                     .font(.system(size: 10.5, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
-                Text("识别结果只保存在本次会话")
+                Text("识别结果缓存在本机，可在设置中清除")
                     .font(.system(size: 9.5, weight: .regular, design: .rounded))
                     .foregroundStyle(.tertiary)
             }

@@ -12,6 +12,7 @@ struct MultiSelectionBar: View {
     let hint: String?
     let canMerge: Bool
     let onMerge: () -> Void
+    let onRecognizeText: (() -> Void)?
     let onClear: () -> Void
 
     var body: some View {
@@ -33,6 +34,32 @@ struct MultiSelectionBar: View {
 
             Spacer(minLength: 12)
 
+            if let onRecognizeText {
+                Button(action: onRecognizeText) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "text.viewfinder")
+                            .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                        Text("识别文字")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundStyle(Color.accentColor)
+                    .padding(.horizontal, 10)
+                    .frame(height: 27)
+                    .background {
+                        Capsule()
+                            .fill(Color.accentColor.opacity(0.10))
+                    }
+                    .overlay {
+                        Capsule()
+                            .strokeBorder(Color.accentColor.opacity(0.20), lineWidth: Theme.hairline)
+                    }
+                    .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .focusable(false)
+                .help("批量识别选中图片中的文字")
+            }
+
             Button(action: onClear) {
                 Text("取消")
                     .font(.system(size: 11, weight: .medium, design: .rounded))
@@ -49,26 +76,28 @@ struct MultiSelectionBar: View {
             .focusable(false)
             .help("取消多选（esc）")
 
-            Button(action: onMerge) {
-                HStack(spacing: 4) {
-                    Image(systemName: "doc.on.doc")
-                        .font(.system(size: 9.5, weight: .semibold, design: .rounded))
-                    Text("合并复制")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+            if onRecognizeText == nil {
+                Button(action: onMerge) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "doc.on.doc")
+                            .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                        Text("合并复制")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundStyle(Color.white)
+                    .padding(.horizontal, 11)
+                    .frame(height: 27)
+                    .background {
+                        Capsule()
+                            .fill(Color.accentColor.opacity(canMerge ? 1 : 0.35))
+                    }
+                    .contentShape(Capsule())
                 }
-                .foregroundStyle(Color.white)
-                .padding(.horizontal, 11)
-                .frame(height: 27)
-                .background {
-                    Capsule()
-                        .fill(Color.accentColor.opacity(canMerge ? 1 : 0.35))
-                }
-                .contentShape(Capsule())
+                .buttonStyle(.plain)
+                .focusable(false)
+                .disabled(!canMerge)
+                .help(canMerge ? "合并复制并关闭（↵）" : (hint ?? "当前选择无法合并"))
             }
-            .buttonStyle(.plain)
-            .focusable(false)
-            .disabled(!canMerge)
-            .help(canMerge ? "合并复制并关闭（↵）" : (hint ?? "当前选择无法合并"))
         }
         .padding(.horizontal, 12)
         .frame(height: 42)

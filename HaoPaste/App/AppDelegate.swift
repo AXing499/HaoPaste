@@ -144,6 +144,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 settings: settings,
                 snippetManager: snippetManager,
                 translationService: translationService,
+                ocrService: ocrService,
                 initialTab: initialTab
             )
         }

@@ -11,10 +11,13 @@ import XCTest
 final class OCRTests: XCTestCase {
     func testOCRServiceRecognizesAndCaches() async throws {
         let counter = OCRCounter()
-        let service = OCRService { _ in
-            counter.calls += 1
-            return "HaoPaste OCR"
-        }
+        let service = OCRService(
+            recognizer: { _, _ in
+                counter.calls += 1
+                return "HaoPaste OCR"
+            },
+            cache: InMemoryOCRCache()
+        )
         let item = makeImageItem()
         let url = URL(fileURLWithPath: "/tmp/haopaste-ocr-test.png")
 
@@ -35,7 +38,10 @@ final class OCRTests: XCTestCase {
     }
 
     func testOCREmptyAndFailureStates() async throws {
-        let emptyService = OCRService { _ in "" }
+        let emptyService = OCRService(
+            recognizer: { _, _ in "" },
+            cache: InMemoryOCRCache()
+        )
         emptyService.present(
             item: makeImageItem(),
             imageURL: URL(fileURLWithPath: "/tmp/empty.png")
@@ -43,9 +49,12 @@ final class OCRTests: XCTestCase {
         await emptyService.waitForCurrentRecognition()
         XCTAssertEqual(emptyService.phase, .empty)
 
-        let failedService = OCRService { _ in
-            throw OCRError.invalidImage
-        }
+        let failedService = OCRService(
+            recognizer: { _, _ in
+                throw OCRError.invalidImage
+            },
+            cache: InMemoryOCRCache()
+        )
         failedService.present(
             item: makeImageItem(),
             imageURL: URL(fileURLWithPath: "/tmp/failed.png")
@@ -57,10 +66,13 @@ final class OCRTests: XCTestCase {
 
     func testEditedTextIsReusedForSameItem() async throws {
         let counter = OCRCounter()
-        let service = OCRService { _ in
-            counter.calls += 1
-            return "Original"
-        }
+        let service = OCRService(
+            recognizer: { _, _ in
+                counter.calls += 1
+                return "Original"
+            },
+            cache: InMemoryOCRCache()
+        )
         let item = makeImageItem()
         let url = URL(fileURLWithPath: "/tmp/edited.png")
 
@@ -74,6 +86,89 @@ final class OCRTests: XCTestCase {
 
         XCTAssertEqual(service.text, "Edited text")
         XCTAssertEqual(counter.calls, 1)
+    }
+
+    func testBatchOCRRecognizesAndReusesCache() async throws {
+        let counter = OCRCounter()
+        let cache = InMemoryOCRCache()
+        let service = OCRService(
+            recognizer: { url, _ in
+                counter.calls += 1
+                return "Text from \(url.lastPathComponent)"
+            },
+            cache: cache
+        )
+
+        let firstItem = makeImageItem(hash: "hash-one")
+        let secondItem = makeImageItem(hash: "hash-two")
+        let firstURL = URL(fileURLWithPath: "/tmp/one.png")
+        let secondURL = URL(fileURLWithPath: "/tmp/two.png")
+
+        service.presentBatch(items: [
+            (firstItem, firstURL),
+            (secondItem, secondURL)
+        ])
+        await service.waitForCurrentRecognition()
+
+        XCTAssertTrue(service.isBatchMode)
+        XCTAssertEqual(service.batchEntries.count, 2)
+        XCTAssertTrue(service.batchEntries.allSatisfy { $0.phase == .success })
+        XCTAssertEqual(service.batchProgressCurrent, 2)
+        XCTAssertEqual(counter.calls, 2)
+        XCTAssertEqual(service.batchEntries[0].text, "Text from one.png")
+
+        let reloaded = OCRService(
+            recognizer: { _, _ in
+                XCTFail("Cache should avoid recognition")
+                return "unexpected"
+            },
+            cache: cache
+        )
+        reloaded.presentBatch(items: [
+            (firstItem, firstURL),
+            (secondItem, secondURL)
+        ])
+        await reloaded.waitForCurrentRecognition()
+
+        XCTAssertEqual(reloaded.batchEntries[0].text, "Text from one.png")
+        XCTAssertEqual(reloaded.batchEntries[1].text, "Text from two.png")
+        XCTAssertEqual(reloaded.batchProgressCurrent, 2)
+    }
+
+    func testDiskCachePersistsAndClears() throws {
+        let directory = try TestFixtures.temporaryDirectory()
+        defer { TestFixtures.remove(directory) }
+
+        let cache = OCRDiskCache(directoryURL: directory)
+        cache.save("HaoPaste OCR", key: "hash-one-automatic")
+
+        let reloaded = OCRDiskCache(directoryURL: directory)
+        XCTAssertEqual(reloaded.load(key: "hash-one-automatic"), "HaoPaste OCR")
+
+        reloaded.removeAll()
+        XCTAssertNil(reloaded.load(key: "hash-one-automatic"))
+    }
+
+    func testRecognitionLanguagePersists() throws {
+        let suite = "HaoPasteTests-OCR-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let service = OCRService(
+            recognizer: { _, _ in "" },
+            cache: InMemoryOCRCache(),
+            defaults: defaults
+        )
+        XCTAssertEqual(service.recognitionLanguage, .automatic)
+
+        service.recognitionLanguage = .simplifiedChinese
+
+        let reloaded = OCRService(
+            recognizer: { _, _ in "" },
+            cache: InMemoryOCRCache(),
+            defaults: defaults
+        )
+        XCTAssertEqual(reloaded.recognitionLanguage, .simplifiedChinese)
     }
 
     func testVisionRecognizesGeneratedEnglishImage() async throws {
@@ -110,12 +205,12 @@ final class OCRTests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func makeImageItem() -> ClipboardItem {
+    private func makeImageItem(hash: String = "image") -> ClipboardItem {
         ClipboardItem(
             type: .image,
             content: "image.png",
             plainText: "图片",
-            contentHash: ContentHasher.imageData(Data("image".utf8)),
+            contentHash: hash,
             imageFileName: "image.png"
         )
     }

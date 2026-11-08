@@ -11,7 +11,9 @@ struct TranslationSettingsPage: View {
     let service: TranslationService
     @Bindable var settings: TranslationSettingsStore
 
+    @Environment(OCRService.self) private var ocrService
     @State private var configuringProvider: TranslationProviderID?
+    @State private var showClearOCRCacheAlert = false
 
     init(service: TranslationService) {
         self.service = service
@@ -49,6 +51,49 @@ struct TranslationSettingsPage: View {
             }
         }
 
+        SettingsCard("识图") {
+            SettingsRow(
+                "识别语言",
+                subtitle: "自动检测适合混合语言截图；指定语言可提高特定语种准确率"
+            ) {
+                Picker(
+                    "",
+                    selection: Binding(
+                        get: { ocrService.recognitionLanguage },
+                        set: { ocrService.recognitionLanguage = $0 }
+                    )
+                ) {
+                    ForEach(OCRRecognitionLanguage.allCases) { language in
+                        Text(language.title).tag(language)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 150)
+            }
+
+            SettingsDivider()
+
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("识图缓存")
+                        .font(.system(.body, design: .rounded))
+                    Text("识别结果按图片与语言缓存在本机，不上传；清除后需要重新识别。")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 10)
+
+                Button("清除识图缓存") {
+                    showClearOCRCacheAlert = true
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(14)
+        }
+
         SettingsCard("引擎优先级") {
             ForEach(
                 Array(settings.providerOrder.enumerated()),
@@ -80,7 +125,7 @@ struct TranslationSettingsPage: View {
                 .foregroundStyle(.orange)
 
                 Label(
-                    "图片文字识别在本地使用 Vision 完成，识别结果只在当前会话缓存，不会上传图片。",
+                    "图片文字识别在本地使用 Vision 完成，识别结果缓存在本机、不会上传图片，可在上方清除。",
                     systemImage: "text.viewfinder"
                 )
 
@@ -100,6 +145,14 @@ struct TranslationSettingsPage: View {
                 service: service,
                 providerID: id
             )
+        }
+        .alert("清除识图缓存？", isPresented: $showClearOCRCacheAlert) {
+            Button("清除", role: .destructive) {
+                ocrService.clearCache()
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("已识别的图片文字缓存会被删除，下次识别需要重新运行 Vision。")
         }
     }
 

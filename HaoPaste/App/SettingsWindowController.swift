@@ -15,6 +15,7 @@ final class SettingsWindowController: NSWindowController {
         settings: AppSettings,
         snippetManager: SnippetManager,
         translationService: TranslationService,
+        ocrService: OCRService,
         initialTab: SettingsTab = .general
     ) {
         let rootView = SettingsView(
@@ -24,6 +25,7 @@ final class SettingsWindowController: NSWindowController {
             initialTab: initialTab
         )
         .environment(snippetManager)
+        .environment(ocrService)
         let hostingController = NSHostingController(rootView: rootView)
 
         let window = NSWindow(

@@ -60,6 +60,23 @@ struct ContentView: View {
         MergedContentBuilder.make(from: selectedHistoryItems)
     }
 
+    private var selectedImageItems: [(ClipboardItem, URL)] {
+        selectedHistoryItems.compactMap { item in
+            guard item.type == .image,
+                  let imageURL = manager.imageURL(for: item)
+            else {
+                return nil
+            }
+            return (item, imageURL)
+        }
+    }
+
+    private var canBatchRecognizeImages: Bool {
+        state.isMultiSelecting
+            && selectedHistoryItems.count > 1
+            && selectedImageItems.count == selectedHistoryItems.count
+    }
+
     private var canMergeSelection: Bool {
         if case .unsupported = mergedSelection {
             return false
@@ -72,7 +89,9 @@ struct ContentView: View {
 
         if case .unsupported = mergedSelection {
             if selectedHistoryItems.contains(where: { $0.type == .image }) {
-                return "图片暂不支持合并"
+                return canBatchRecognizeImages
+                    ? "可批量识别图片文字"
+                    : "图片暂不支持合并"
             }
             return "没有可复制的内容"
         }
@@ -137,23 +156,51 @@ struct ContentView: View {
             }
 
             if ocrService.isPresenting {
-                OCRPaneView(
-                    service: ocrService,
-                    onCopyText: onCopyText,
-                    onTranslate: { text in
-                        translationService.present(
-                            text: text,
-                            title: "图片文字 · \(ocrService.sourceTitle)"
+                Group {
+                    if ocrService.isBatchMode {
+                        BatchOCRPaneView(
+                            service: ocrService,
+                            onCopyAll: onCopyText,
+                            onCopyEntry: { text in
+                                _ = manager.copyTextToPasteboard(text)
+                            },
+                            onTranslateEntry: { text, title in
+                                translationService.present(
+                                    text: text,
+                                    title: title
+                                )
+                            },
+                            onSaveSnippet: { text in
+                                saveOCRSnippet(
+                                    text,
+                                    title: "批量识图 · \(ocrService.batchEntries.count) 张"
+                                )
+                            },
+                            onClose: {
+                                ocrService.close()
+                                state.requestSearchFocus()
+                            }
                         )
-                    },
-                    onSaveSnippet: { text in
-                        saveOCRSnippet(text)
-                    },
-                    onClose: {
-                        ocrService.close()
-                        state.requestSearchFocus()
+                    } else {
+                        OCRPaneView(
+                            service: ocrService,
+                            onCopyText: onCopyText,
+                            onTranslate: { text in
+                                translationService.present(
+                                    text: text,
+                                    title: "图片文字 · \(ocrService.sourceTitle)"
+                                )
+                            },
+                            onSaveSnippet: { text in
+                                saveOCRSnippet(text)
+                            },
+                            onClose: {
+                                ocrService.close()
+                                state.requestSearchFocus()
+                            }
+                        )
                     }
-                )
+                }
                 .zIndex(2)
                 .transition(.opacity)
             }
@@ -408,6 +455,9 @@ struct ContentView: View {
                         onMerge: {
                             onCopyMerged(selectedHistoryItems)
                         },
+                        onRecognizeText: canBatchRecognizeImages ? {
+                            ocrService.presentBatch(items: selectedImageItems)
+                        } : nil,
                         onClear: {
                             withAnimation(reduceMotion ? nil : Theme.spring) {
                                 _ = state.clearMultiSelection()
@@ -516,15 +566,15 @@ struct ContentView: View {
         }
     }
 
-    private func saveOCRSnippet(_ text: String) {
+    private func saveOCRSnippet(_ text: String, title: String? = nil) {
         guard !text.isEmpty else { return }
 
-        let rawTitle = ocrService.sourceTitle
-        let title = rawTitle.count > 20
+        let rawTitle = title ?? ocrService.sourceTitle
+        let trimmedTitle = rawTitle.count > 20
             ? String(rawTitle.prefix(20)) + "…"
             : rawTitle
         _ = snippetManager.create(
-            title: "识图 · \(title)",
+            title: "识图 · \(trimmedTitle)",
             content: text
         )
     }

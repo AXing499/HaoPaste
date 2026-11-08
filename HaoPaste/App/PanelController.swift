@@ -613,7 +613,11 @@ final class PanelController: NSObject, NSWindowDelegate {
         }
 
         if isCommandOnly, event.keyCode == KeyCode.r {
-            ocrService.recognize(force: true)
+            if ocrService.isBatchMode {
+                ocrService.recognizeBatch(force: true)
+            } else {
+                ocrService.recognize(force: true)
+            }
             return true
         }
 
@@ -622,12 +626,30 @@ final class PanelController: NSObject, NSWindowDelegate {
             return true
         }
 
+        if ocrService.isBatchMode {
+            // The batch pane has no text editor; keep the search field behind
+            // it from changing while results are on screen.
+            return true
+        }
+
         // Let the focused TextEditor handle typing, selection and standard
-        // clipboard shortcuts while the OCR pane is open.
+        // clipboard shortcuts while the single OCR pane is open.
         return false
     }
 
     private func translateOCRText() {
+        if ocrService.isBatchMode {
+            guard let entry = ocrService.batchEntries.first(where: {
+                !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            }) else {
+                NSSound.beep()
+                return
+            }
+
+            translationService.present(text: entry.text, title: entry.title)
+            return
+        }
+
         let text = ocrService.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
             NSSound.beep()
