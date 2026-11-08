@@ -1,0 +1,139 @@
+//
+//  HistoryArchiveTests.swift
+//  HaoPasteTests
+//
+
+import AppKit
+import XCTest
+@testable import HaoPaste
+
+@MainActor
+final class HistoryArchiveTests: XCTestCase {
+    func testExportImportRoundTripAndDeduplication() throws {
+        let root = try TestFixtures.temporaryDirectory()
+        defer { TestFixtures.remove(root) }
+
+        let sourceDirectory = root.appendingPathComponent("source", isDirectory: true)
+        let destinationDirectory = root.appendingPathComponent("destination", isDirectory: true)
+        let sourceStore = ClipboardStore(baseURL: sourceDirectory)
+        let sourcePasteboard = TestFixtures.makeCustomPasteboard()
+
+        let imageID = UUID()
+        let imageData = TestFixtures.makePNGData()
+        let storedImage = try sourceStore.saveImage(data: imageData, id: imageID)
+        let now = Date()
+        let sourceItems = [
+            TestFixtures.makeTextItem(
+                "pinned note",
+                isPinned: true,
+                createdAt: now.addingTimeInterval(-10)
+            ),
+            TestFixtures.makeTextItem(
+                "let answer = 42",
+                type: .code,
+                createdAt: now.addingTimeInterval(-20)
+            ),
+            ClipboardItem(
+                id: imageID,
+                type: .image,
+                content: storedImage.fileName,
+                plainText: "图片 \(storedImage.dimensions.displayText)",
+                createdAt: now.addingTimeInterval(-30),
+                contentHash: ContentHasher.imageData(imageData),
+                imageFileName: storedImage.fileName,
+                thumbnailFileName: storedImage.thumbnailFileName,
+                imageDimensions: storedImage.dimensions
+            )
+        ]
+        sourceStore.saveNow(sourceItems)
+
+        let sourceManager = ClipboardManager(
+            store: sourceStore,
+            monitor: ClipboardMonitor(pasteboard: sourcePasteboard)
+        )
+        sourceManager.start()
+        defer { sourceManager.shutdown() }
+
+        let archiveURL = root.appendingPathComponent("backup.zip")
+        let exportSummary = try sourceManager.exportHistory(to: archiveURL)
+        XCTAssertEqual(exportSummary.itemCount, 3)
+        XCTAssertEqual(exportSummary.imageCount, 1)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: archiveURL.path))
+
+        let destinationStore = ClipboardStore(baseURL: destinationDirectory)
+        let destinationManager = ClipboardManager(
+            store: destinationStore,
+            monitor: ClipboardMonitor(pasteboard: TestFixtures.makeCustomPasteboard())
+        )
+        destinationManager.start()
+        defer { destinationManager.shutdown() }
+
+        let firstImport = try destinationManager.importHistory(from: archiveURL)
+        XCTAssertEqual(firstImport.importedCount, 3)
+        XCTAssertEqual(firstImport.mergedPinnedCount, 0)
+        XCTAssertEqual(firstImport.skippedCount, 0)
+        XCTAssertEqual(destinationManager.items.count, 3)
+        XCTAssertEqual(destinationManager.pinnedCount, 1)
+
+        let importedImage = try XCTUnwrap(
+            destinationManager.items.first { $0.type == .image }
+        )
+        XCTAssertNotEqual(importedImage.imageFileName, storedImage.fileName)
+
+        let imagesDirectory = destinationDirectory
+            .appendingPathComponent("Images", isDirectory: true)
+        let importedImageURL = imagesDirectory
+            .appendingPathComponent(try XCTUnwrap(importedImage.imageFileName))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: importedImageURL.path))
+
+        let importedThumbnailURL = imagesDirectory
+            .appendingPathComponent(try XCTUnwrap(importedImage.thumbnailFileName))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: importedThumbnailURL.path))
+
+        let secondImport = try destinationManager.importHistory(from: archiveURL)
+        XCTAssertEqual(secondImport.importedCount, 0)
+        XCTAssertEqual(secondImport.skippedCount, 3)
+        XCTAssertEqual(destinationManager.items.count, 3)
+    }
+
+    func testImportRejectsMissingHistoryFile() throws {
+        let root = try TestFixtures.temporaryDirectory()
+        defer { TestFixtures.remove(root) }
+
+        let sourceDirectory = root.appendingPathComponent("source", isDirectory: true)
+        let destinationDirectory = root.appendingPathComponent("destination", isDirectory: true)
+        let sourceStore = ClipboardStore(baseURL: sourceDirectory)
+        let sourcePasteboard = TestFixtures.makeCustomPasteboard()
+        let sourceManager = ClipboardManager(
+            store: sourceStore,
+            monitor: ClipboardMonitor(pasteboard: sourcePasteboard)
+        )
+        sourceManager.start()
+        defer { sourceManager.shutdown() }
+
+        let archiveURL = root.appendingPathComponent("empty.zip")
+        let emptyPayload = root.appendingPathComponent("Empty", isDirectory: true)
+        try FileManager.default.createDirectory(at: emptyPayload, withIntermediateDirectories: true)
+        try FileManager.default.createFile(
+            atPath: emptyPayload.appendingPathComponent("not-history.txt").path,
+            contents: Data("nope".utf8)
+        )
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+        process.arguments = ["-c", "-k", "--keepParent", emptyPayload.path, archiveURL.path]
+        try process.run()
+        process.waitUntilExit()
+        XCTAssertEqual(process.terminationStatus, 0)
+
+        let destinationStore = ClipboardStore(baseURL: destinationDirectory)
+        let destinationManager = ClipboardManager(
+            store: destinationStore,
+            monitor: ClipboardMonitor(pasteboard: TestFixtures.makeCustomPasteboard())
+        )
+        destinationManager.start()
+        defer { destinationManager.shutdown() }
+
+        XCTAssertThrowsError(try destinationManager.importHistory(from: archiveURL))
+    }
+}

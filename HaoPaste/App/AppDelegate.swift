@@ -20,7 +20,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotKey: GlobalHotKey?
     private var activeHotKeyConfiguration: HotKeyConfiguration?
 
+    private var isRunningUnitTests: Bool {
+        let environment = ProcessInfo.processInfo.environment
+        return environment["XCTestConfigurationFilePath"] != nil
+            || environment["XCTestBundlePath"] != nil
+            || NSClassFromString("XCTestCase") != nil
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Unit tests run in the host application. Do not create the status item,
+        // start pasteboard polling or register a global hotkey in that mode.
+        guard !isRunningUnitTests else { return }
+
         NSApp.setActivationPolicy(.accessory)
         configureMainMenu()
 

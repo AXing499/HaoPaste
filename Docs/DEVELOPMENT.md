@@ -92,6 +92,9 @@ Scripts/
 ├── package-dmg.sh
 └── install-app.sh
 
+HaoPasteTests/        # XCTest：分类、设置、存储、管理器、备份
+.github/workflows/    # CI：测试 + Release 构建
+
 Docs/
 ├── README.md
 ├── USER_GUIDE.md
@@ -191,6 +194,7 @@ CURRENT_PROJECT_VERSION: "4"
 
 修改后运行 `make project` 再构建。发布前检查：
 
+- [ ] `make test` 全部通过
 - [ ] `make release` 无警告/错误（AppIntents 元数据提示可忽略）
 - [ ] 全新用户目录（清空 App Support + UserDefaults）启动正常
 - [ ] 首次启动自动展示面板；再次打开应用会显示面板
@@ -213,6 +217,36 @@ CURRENT_PROJECT_VERSION: "4"
 - [ ] 更新 `Docs/` 与 README 所需截图
 
 ## 6. 测试与诊断
+
+### 自动化测试
+
+```bash
+make test
+```
+
+等价于：
+
+```bash
+xcodebuild \
+  -project HaoPaste.xcodeproj \
+  -scheme HaoPaste \
+  -configuration Debug \
+  -destination 'platform=macOS' \
+  -derivedDataPath .build \
+  test
+```
+
+当前 30 个测试覆盖：
+
+- 内容分类器：URL / HEX / JSON / 代码 / SQL / 普通文本边界。
+- `HotKeyConfiguration`：默认值、修饰符、显示顺序、校验。
+- `ClipboardItem`：格式徽章、搜索、分类过滤。
+- `AppSettings`：默认值、持久化、快捷键、隐私排除匹配、非法上限回退。
+- `ClipboardStore`：文本 / 图片资产往返、缺失图片过滤。
+- `ClipboardManager`：FIFO 裁剪、置顶保护、清空逻辑。
+- `HistoryArchiveService`：导出 → 空库导入 → 重复导入去重、无效归档报错。
+
+测试宿主使用的是真实 app target，但 `AppDelegate` 会检测 XCTest 环境并跳过菜单栏、轮询和全局快捷键初始化。CI 工作流位于 `.github/workflows/ci.yml`，会运行测试并额外执行一次 Release 构建。
 
 ### 手动回归
 

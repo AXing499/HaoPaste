@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Run unit tests
+        run: |
+          xcodebuild \
+            -project HaoPaste.xcodeproj \
+            -scheme HaoPaste \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath .build/ci \
+            test -quiet
+
+      - name: Build Release
+        run: |
+          xcodebuild \
+            -project HaoPaste.xcodeproj \
+            -scheme HaoPaste \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            -derivedDataPath .build/ci-release \
+            build -quiet

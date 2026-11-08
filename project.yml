@@ -40,14 +40,37 @@ targets:
         SWIFT_EMIT_LOC_STRINGS: YES
         ENABLE_HARDENED_RUNTIME: YES
 
+  HaoPasteTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: HaoPasteTests
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: HaoPaste
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hao.HaoPasteTests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+        SWIFT_STRICT_CONCURRENCY: minimal
+        ENABLE_HARDENED_RUNTIME: NO
+
 schemes:
   HaoPaste:
     build:
       targets:
         HaoPaste: all
+        HaoPasteTests: [test]
     run:
       config: Debug
       commandLineArguments:
         "--show": false
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - HaoPasteTests
     archive:
       config: Release

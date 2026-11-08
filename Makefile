@@ -8,7 +8,7 @@ DEMO_STORAGE := /tmp/haopaste-demo
 RELEASE_DERIVED_DATA := .build/release
 RELEASE_APP := $(RELEASE_DERIVED_DATA)/Build/Products/Release/$(APP_NAME).app
 
-.PHONY: project build run demo release dmg install clean
+.PHONY: project build run demo test release dmg install clean
 
 project:
 	xcodegen generate
@@ -19,6 +19,11 @@ build: project
 
 run: build
 	open "$(APP_PATH)"
+
+# Run the XCTest suite (hosted by the app, UI setup skipped in test mode).
+test: project
+	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Debug \
+		-destination 'platform=macOS' -derivedDataPath $(DERIVED_DATA) test
 
 # Launch with a throwaway history so the sample content is deterministic.
 demo: build
