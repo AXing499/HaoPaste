@@ -379,16 +379,9 @@ final class ClipboardShelfController: NSObject {
         placePanel(on: screen)
         let target = ClipboardShelfLayout.panelFrame(on: screen, edge: edge)
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        let slideDistance = edge == .top
-            ? ClipboardShelfLayout.panelHeight + 24
-            : ClipboardShelfLayout.sidePanelWidth + 24
-        let slide = ClipboardShelfLayout.slideOffset(
-            for: edge,
-            distance: slideDistance
-        )
         let start = reduceMotion
             ? target
-            : target.offsetBy(dx: slide.width, dy: slide.height)
+            : collapsedFrame(from: target)
 
         panel.alphaValue = 1
         panel.setFrame(start, display: false)
@@ -406,9 +399,9 @@ final class ClipboardShelfController: NSObject {
         } else {
             isRevealing = true
             NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.75
+                context.duration = 0.8
                 context.timingFunction = CAMediaTimingFunction(
-                    controlPoints: 0.16, 0.9, 0.3, 1.0
+                    controlPoints: 0.42, 0.02, 0.22, 1.0
                 )
                 panel.animator().setFrame(target, display: true)
             } completionHandler: { [weak self] in
@@ -440,16 +433,9 @@ final class ClipboardShelfController: NSObject {
         let target = screen.map {
             ClipboardShelfLayout.panelFrame(on: $0, edge: edge)
         } ?? panel.frame
-        let slideDistance = edge == .top
-            ? ClipboardShelfLayout.panelHeight + 24
-            : ClipboardShelfLayout.sidePanelWidth + 24
-        let slide = ClipboardShelfLayout.slideOffset(
-            for: edge,
-            distance: slideDistance
-        )
         let end = reduceMotion
             ? target
-            : target.offsetBy(dx: slide.width, dy: slide.height)
+            : collapsedFrame(from: target)
 
         let finish = { [weak self] in
             guard let self else { return }
@@ -496,6 +482,28 @@ final class ClipboardShelfController: NSObject {
         let frame = ClipboardShelfLayout.panelFrame(on: screen, edge: edge)
         if panel.frame != frame {
             panel.setFrame(frame, display: false)
+        }
+    }
+
+    /// Where the shelf starts before revealing and ends when hiding.
+    /// The top shelf grows downward from the menu bar edge so the cards
+    /// appear immediately; the side shelves slide in from their screen edge.
+    private func collapsedFrame(from target: NSRect) -> NSRect {
+        switch edge {
+        case .top:
+            return NSRect(
+                x: target.minX,
+                y: target.maxY - 1,
+                width: target.width,
+                height: 1
+            )
+
+        case .left, .right:
+            let slide = ClipboardShelfLayout.slideOffset(
+                for: edge,
+                distance: ClipboardShelfLayout.sidePanelWidth + 24
+            )
+            return target.offsetBy(dx: slide.width, dy: slide.height)
         }
     }
 

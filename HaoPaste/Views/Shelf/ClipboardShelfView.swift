@@ -68,8 +68,6 @@ struct ClipboardShelfView: View {
     @State private var scrollHintVisible = false
     @State private var scrollHintToken = UUID()
 
-    private let cardAngles: [Double] = [0, 0, 0, 0, 0, 0]
-
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
@@ -167,34 +165,62 @@ struct ClipboardShelfView: View {
             let visibleItems = visibleRange.map {
                 ShelfVisibleItem(index: $0, item: loadedItems[$0])
             }
-            let filterY = height
+            // Keep the top filter bar at its final position while the panel
+            // grows downward during the reveal, so the cards emerge first and
+            // the filter bar arrives with the finished shelf.
+            let contentBottom = isSide
+                ? height
+                : ClipboardShelfLayout.panelHeight
+            let filterY = contentBottom
                 - ClipboardShelfLayout.filterBarBottom
                 - ClipboardShelfLayout.filterBarHeight / 2
             let maskHeight = max(
                 0,
-                height
+                contentBottom
                     - ClipboardShelfLayout.filterBarBottom
                     - ClipboardShelfLayout.filterBarHeight
             )
             let railX = edge == .left
+                ? ClipboardShelfLayout.sideRailInset
+                : width - ClipboardShelfLayout.sideRailInset
+            let clipCenterX = edge == .left
                 ? width / 2
                     - cardWidth / 2
-                    + 7
+                    + ClipboardShelfLayout.sideClipInset
                 : width / 2
                     + cardWidth / 2
-                    - 7
+                    - ClipboardShelfLayout.sideClipInset
 
             ZStack(alignment: .top) {
                 ZStack(alignment: .top) {
                     if isSide {
-                    ShelfSideRackView(
-                        railX: railX,
-                        start: sideRack.lowerBound,
-                        end: sideRack.upperBound
-                    )
-                    .animation(Theme.gentleSpring, value: sideRack.lowerBound)
-                    .animation(Theme.gentleSpring, value: sideRack.upperBound)
-                } else {
+                        ShelfSideRackView(
+                            railX: railX,
+                            start: sideRack.lowerBound,
+                            end: sideRack.upperBound
+                        )
+                        .animation(
+                            Theme.gentleSpring,
+                            value: sideRack.lowerBound
+                        )
+                        .animation(
+                            Theme.gentleSpring,
+                            value: sideRack.upperBound
+                        )
+
+                        ForEach(visibleItems, id: \.item.id) { entry in
+                            ShelfSideArmView(
+                                railX: railX,
+                                clipX: clipCenterX
+                            )
+                            .position(
+                                x: (railX + clipCenterX) / 2,
+                                y: sideTops[entry.index] - scrollOffset
+                                    + ClipboardShelfLayout.clipLoopY
+                            )
+                            .allowsHitTesting(false)
+                        }
+                    } else {
                     ShelfRackView(
                         start: topRack.lowerBound,
                         end: topRack.upperBound,
@@ -236,9 +262,6 @@ struct ClipboardShelfView: View {
                             rackStart: topRack.lowerBound,
                             rackEnd: topRack.upperBound
                         ) + ClipboardShelfLayout.cardTopOffset
-                    let angle = cardAngles[index % cardAngles.count]
-                        * (isSide ? 0.45 : 1)
-
                     ShelfCardView(
                         item: item,
                         cardWidth: cardWidth,
@@ -247,7 +270,6 @@ struct ClipboardShelfView: View {
                         isHovering: isHovering,
                         isCopied: copiedID == item.id,
                         cardHeight: cardHeight,
-                        baseAngle: angle,
                         edge: edge,
                         canDragOut: canDragOut(item),
                         dragProvider: { dragProvider(for: item) },
@@ -559,8 +581,37 @@ private struct ShelfRackView: View, Animatable {
     }
 }
 
-/// A vertical peg rail for left / right edge mode. Cards hang from arms
-/// clipped to their outer top edge; the rail stays visible near the screen edge.
+/// A short horizontal arm joining the edge rail to one card's clip loop.
+private struct ShelfSideArmView: View {
+    let railX: CGFloat
+    let clipX: CGFloat
+
+    var body: some View {
+        Canvas { context, size in
+            let midY = size.height / 2
+            var arm = Path()
+            arm.move(to: CGPoint(x: 0, y: midY))
+            arm.addLine(to: CGPoint(x: size.width, y: midY))
+            context.stroke(
+                arm,
+                with: .linearGradient(
+                    Gradient(colors: [
+                        Color.primary.opacity(0.46),
+                        Color.primary.opacity(0.32),
+                        Color.primary.opacity(0.46)
+                    ]),
+                    startPoint: CGPoint(x: 0, y: midY),
+                    endPoint: CGPoint(x: size.width, y: midY)
+                ),
+                style: StrokeStyle(lineWidth: 1.3, lineCap: .round)
+            )
+        }
+        .frame(width: max(0, abs(clipX - railX)), height: 3)
+    }
+}
+
+/// A vertical peg rail for left / right edge mode. Each card hangs from a
+/// short arm that reaches its clip loop; the rail stays near the screen edge.
 private struct ShelfSideRackView: View, Animatable {
     var railX: CGFloat
     var start: CGFloat

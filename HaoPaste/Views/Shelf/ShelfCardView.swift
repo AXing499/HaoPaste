@@ -16,7 +16,6 @@ struct ShelfCardView: View {
     let isHovering: Bool
     let isCopied: Bool
     let cardHeight: CGFloat
-    let baseAngle: Double
     let edge: ClipboardShelfEdge
     let canDragOut: Bool
     let dragProvider: () -> NSItemProvider
@@ -57,9 +56,26 @@ struct ShelfCardView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            bodySurface
-                .contentShape(Rectangle())
-                .onTapGesture(perform: onCopy)
+            ZStack(alignment: .top) {
+                bodySurface
+                    .contentShape(Rectangle())
+                    .onTapGesture(perform: onCopy)
+
+                if isHovering {
+                    actionBar
+                        .transition(
+                            .opacity.combined(with: .scale(scale: 0.94))
+                        )
+                }
+            }
+            .scaleEffect(
+                isHovering && !reduceMotion ? 1.03 : 1,
+                anchor: rotationAnchor
+            )
+            .animation(
+                reduceMotion ? nil : Theme.spring,
+                value: isHovering
+            )
 
             ShelfClipView(
                 itemID: item.id,
@@ -68,34 +84,12 @@ struct ShelfCardView: View {
                 onDelete: onDelete
             )
             .frame(maxWidth: .infinity, alignment: clipAlignment)
-
-            if isHovering {
-                actionBar
-                    .transition(.opacity.combined(with: .scale(scale: 0.94)))
-            }
         }
         .frame(
             width: cardWidth,
-            height: ClipboardShelfLayout.cardHeight,
+            height: cardHeight,
             alignment: .top
         )
-        .rotationEffect(
-            .degrees(isHovering || reduceMotion ? 0 : baseAngle),
-            anchor: rotationAnchor
-        )
-        .offset(
-            x: isHovering && !reduceMotion
-                ? ClipboardShelfLayout.hoverOffset(for: edge).width
-                : 0,
-            y: isHovering && !reduceMotion
-                ? ClipboardShelfLayout.hoverOffset(for: edge).height
-                : 0
-        )
-        .scaleEffect(
-            isHovering && !reduceMotion ? 1.035 : 1,
-            anchor: rotationAnchor
-        )
-        .animation(reduceMotion ? nil : Theme.spring, value: isHovering)
         .help("点击复制")
         .accessibilityLabel("\(item.formatBadge)，\(item.displayTitle)")
         .accessibilityHint("复制到剪贴板")

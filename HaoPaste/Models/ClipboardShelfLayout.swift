@@ -31,7 +31,7 @@ enum ClipboardShelfLayout {
     static let cardTopOffset: CGFloat = -clipLoopY
     static let minCardHeight: CGFloat = 110
     static let maxTopCardHeight: CGFloat = 150
-    static let maxSideCardHeight: CGFloat = 240
+    static let maxSideCardHeight: CGFloat = 200
     static let textLineHeight: CGFloat = 15
     static let minCardWidth: CGFloat = 118
     static let maxCardWidth: CGFloat = 156
@@ -45,6 +45,8 @@ enum ClipboardShelfLayout {
     static let sideSpacing: CGFloat = 20
     static let sideRackInset: CGFloat = 16
     static let sideRailInset: CGFloat = 16
+    /// Horizontal distance from the card's outer edge to the clip center.
+    static let sideClipInset: CGFloat = 7
     static let sideRevealDepth: CGFloat = 9
     static let filterBarHeight: CGFloat = 28
     static let filterBarBottom: CGFloat = 12
@@ -457,18 +459,6 @@ enum ClipboardShelfLayout {
             width: size.width,
             height: size.height
         )
-    }
-
-    /// SwiftUI content offset (Y grows downward) used to slide the shelf in.
-    static func contentOffset(
-        for edge: ClipboardShelfEdge,
-        distance: CGFloat
-    ) -> CGSize {
-        switch edge {
-        case .top: return CGSize(width: 0, height: -distance)
-        case .left: return CGSize(width: -distance, height: 0)
-        case .right: return CGSize(width: distance, height: 0)
-        }
     }
 
     static func hoverOffset(for edge: ClipboardShelfEdge) -> CGSize {
