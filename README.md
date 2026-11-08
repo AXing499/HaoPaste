@@ -1,6 +1,6 @@
 # HaoPaste
 
-当前版本：**v0.6.0**
+当前版本：**v0.7.0**
 
 一款原生、轻快、键盘优先的 macOS 剪切板管理器。用 `⌥⌘V` 从任何应用呼出无标题栏悬浮面板，搜索、选择、复制，一气呵成。
 
@@ -21,11 +21,11 @@
    ```bash
    make dmg
    # 输出：
-   # dist/HaoPaste-0.6.0.dmg
-   # dist/HaoPaste-0.6.0.dmg.sha256
+   # dist/HaoPaste-0.7.0.dmg
+   # dist/HaoPaste-0.7.0.dmg.sha256
    ```
 
-2. 双击打开 `dist/HaoPaste-0.6.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
+2. 双击打开 `dist/HaoPaste-0.7.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
 3. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
 4. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
 
@@ -91,6 +91,17 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 - 长文本按段落分块翻译；译文可复制、复制双语或保存为片段
 - 在线翻译只发送当前待翻译文本，图片、历史和文件不会上传
 
+### 识图与文字提取
+
+![HaoPaste 识图](Docs/screenshot-ocr.png)
+
+- 在图片预览底部点击「提取文字」，或右键图片选择「提取文字…」，也可按 `⌘R`
+- 使用 macOS Vision 在本地识别，图片不会上传
+- 识别结果可编辑、可复制、可保存为片段
+- 点击「翻译」可直接把识别文字送入翻译面板，复用已配置的翻译引擎
+- 识别结果只在本次会话缓存，重新打开同一图片无需再次识别
+- 适合截图、扫描图、设计稿等图片中的文字提取
+
 ## 功能
 
 - **系统级唤起**：默认 `⌥⌘V` 全局快捷键，或点击菜单栏剪贴板图标；快捷键可在设置中录入修改。
@@ -108,7 +119,8 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
   | `⌘1` – `⌘9` | 直接复制对应序号的条目 |
   | `⌘P` | 置顶 / 取消置顶 |
   | `⌘Y` | 打开 / 关闭选中条目的预览 |
-  | `⌘T` | 翻译选中文本；翻译面板中按 `⌘T` 关闭 |
+  | `⌘T` | 翻译选中文本；图片上打开识图；翻译面板中按 `⌘T` 关闭 |
+  | `⌘R` | 识别选中图片中的文字 |
   | `⌘⌫` | 删除选中条目 |
   | `esc` | 多选时取消多选；有搜索词时清除搜索；否则关闭面板 |
 
@@ -124,6 +136,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 - **拖拽导出**：把文本、图片或单个文件条目直接拖到其他应用；预览中的图片与文件行同样可拖拽。
 - **多选合并**：`⌘`-点击或 `⇧`-点击多选，按 `↵` 将多条文本合并复制；多个文件条目复制为文件 URL 列表。
 - **翻译**：`⌘T` 或预览中的「翻译」打开翻译面板；支持非官方 Google / Bing 与官方 Azure / DeepL / 百度 / Google Cloud，多引擎自动回退。
+- **识图**：Vision 本地 OCR，图片预览中提取文字，可编辑、复制、保存片段或直接翻译。
 - **Snippets 片段**：在设置中管理常用文本与模板，面板「片段」标签中搜索、键盘选择并一键复制；不会写入历史。
 - **富文本保留**：从浏览器 / 备忘录等复制的 RTF / HTML 格式会随内容保存，复制时优先保留格式；右键可复制为纯文本。
 - **颜色可视化**：HEX 条目显示真实颜色色块，支持复制 HEX / RGB / HSL。
@@ -158,7 +171,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 # 开发调试
 make run       # Debug 构建并打开
 make demo      # 用可复现的示例数据启动，便于查看界面
-make test      # 运行 80 个 XCTest（自动化测试）
+make test      # 运行 85 个 XCTest（自动化测试）
 
 # 日常使用 / 发布
 make release   # Release 构建
@@ -172,7 +185,7 @@ make install   # 安装到 /Applications 并启动
 
 ## 质量与测试
 
-- **80 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、多选 / 合并、翻译引擎 / 回退 / 授权、去重/裁剪、存储读写、备份导入导出。
+- **85 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、多选 / 合并、翻译引擎 / 回退 / 授权、OCR、去重/裁剪、存储读写、备份导入导出。
 - 测试宿主会自动跳过菜单栏、剪贴板轮询和全局快捷键注册，不影响正常使用。
 - GitHub Actions 工作流：`.github/workflows/ci.yml`，在 macOS 上执行测试并构建 Release。
 - 运行：`make test`。
@@ -185,6 +198,7 @@ make install   # 安装到 /Applications 并启动
 - 选中条目后按 `⌘Y` 打开预览；预览中按 `esc` 返回列表，按 `↵` 复制并关闭。
 - 按住 `⌘` 点击条目切换多选，按住 `⇧` 点击选择连续范围；多选时底部出现合并操作条。
 - 选中文本后按 `⌘T` 打开翻译；翻译面板中 `esc` 返回列表，`↵` 复制译文并关闭。
+- 选中图片后按 `⌘R` 或 `⌘T` 打开识图；识别文字可直接编辑并翻译。
 - 被选中条目使用系统强调色底色与边框，键盘与鼠标操作共享同一套选中状态。
 - `⌘1`–`⌘9` 对应当前过滤结果中的前九条。
 
@@ -271,6 +285,7 @@ HaoPaste/
 │   ├── TranslationService.swift     # 翻译状态、回退、缓存与授权
 │   ├── TranslationSettingsStore.swift # 目标语言与引擎优先级
 │   ├── TranslationCredentialStore.swift # Keychain 凭证
+│   ├── OCRService.swift             # Vision 本地文字识别与会话缓存
 │   └── Translation/                 # Google / Bing / DeepL / Azure / 百度 / Google Cloud
 ├── Models/
 │   ├── ClipboardItem.swift
@@ -280,7 +295,7 @@ HaoPaste/
 │   ├── TranslationModels.swift      # Provider / 凭证 / 请求模型
 │   └── HotKeyConfiguration.swift    # 快捷键键码与显示
 ├── State/PanelViewState.swift       # 搜索、筛选、选中项与焦点
-├── Views/                           # ContentView、ItemRowView、PreviewOverlayView、TranslationPaneView、Settings
+├── Views/                           # ContentView、ItemRowView、PreviewOverlayView、TranslationPaneView、OCRPaneView、Settings
 ├── Utilities/ImageSavePanel.swift   # 图片另存为 PNG
 ├── Theme/Theme.swift                # 圆角、间距、弹簧动效、细描边
 └── Support/                         # DEMO 数据与离屏截图工具（仅 Debug）
@@ -326,6 +341,11 @@ launchctl unsetenv HAOPASTE_RENDER_MULTI
 launchctl setenv HAOPASTE_RENDER_TRANSLATION success
 open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/translation.png --storage /tmp/haopaste-preview-translation
 launchctl unsetenv HAOPASTE_RENDER_TRANSLATION
+
+# 识图界面渲染（success / empty）
+launchctl setenv HAOPASTE_RENDER_OCR success
+open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/ocr.png --storage /tmp/haopaste-preview-ocr
+launchctl unsetenv HAOPASTE_RENDER_OCR
 ```
 
 `make demo` 等价于以 `--demo --show --storage /tmp/haopaste-demo` 启动一个 Debug 实例。
@@ -350,7 +370,8 @@ launchctl unsetenv HAOPASTE_RENDER_TRANSLATION
 - 翻译目前只应用于文本 / 富文本；代码、URL、颜色、图片和文件不显示翻译入口。
 - Google / Bing 非官方接口没有公开契约，可能限流或失效；DeepL 非官方当前受服务端版本限制，建议使用官方 API。
 - 在线翻译会把当前文本发送给选中的引擎；API Key 保存在钥匙串，不进入备份。
-- Apple 离线翻译与图片 OCR 将在 v0.6.1 / v0.7.0 接入。
+- Apple 离线翻译尚未接入（macOS 15+ 与语言包下载需要单独验证）；OCR 结果只在当前会话缓存。
+- 识图只针对图片条目，暂不支持批量识别或扫描 PDF。
 - 富文本的 RTF / HTML 各自限制在 2MB 以内；超过时自动回退为纯文本。
 - 备份中的文件条目同样只保存路径引用，跨设备恢复后可能不可用。
 - 点击条目只复制，不自动粘贴（不申请辅助功能权限）。
