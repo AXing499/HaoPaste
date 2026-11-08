@@ -30,6 +30,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     let manager: ClipboardManager
     let snippetManager: SnippetManager
     let translationService: TranslationService
+    let ocrService: OCRService
     let state = PanelViewState()
 
     private let panel: ClipboardPanel
@@ -44,11 +45,13 @@ final class PanelController: NSObject, NSWindowDelegate {
     init(
         manager: ClipboardManager,
         snippetManager: SnippetManager,
-        translationService: TranslationService
+        translationService: TranslationService,
+        ocrService: OCRService
     ) {
         self.manager = manager
         self.snippetManager = snippetManager
         self.translationService = translationService
+        self.ocrService = ocrService
         self.panel = ClipboardPanel(
             contentRect: NSRect(origin: .zero, size: Theme.windowSize),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -136,6 +139,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         isHiding = true
         state.endPreview()
         translationService.close()
+        ocrService.close()
         presentationGeneration &+= 1
         let generation = presentationGeneration
 
@@ -314,6 +318,14 @@ final class PanelController: NSObject, NSWindowDelegate {
             )
         }
 
+        if ocrService.isPresenting {
+            return handleOCRKeyDown(
+                event,
+                flags: flags,
+                isCommandOnly: isCommandOnly
+            )
+        }
+
         if state.isPreviewing {
             return handlePreviewKeyDown(
                 event,
@@ -398,6 +410,11 @@ final class PanelController: NSObject, NSWindowDelegate {
             return true
         }
 
+        if isCommandOnly, event.keyCode == KeyCode.r {
+            openOCRForSelectedItem()
+            return true
+        }
+
         if isCommandOnly, [KeyCode.delete, KeyCode.forwardDelete].contains(event.keyCode) {
             if !isSnippetMode {
                 deleteSelectedItem()
@@ -440,9 +457,16 @@ final class PanelController: NSObject, NSWindowDelegate {
 
         if isCommandOnly, event.keyCode == KeyCode.t {
             if let id = state.previewingItemID,
-               let item = manager.items.first(where: { $0.id == id }),
-               item.isTranslatable {
-                translationService.present(item: item)
+               let item = manager.items.first(where: { $0.id == id }) {
+                openSmartAction(for: item)
+            }
+            return true
+        }
+
+        if isCommandOnly, event.keyCode == KeyCode.r {
+            if let id = state.previewingItemID,
+               let item = manager.items.first(where: { $0.id == id }) {
+                openOCR(for: item)
             }
             return true
         }
@@ -520,12 +544,100 @@ final class PanelController: NSObject, NSWindowDelegate {
             item = state.selectedItem(in: currentVisibleItems)
         }
 
-        guard let item, item.isTranslatable else {
+        guard let item else {
             NSSound.beep()
             return
         }
 
-        translationService.present(item: item)
+        openSmartAction(for: item)
+    }
+
+    private func openOCRForSelectedItem() {
+        guard !isSnippetMode else { return }
+
+        let item: ClipboardItem?
+        if let previewingItemID = state.previewingItemID {
+            item = manager.items.first { $0.id == previewingItemID }
+        } else {
+            item = state.selectedItem(in: currentVisibleItems)
+        }
+
+        guard let item else {
+            NSSound.beep()
+            return
+        }
+
+        openOCR(for: item)
+    }
+
+    private func openSmartAction(for item: ClipboardItem) {
+        if item.isTranslatable {
+            translationService.present(item: item)
+            return
+        }
+
+        if item.type == .image {
+            openOCR(for: item)
+            return
+        }
+
+        NSSound.beep()
+    }
+
+    private func openOCR(for item: ClipboardItem) {
+        guard
+            item.type == .image,
+            let imageURL = manager.imageURL(for: item)
+        else {
+            NSSound.beep()
+            return
+        }
+
+        ocrService.present(item: item, imageURL: imageURL)
+    }
+
+    private func handleOCRKeyDown(
+        _ event: NSEvent,
+        flags: NSEvent.ModifierFlags,
+        isCommandOnly: Bool
+    ) -> Bool {
+        if event.keyCode == KeyCode.escape {
+            ocrService.close()
+            state.requestSearchFocus()
+            return true
+        }
+
+        if isCommandOnly, event.keyCode == KeyCode.w {
+            hide()
+            return true
+        }
+
+        if isCommandOnly, event.keyCode == KeyCode.r {
+            ocrService.recognize(force: true)
+            return true
+        }
+
+        if isCommandOnly, event.keyCode == KeyCode.t {
+            translateOCRText()
+            return true
+        }
+
+        // Let the focused TextEditor handle typing, selection and standard
+        // clipboard shortcuts while the OCR pane is open.
+        return false
+    }
+
+    private func translateOCRText() {
+        let text = ocrService.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else {
+            NSSound.beep()
+            return
+        }
+
+        translationService.present(
+            text: text,
+            title: "图片文字 · \(ocrService.sourceTitle)"
+        )
     }
 
     private func copyTranslationAndHide() {
@@ -703,6 +815,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         .environment(manager)
         .environment(snippetManager)
         .environment(translationService)
+        .environment(ocrService)
 
         let hostingView = NSHostingView(rootView: rootView)
         hostingView.frame = NSRect(origin: .zero, size: Theme.windowSize)

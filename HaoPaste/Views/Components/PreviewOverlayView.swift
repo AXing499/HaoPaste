@@ -20,6 +20,7 @@ struct PreviewOverlayView: View {
     let onRevealFiles: () -> Void
     let onSaveImage: () -> Void
     let onTranslate: () -> Void
+    let onExtractText: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isPresented = false
@@ -343,6 +344,11 @@ struct PreviewOverlayView: View {
                 }
 
                 if item.type == .image, imageURL != nil {
+                    secondaryButton(
+                        "提取文字",
+                        systemImage: "text.viewfinder",
+                        action: onExtractText
+                    )
                     secondaryButton(
                         "保存…",
                         systemImage: "square.and.arrow.down",

@@ -36,7 +36,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: return "启动、快捷键与监听"
         case .history: return "记录容量、存储位置与清理"
         case .snippets: return "常用文本，一键复制"
-        case .intelligence: return "翻译引擎、语言与在线授权"
+        case .intelligence: return "翻译引擎、语言与图片文字"
         case .privacy: return "应用排除与内容类型"
         case .about: return "版本与隐私信息"
         }

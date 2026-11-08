@@ -21,6 +21,7 @@ struct ItemRowView: View {
     let onCopyText: (String) -> Void
     let onPreview: () -> Void
     let onTranslate: () -> Void
+    let onExtractText: () -> Void
     let onTogglePin: () -> Void
     let onDelete: () -> Void
 
@@ -122,6 +123,12 @@ struct ItemRowView: View {
             }
 
             if item.type == .image, imageURL != nil {
+                Button {
+                    onExtractText()
+                } label: {
+                    Label("提取文字…", systemImage: "text.viewfinder")
+                }
+
                 Button {
                     saveImage()
                 } label: {

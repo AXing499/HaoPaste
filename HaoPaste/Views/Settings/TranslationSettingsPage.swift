@@ -80,6 +80,11 @@ struct TranslationSettingsPage: View {
                 .foregroundStyle(.orange)
 
                 Label(
+                    "图片文字识别在本地使用 Vision 完成，识别结果只在当前会话缓存，不会上传图片。",
+                    systemImage: "text.viewfinder"
+                )
+
+                Label(
                     "官方 API 凭证保存在 macOS 钥匙串，不写入历史、日志或备份文件。",
                     systemImage: "key"
                 )

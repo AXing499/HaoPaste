@@ -12,6 +12,7 @@ struct ContentView: View {
     @Environment(ClipboardManager.self) private var manager
     @Environment(SnippetManager.self) private var snippetManager
     @Environment(TranslationService.self) private var translationService
+    @Environment(OCRService.self) private var ocrService
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @Bindable var state: PanelViewState
@@ -125,9 +126,35 @@ struct ContentView: View {
                     },
                     onTranslate: {
                         translationService.present(item: previewItem)
+                    },
+                    onExtractText: {
+                        guard let imageURL = manager.imageURL(for: previewItem) else { return }
+                        ocrService.present(item: previewItem, imageURL: imageURL)
                     }
                 )
                 .zIndex(1)
+                .transition(.opacity)
+            }
+
+            if ocrService.isPresenting {
+                OCRPaneView(
+                    service: ocrService,
+                    onCopyText: onCopyText,
+                    onTranslate: { text in
+                        translationService.present(
+                            text: text,
+                            title: "图片文字 · \(ocrService.sourceTitle)"
+                        )
+                    },
+                    onSaveSnippet: { text in
+                        saveOCRSnippet(text)
+                    },
+                    onClose: {
+                        ocrService.close()
+                        state.requestSearchFocus()
+                    }
+                )
+                .zIndex(2)
                 .transition(.opacity)
             }
 
@@ -144,7 +171,7 @@ struct ContentView: View {
                         state.requestSearchFocus()
                     }
                 )
-                .zIndex(2)
+                .zIndex(3)
                 .transition(.opacity)
             }
         }
@@ -337,6 +364,10 @@ struct ContentView: View {
                             onTranslate: {
                                 translationService.present(item: item)
                             },
+                            onExtractText: {
+                                guard let imageURL = manager.imageURL(for: item) else { return }
+                                ocrService.present(item: item, imageURL: imageURL)
+                            },
                             onTogglePin: {
                                 withAnimation(reduceMotion ? nil : Theme.spring) {
                                     manager.togglePin(item)
@@ -483,6 +514,19 @@ struct ContentView: View {
         } else {
             state.ensureSelection(in: visibleItems)
         }
+    }
+
+    private func saveOCRSnippet(_ text: String) {
+        guard !text.isEmpty else { return }
+
+        let rawTitle = ocrService.sourceTitle
+        let title = rawTitle.count > 20
+            ? String(rawTitle.prefix(20)) + "…"
+            : rawTitle
+        _ = snippetManager.create(
+            title: "识图 · \(title)",
+            content: text
+        )
     }
 
     private func saveTranslationSnippet(_ text: String) {

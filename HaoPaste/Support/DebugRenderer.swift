@@ -17,6 +17,7 @@ enum DebugRenderer {
         manager: ClipboardManager,
         snippetManager: SnippetManager,
         translationService: TranslationService,
+        ocrService: OCRService,
         to url: URL,
         completion: @escaping @MainActor () -> Void
     ) {
@@ -70,6 +71,34 @@ enum DebugRenderer {
             break
         }
 
+        switch ProcessInfo.processInfo.environment["HAOPASTE_RENDER_OCR"] {
+        case "success":
+            if let imageItem = manager.filteredItems(query: "", filter: .image).first,
+               let imageURL = manager.imageURL(for: imageItem) {
+                ocrService.seedPreview(
+                    sourceTitle: imageItem.displayTitle,
+                    imageURL: imageURL,
+                    text: """
+                    HaoPaste
+                    Clipboard, reimagined.
+
+                    复制、翻译、搜索，一切都在指尖完成。
+                    """
+                )
+            }
+        case "empty":
+            if let imageItem = manager.filteredItems(query: "", filter: .image).first,
+               let imageURL = manager.imageURL(for: imageItem) {
+                ocrService.seedPreview(
+                    sourceTitle: imageItem.displayTitle,
+                    imageURL: imageURL,
+                    text: ""
+                )
+            }
+        default:
+            break
+        }
+
         switch ProcessInfo.processInfo.environment["HAOPASTE_RENDER_PREVIEW"] {
         case "image":
             state.previewingItemID = manager
@@ -118,6 +147,7 @@ enum DebugRenderer {
             .environment(manager)
             .environment(snippetManager)
             .environment(translationService)
+            .environment(ocrService)
         }
         .frame(width: Theme.windowSize.width, height: Theme.windowSize.height)
 
@@ -134,6 +164,7 @@ enum DebugRenderer {
         settings: AppSettings,
         snippetManager: SnippetManager,
         translationService: TranslationService,
+        ocrService: OCRService,
         to url: URL,
         completion: @escaping @MainActor () -> Void
     ) {

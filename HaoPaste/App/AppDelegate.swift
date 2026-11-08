@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBarController: StatusBarController!
     private var settings: AppSettings!
     private var translationService: TranslationService!
+    private var ocrService: OCRService!
     private var settingsWindowController: SettingsWindowController?
 
     private var hotKey: GlobalHotKey?
@@ -41,6 +42,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settings.refreshLaunchAtLoginStatus()
         snippetManager = SnippetManager()
         translationService = TranslationService()
+        ocrService = OCRService()
 
         manager = ClipboardManager()
         manager.isSourceExcluded = { [weak settings] source in
@@ -68,7 +70,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panelController = PanelController(
             manager: manager,
             snippetManager: snippetManager,
-            translationService: translationService
+            translationService: translationService,
+            ocrService: ocrService
         )
         statusBarController = StatusBarController(
             manager: manager,
@@ -300,6 +303,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 settings: settings,
                 snippetManager: snippetManager,
                 translationService: translationService,
+                ocrService: ocrService,
                 to: URL(fileURLWithPath: path)
             ) {
                 NSApp.terminate(nil)
@@ -317,6 +321,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             manager: manager,
             snippetManager: snippetManager,
             translationService: translationService,
+            ocrService: ocrService,
             to: URL(fileURLWithPath: path)
         ) {
             NSApp.terminate(nil)
