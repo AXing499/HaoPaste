@@ -97,6 +97,7 @@ struct ContentView: View {
                 .font(.system(.body, design: .rounded))
                 .focusEffectDisabled()
                 .focused($isSearchFocused)
+                .help("支持中文、拼音缩写、来源应用与模糊匹配")
                 .onSubmit {
                     copySelectedItem()
                 }

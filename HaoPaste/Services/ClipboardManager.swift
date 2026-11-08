@@ -90,16 +90,7 @@ final class ClipboardManager {
     }
 
     func filteredItems(query: String, filter: ClipboardFilter) -> [ClipboardItem] {
-        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        return items
-            .filter { filter.matches($0) && $0.matches(trimmedQuery) }
-            .sorted { lhs, rhs in
-                if lhs.isPinned != rhs.isPinned {
-                    return lhs.isPinned
-                }
-                return lhs.createdAt > rhs.createdAt
-            }
+        SearchMatcher().search(items, query: query, filter: filter)
     }
 
     // MARK: - Actions

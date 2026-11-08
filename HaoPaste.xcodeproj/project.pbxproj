@@ -45,10 +45,12 @@
 		C142C3D4EFC5C1486AE773FD /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D679CEC15FCA55365C23A9A /* Theme.swift */; };
 		C5CBF2508DCEBDD381431C82 /* PanelViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 374885024B24FF652467CDF8 /* PanelViewState.swift */; };
 		C89E89E2A4320756E5F0DD62 /* ClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331DB1B0F0174C1657E57FB7 /* ClipboardItem.swift */; };
+		D8D925ACC0BFFAF475F6C4E3 /* SearchMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E4E46E73867B1B6E190F12E /* SearchMatcher.swift */; };
 		DBCBC043E12719C5AB928A84 /* HistoryArchiveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C933E76F01584AF2B1F9726 /* HistoryArchiveService.swift */; };
 		DC1D2459DDBB4CC60868BE0E /* DebugRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E7C5BB5480E79F7ED49AB9F /* DebugRenderer.swift */; };
 		E183EFFD05831405EB74DFEB /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E38F1F6E9F6B62B54836F6FE /* ClipboardStore.swift */; };
 		EBA73F14980E36C18373EABB /* PanelFooterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31E3D83E025D4E5596130E5 /* PanelFooterView.swift */; };
+		EC684CD410ECA9CF74EE45F0 /* SearchMatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FC01E5172C577ED5FFD5C5B /* SearchMatcherTests.swift */; };
 		EFAAB6EB24DE9EEFDA0D0540 /* HexColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F605FCEA14CB6C5977C2054D /* HexColorTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -85,11 +87,13 @@
 		828C80C85C28B72F4ED72FF1 /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
 		88D60DF7743A6A83A831D5D1 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
 		8C933E76F01584AF2B1F9726 /* HistoryArchiveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryArchiveService.swift; sourceTree = "<group>"; };
+		8FC01E5172C577ED5FFD5C5B /* SearchMatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchMatcherTests.swift; sourceTree = "<group>"; };
 		914EDFEEB969343B78627F70 /* KeyboardShortcutBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutBadge.swift; sourceTree = "<group>"; };
 		91F8358485862E4BDB4C5AA8 /* ItemRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemRowView.swift; sourceTree = "<group>"; };
 		97F2274F96FF92374E518A3F /* HotKeyConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyConfigurationTests.swift; sourceTree = "<group>"; };
 		97F5185F6103912DF6F1054E /* HistoryArchiveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryArchiveTests.swift; sourceTree = "<group>"; };
 		9DBB21960055B0BE3297123F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		9E4E46E73867B1B6E190F12E /* SearchMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchMatcher.swift; sourceTree = "<group>"; };
 		A0234BE991D3252CCB271F1C /* ClipboardManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManagerTests.swift; sourceTree = "<group>"; };
 		A2123477D4ABDE27D2B9922A /* ShortcutRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorderView.swift; sourceTree = "<group>"; };
 		A31E3D83E025D4E5596130E5 /* PanelFooterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelFooterView.swift; sourceTree = "<group>"; };
@@ -214,6 +218,7 @@
 				F605FCEA14CB6C5977C2054D /* HexColorTests.swift */,
 				97F5185F6103912DF6F1054E /* HistoryArchiveTests.swift */,
 				97F2274F96FF92374E518A3F /* HotKeyConfigurationTests.swift */,
+				8FC01E5172C577ED5FFD5C5B /* SearchMatcherTests.swift */,
 				F441AB428F62F097CD0D7E84 /* TestSupport.swift */,
 			);
 			path = HaoPasteTests;
@@ -253,6 +258,7 @@
 				D09E490744CB5AA1715664C4 /* ContentHasher.swift */,
 				8C933E76F01584AF2B1F9726 /* HistoryArchiveService.swift */,
 				49E441CDB44CD63467E1682C /* ImageProcessor.swift */,
+				9E4E46E73867B1B6E190F12E /* SearchMatcher.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -387,6 +393,7 @@
 				EBA73F14980E36C18373EABB /* PanelFooterView.swift in Sources */,
 				C5CBF2508DCEBDD381431C82 /* PanelViewState.swift in Sources */,
 				6889A7548FD9C2DC74C2A74E /* RelativeTime.swift in Sources */,
+				D8D925ACC0BFFAF475F6C4E3 /* SearchMatcher.swift in Sources */,
 				727CAB1FD63A945CA7721E19 /* SettingsView.swift in Sources */,
 				3A3D96E4E6D9E6F892A0C81F /* SettingsWindowController.swift in Sources */,
 				5D68F1BB83C5F59CEBA30FC9 /* ShortcutRecorderView.swift in Sources */,
@@ -408,6 +415,7 @@
 				EFAAB6EB24DE9EEFDA0D0540 /* HexColorTests.swift in Sources */,
 				7C67CF3046F91A5743186241 /* HistoryArchiveTests.swift in Sources */,
 				5354701E952BC1FD1E1C2BC2 /* HotKeyConfigurationTests.swift in Sources */,
+				EC684CD410ECA9CF74EE45F0 /* SearchMatcherTests.swift in Sources */,
 				737EFA716D0CF5A25E552646 /* TestSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -521,7 +529,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -541,7 +549,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.3.1;
+				MARKETING_VERSION = 0.3.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -588,7 +596,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -602,7 +610,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.3.1;
+				MARKETING_VERSION = 0.3.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
