@@ -8,18 +8,36 @@
 import AppKit
 import CoreGraphics
 
+struct ShelfHitTarget: Equatable {
+    enum Kind: Equatable {
+        case card(UUID)
+        case filterBar
+    }
+
+    let kind: Kind
+    let rect: CGRect
+}
+
 enum ClipboardShelfLayout {
     static let panelHeight: CGFloat = 232
-    static let lineTop: CGFloat = 14
-    static let clipHeight: CGFloat = 12
-    static let cardBodyHeight: CGFloat = 128
-    static let cardHeight = clipHeight + cardBodyHeight
+    static let railTop: CGFloat = 8
+    static let lineTop: CGFloat = 16
+    static let clipHeight: CGFloat = 14
+    static let clipOverlap: CGFloat = 3
+    static let bodyOffset = clipHeight - clipOverlap
+    static let cardBodyHeight: CGFloat = 129
+    static let cardHeight = clipHeight + cardBodyHeight - clipOverlap
+    static let cardTopOffset: CGFloat = -clipHeight / 2
     static let minCardWidth: CGFloat = 118
     static let maxCardWidth: CGFloat = 156
     static let spacing: CGFloat = 14
     static let sidePadding: CGFloat = 40
+    static let rackInset: CGFloat = 16
+    static let rackMargin: CGFloat = 44
     static let filterBarHeight: CGFloat = 28
     static let filterBarBottom: CGFloat = 12
+    static let minSag: CGFloat = 12
+    static let maxSag: CGFloat = 24
 
     static func capacity(width: CGFloat, limit: Int) -> Int {
         let available = max(0, width - sidePadding * 2)
@@ -50,14 +68,51 @@ enum ClipboardShelfLayout {
         return start + CGFloat(index) * (cardWidth + spacing) + cardWidth / 2
     }
 
-    static func sag(width: CGFloat) -> CGFloat {
-        min(8, width * 0.006)
+    /// The rack is inset from the screen edges and grows with the visible
+    /// cards, so a short filter result still reads as a deliberate clothesline.
+    static func rackSpan(
+        width: CGFloat,
+        count: Int,
+        cardWidth: CGFloat
+    ) -> ClosedRange<CGFloat> {
+        guard width > rackInset * 2 else {
+            return 0...max(0, width)
+        }
+
+        let start: CGFloat
+        let end: CGFloat
+
+        if count == 0 {
+            let half = min(width * 0.22, 190)
+            start = width / 2 - half
+            end = width / 2 + half
+        } else {
+            let total = totalWidth(count: count, cardWidth: cardWidth)
+            let left = (width - total) / 2
+            start = max(rackInset, left - rackMargin)
+            end = min(width - rackInset, left + total + rackMargin)
+        }
+
+        guard end - start > 8 else {
+            return (width / 2 - 4)...(width / 2 + 4)
+        }
+        return start...end
     }
 
-    static func ropeY(x: CGFloat, width: CGFloat) -> CGFloat {
-        guard width > 0 else { return lineTop }
-        let fraction = min(max(x / width, 0), 1)
-        return lineTop + 4 * sag(width: width) * fraction * (1 - fraction)
+    static func sag(span: CGFloat) -> CGFloat {
+        min(maxSag, max(minSag, span * 0.018))
+    }
+
+    static func ropeY(
+        x: CGFloat,
+        rackStart: CGFloat,
+        rackEnd: CGFloat
+    ) -> CGFloat {
+        let span = rackEnd - rackStart
+        guard span > 1 else { return lineTop }
+
+        let fraction = min(max((x - rackStart) / span, 0), 1)
+        return lineTop + 4 * sag(span: span) * fraction * (1 - fraction)
     }
 
     static func menuBarBand(of screen: NSScreen) -> NSRect {
@@ -110,6 +165,13 @@ enum ClipboardShelfLayout {
     /// Point is in top-left (SwiftUI) panel coordinates.
     static func hitTest(_ point: CGPoint, in rects: [CGRect]) -> Bool {
         rects.contains { $0.insetBy(dx: -4, dy: -4).contains(point) }
+    }
+
+    static func hitTarget(
+        at point: CGPoint,
+        in targets: [ShelfHitTarget]
+    ) -> ShelfHitTarget? {
+        targets.first { $0.rect.insetBy(dx: -4, dy: -4).contains(point) }
     }
 
     static func isFullScreen(on screen: NSScreen) -> Bool {

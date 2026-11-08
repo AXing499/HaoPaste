@@ -1,0 +1,17 @@
+//
+//  ShelfInteractionState.swift
+//  HaoPaste
+//
+//  Pointer state shared by the shelf controller and cards.
+//
+
+import Foundation
+import Observation
+
+@MainActor
+@Observable
+final class ShelfInteractionState {
+    /// Driven by the controller's hit testing rather than SwiftUI onHover, so
+    /// the highlight never sticks when click-through toggles between cards.
+    var hoveredItemID: UUID?
+}

@@ -298,6 +298,10 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 面板默认 `ignoresMouseEvents = true`；SwiftUI 通过 `PreferenceKey` 上报卡片与筛选栏的命中矩形，控制器按 30Hz 把鼠标位置换算到面板顶部坐标并切换点击穿透。面板空白区域不拦截下方应用。
 - 卡片显示 `ClipboardShelfLayout.capacity` 计算出的数量：由屏幕宽度、6–12 条设置上限和最小卡片宽度共同决定；卡片横向居中，绳线带轻微弧度。
 - 卡片点击调用 `ClipboardManager.copyToPasteboard`，同步 `changeCount`，不会生成新历史；复制成功后挂架保持展开并显示短暂「已复制」反馈。
+- 悬停状态由控制器根据同一套命中矩形计算并写入 `ShelfInteractionState`，不依赖 SwiftUI `onHover`，因此卡片之间的点击穿透切换不会留下错位或卡住的高亮。
+- 筛选栏使用点击手势而非 `Button`，并把材质背景与描边设为不参与命中测试；这是非激活面板中稳定响应点击的关键。
+- 卡片通过 `ItemDragProvider` 支持拖拽到其他应用；右键菜单提供复制、置顶 / 取消置顶、复制纯文本与删除；悬停时右上角显示置顶 / 删除按钮。
+- 筛选切换时，卡片使用插入 / 移除过渡，横杆的起点、终点与下垂幅度通过 `Animatable` 平滑伸缩。
 - 展开前会检查：HaoPaste 是否位于前台、是否有全屏窗口覆盖当前屏幕、用户是否刚点过菜单栏。点击菜单栏会隐藏挂架并把本次悬停标记为抑制，直到鼠标离开菜单栏。
 - 活动空间 / 屏幕参数变化时自动收起；支持「减弱动态效果」，此时使用无动画的展开 / 收起。
 
@@ -371,7 +375,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-97 个 XCTest 由 app target 作为测试宿主运行：
+99 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。
@@ -379,7 +383,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - `AppSettings`：默认值、持久化、排除规则匹配、非法上限回退。
 - `ClipboardStore`：文本 / 图片资产读写、缺失资产过滤。
 - `ClipboardManager`：FIFO 裁剪、置顶保护、清空。
-- 顶部挂架：筛选规则、容量与卡片宽度、绳线几何、菜单栏展开区域、点击命中、显示数量持久化。
+- 顶部挂架：筛选规则、容量与卡片宽度、支架 / 绳线几何、菜单栏展开区域、点击命中目标、文本类判断、显示数量持久化。
 - `HistoryArchiveService`：导出、导入、重复导入去重、无效归档报错。
 - `SearchMatcher`：中文、拼音全拼 / 首字母、模糊匹配、相关性排序。
 - `SnippetManager`：片段 CRUD、持久化、搜索、合并。

@@ -32,7 +32,8 @@ final class ClipboardShelfController: NSObject {
     private var manualVisited = false
     private var hotZoneSince: Date?
     private var awaySince: Date?
-    private let hitRectStore: ShelfHitRectStore
+    private let hitTargetStore: ShelfHitTargetStore
+    private let interaction: ShelfInteractionState
     private var menuBarSuppressed = false
 
     var onVisibilityChanged: (() -> Void)?
@@ -47,14 +48,18 @@ final class ClipboardShelfController: NSObject {
         self.manager = manager
         self.settings = settings
 
-        let hitRectStore = ShelfHitRectStore()
-        self.hitRectStore = hitRectStore
+        let hitTargetStore = ShelfHitTargetStore()
+        self.hitTargetStore = hitTargetStore
+
+        let interactionState = ShelfInteractionState()
+        self.interaction = interactionState
 
         let rootView = ClipboardShelfView(
             manager: manager,
             settings: settings,
-            onHitRectsChanged: { rects in
-                hitRectStore.rects = rects
+            interaction: interactionState,
+            onHitTargetsChanged: { targets in
+                hitTargetStore.targets = targets
             }
         )
         let hostingView = ShelfHostingView(rootView: rootView)
@@ -241,6 +246,7 @@ final class ClipboardShelfController: NSObject {
     private func updateMousePassThrough(mouse: NSPoint) {
         guard isRevealed, !isHiding else {
             panel.ignoresMouseEvents = true
+            interaction.hoveredItemID = nil
             return
         }
 
@@ -250,13 +256,23 @@ final class ClipboardShelfController: NSObject {
             y: panel.frame.height - local.y
         )
 
-        let isOverCard = ClipboardShelfLayout.hitTest(
-            flipped,
-            in: hitRectStore.rects
+        let target = ClipboardShelfLayout.hitTarget(
+            at: flipped,
+            in: hitTargetStore.targets
         )
+        let hoveredID: UUID?
+        if case let .card(id) = target?.kind {
+            hoveredID = id
+        } else {
+            hoveredID = nil
+        }
+        if interaction.hoveredItemID != hoveredID {
+            interaction.hoveredItemID = hoveredID
+        }
 
-        if panel.ignoresMouseEvents == isOverCard {
-            panel.ignoresMouseEvents = !isOverCard
+        let acceptsMouse = target != nil
+        if panel.ignoresMouseEvents == acceptsMouse {
+            panel.ignoresMouseEvents = !acceptsMouse
         }
     }
 
@@ -280,6 +296,7 @@ final class ClipboardShelfController: NSObject {
 
         isRevealed = true
         awaySince = nil
+        interaction.hoveredItemID = nil
 
         if !reduceMotion {
             NSAnimationContext.runAnimationGroup { context in
@@ -300,6 +317,7 @@ final class ClipboardShelfController: NSObject {
 
         isRevealed = false
         isHiding = true
+        interaction.hoveredItemID = nil
         manualOpen = false
         manualVisited = false
         hotZoneSince = nil
@@ -418,8 +436,8 @@ final class ClipboardShelfController: NSObject {
     }
 }
 
-private final class ShelfHitRectStore {
-    var rects: [CGRect] = []
+private final class ShelfHitTargetStore {
+    var targets: [ShelfHitTarget] = []
 }
 
 /// The shelf is shown while another app is active, so the first click must

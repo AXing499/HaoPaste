@@ -41,6 +41,13 @@ final class ClipboardShelfTests: XCTestCase {
 
         XCTAssertTrue(ClipboardShelfFilter.image.matches(image))
         XCTAssertFalse(ClipboardShelfFilter.image.matches(text))
+
+        XCTAssertTrue(text.isTextLike)
+        XCTAssertTrue(code.isTextLike)
+        XCTAssertTrue(url.isTextLike)
+        XCTAssertTrue(color.isTextLike)
+        XCTAssertFalse(image.isTextLike)
+        XCTAssertFalse(file.isTextLike)
     }
 
     func testShelfCapacityAndCardWidth() {
@@ -80,12 +87,65 @@ final class ClipboardShelfTests: XCTestCase {
             width: width,
             cardWidth: cardWidth
         )
+        let rack = ClipboardShelfLayout.rackSpan(
+            width: width,
+            count: 5,
+            cardWidth: cardWidth
+        )
 
         XCTAssertEqual(first + last, width, accuracy: 0.01)
+        XCTAssertGreaterThan(rack.lowerBound, ClipboardShelfLayout.rackInset - 0.01)
+        XCTAssertLessThan(rack.upperBound, width)
         XCTAssertGreaterThan(
-            ClipboardShelfLayout.ropeY(x: width / 2, width: width),
-            ClipboardShelfLayout.ropeY(x: 0, width: width)
+            ClipboardShelfLayout.ropeY(
+                x: width / 2,
+                rackStart: rack.lowerBound,
+                rackEnd: rack.upperBound
+            ),
+            ClipboardShelfLayout.ropeY(
+                x: rack.lowerBound,
+                rackStart: rack.lowerBound,
+                rackEnd: rack.upperBound
+            )
         )
+        XCTAssertEqual(
+            ClipboardShelfLayout.ropeY(
+                x: rack.lowerBound,
+                rackStart: rack.lowerBound,
+                rackEnd: rack.upperBound
+            ),
+            ClipboardShelfLayout.lineTop,
+            accuracy: 0.01
+        )
+    }
+
+    func testRackSpanTracksVisibleCards() {
+        let width: CGFloat = 1_440
+        let cardWidth = ClipboardShelfLayout.cardWidth(
+            width: width,
+            count: 8
+        )
+        let full = ClipboardShelfLayout.rackSpan(
+            width: width,
+            count: 8,
+            cardWidth: cardWidth
+        )
+        let short = ClipboardShelfLayout.rackSpan(
+            width: width,
+            count: 2,
+            cardWidth: cardWidth
+        )
+        let empty = ClipboardShelfLayout.rackSpan(
+            width: width,
+            count: 0,
+            cardWidth: cardWidth
+        )
+
+        XCTAssertGreaterThan(full.upperBound - full.lowerBound, short.upperBound - short.lowerBound)
+        XCTAssertGreaterThan(short.upperBound - short.lowerBound, empty.upperBound - empty.lowerBound)
+        XCTAssertEqual(full.lowerBound + full.upperBound, width, accuracy: 0.5)
+        XCTAssertEqual(short.lowerBound + short.upperBound, width, accuracy: 0.5)
+        XCTAssertEqual(empty.lowerBound + empty.upperBound, width, accuracy: 0.5)
     }
 
     func testRevealBandIsMiddleThirdOfMenuBar() throws {
@@ -126,6 +186,30 @@ final class ClipboardShelfTests: XCTestCase {
             ClipboardShelfLayout.hitTest(
                 CGPoint(x: 175, y: 170),
                 in: [card]
+            )
+        )
+    }
+
+    func testShelfHitTargetReturnsCardIdentity() {
+        let id = UUID()
+        let card = ShelfHitTarget(
+            kind: .card(id),
+            rect: CGRect(x: 100, y: 20, width: 150, height: 140)
+        )
+        let filter = ShelfHitTarget(
+            kind: .filterBar,
+            rect: CGRect(x: 500, y: 190, width: 180, height: 28)
+        )
+
+        let target = ClipboardShelfLayout.hitTarget(
+            at: CGPoint(x: 175, y: 90),
+            in: [filter, card]
+        )
+        XCTAssertEqual(target?.kind, .card(id))
+        XCTAssertNil(
+            ClipboardShelfLayout.hitTarget(
+                at: CGPoint(x: 400, y: 90),
+                in: [filter, card]
             )
         )
     }

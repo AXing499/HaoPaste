@@ -206,6 +206,15 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         type == .text
     }
 
+    var isTextLike: Bool {
+        switch type {
+        case .text, .code, .url, .colorHex:
+            return true
+        case .image, .file:
+            return false
+        }
+    }
+
     var fileCount: Int {
         filePaths?.count ?? 0
     }

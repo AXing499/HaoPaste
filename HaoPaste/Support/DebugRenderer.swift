@@ -185,7 +185,8 @@ enum DebugRenderer {
             ClipboardShelfView(
                 manager: manager,
                 settings: settings,
-                onHitRectsChanged: { _ in }
+                interaction: ShelfInteractionState(),
+                onHitTargetsChanged: { _ in }
             )
         }
         .frame(
