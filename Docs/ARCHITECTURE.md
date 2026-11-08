@@ -97,6 +97,7 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `ImageProcessor.swift` | 解码、PNG 归一化、获取像素尺寸、生成最大 560px 缩略图 |
 | `ItemPreview.swift` | 预览文本构建：RTF / HTML 归一化、字体大小收敛、12 万字符上限 |
 | `ItemDragProvider.swift` | 为文本 / 图片 / 单文件构建 `NSItemProvider`，附带 RTF / HTML 数据 |
+| `MergedContentBuilder.swift` | 多选合并规则：文本换行、文件 URL、混合路径与图片限制 |
 | `ImageSavePanel.swift`（Utilities） | 共享的 PNG 另存为流程与错误提示 |
 | 富文本 | `RichTextPayload` + `RichText/<id>.json`（RTF / HTML 原始数据） |
 
@@ -107,10 +108,11 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `ContentView.swift` | 面板布局：搜索栏、分类、数量、列表、页脚 |
 | `ItemRowView.swift` | 条目卡片：图标 / 缩略图、徽章、来源、时间、快捷复制、悬停预览 / 置顶 / 删除、拖拽 |
 | `PreviewOverlayView.swift` | 预览卡片：图片棋盘格、全文 / 富文本、颜色色块、文件列表、拖拽与动作 |
+| `MultiSelectionBar.swift` | 多选浮动操作条：已选数量、合并复制、取消与不支持提示 |
 | `FilterTabsView.swift` | 胶囊分类按钮与 matched geometry 滑动选中态 |
 | `EmptyStateView.swift` | 空历史 / 无搜索结果状态 |
 | `PanelFooterView.swift` | 监听状态与键盘提示 |
-| `PanelViewState.swift` | 搜索、分类、选中项、预览状态、焦点触发器 |
+| `PanelViewState.swift` | 搜索、分类、单选 / 多选、锚点、预览状态、焦点触发器 |
 | `HotKeyConfiguration.swift` | Carbon 键码 / 修饰符、显示文案与校验 |
 | `Snippet.swift` | 可复用文本片段模型 |
 | `SnippetRowView.swift` | 面板片段列表行 |
@@ -219,14 +221,24 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 列表行通过 `.onDrag` 提供 `NSItemProvider`：文本附带纯文本 / RTF / HTML，图片附带 PNG 数据与文件 URL，单文件条目附带文件 URL。
 - 预览中的图片和文件行也可拖拽；多文件条目暂不支持整体拖拽。
 
-### 6.8 键盘事件
+### 6.8 多选与合并
+
+- 多选状态由 `PanelViewState.selectedIDs` 与 `selectionAnchorID` 管理；单选仍使用 `selectedID`，两者在 UI 中统一通过 `isItemSelected` 判断。
+- `⌘`-点击切换条目，`⇧`-点击按锚点选择连续范围；`⇧↑` / `⇧↓` 移动焦点并扩展范围，`⌘⇧A` 全选当前可见结果，`esc` 优先取消多选。
+- 选中 2 条以上时，列表底部浮现 `MultiSelectionBar`；`↵` 或「合并复制」执行合并，结果写入剪贴板后关闭面板。
+- `MergedContentBuilder` 按可见顺序合并：文本类用换行连接；全部为文件时输出多个文件 URL；文本与文件混合时文件以路径形式追加。
+- 图片暂不支持合并，操作条会禁用主按钮并显示原因。
+- 合并写入会同步 `changeCount`，因此不会生成新的历史记录，也不会改变原条目的时间。
+
+### 6.9 键盘事件
 
 `PanelController` 使用 `NSEvent.addLocalMonitorForEvents(matching: .keyDown)` 在面板为 key window 时处理：
 
-- 方向键：更新 `PanelViewState.selectedID`；
-- 回车：复制选中项并关闭；
+- 方向键：更新 `PanelViewState.selectedID`；按住 `⇧` 时扩展多选范围；
+- `⌘⇧A`：全选当前可见结果；
+- 回车：复制选中项；多选时合并复制并关闭；
 - `⌘P` / `⌘Y` / `⌘⌫` / `⌘W` / `⌘1–9`；
-- `esc`：清空搜索；预览中关闭预览；否则关闭面板。
+- `esc`：取消多选；清空搜索；预览中关闭预览；否则关闭面板。
 - 预览打开时，方向键切换预览条目，回车 / `⌘C` 复制并关闭，其他命令快捷键被忽略。
 
 其余按键原样交还 AppKit / 输入法，因此搜索框和中文输入法保持正常工作。
@@ -260,6 +272,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 列表使用 `LazyVStack`，仅渲染视口附近卡片。
 - 图片列表只加载 560px 缩略图，原图只在复制或预览时读取。
 - 富文本预览按需读取缓存 JSON；拖拽 Provider 也延迟到拖拽开始时构建，不增加列表渲染开销。
+- 合并复制只遍历当前选中的条目；文件 URL 按路径去重，复杂度与选择数量线性相关。
 - 去重哈希在采集线程（主线程）执行；对常规文本 / 图片足够快，超大内容可后续迁移到后台任务。
 - 搜索在当前 200 条规模内同步执行；只对含 CJK 的内容按需做拼音转换，结果按相关性排序，无持久化索引。
 - 当前默认上限为 200 条未置顶 + 任意置顶项，可在设置中调整为 100 / 200 / 500 / 1000；排序与搜索为 O(n log n) 级别，规模可控。
@@ -281,7 +294,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-54 个 XCTest 由 app target 作为测试宿主运行：
+65 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。
@@ -299,6 +312,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 富文本 RTF/HTML 缓存、回写与备份迁移。
 - 预览状态生命周期、超长文本截断、富文本格式保留与颜色归一化。
 - 文本 / 富文本 / 图片拖拽 Provider 的类型与数据内容。
+- 多选状态：⌘ 切换、⇧ 范围、锚点稳定、全选与删除后的裁剪。
+- 合并复制：文本顺序、文件 URL、混合路径、去重、图片限制与剪贴板写入。
 
 运行：`make test`。CI：`.github/workflows/ci.yml`，执行测试并构建 Release。
 

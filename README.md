@@ -1,6 +1,6 @@
 # HaoPaste
 
-当前版本：**v0.4.0**
+当前版本：**v0.5.0**
 
 一款原生、轻快、键盘优先的 macOS 剪切板管理器。用 `⌥⌘V` 从任何应用呼出无标题栏悬浮面板，搜索、选择、复制，一气呵成。
 
@@ -21,11 +21,11 @@
    ```bash
    make dmg
    # 输出：
-   # dist/HaoPaste-0.4.0.dmg
-   # dist/HaoPaste-0.4.0.dmg.sha256
+   # dist/HaoPaste-0.5.0.dmg
+   # dist/HaoPaste-0.5.0.dmg.sha256
    ```
 
-2. 双击打开 `dist/HaoPaste-0.4.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
+2. 双击打开 `dist/HaoPaste-0.5.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
 3. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
 4. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
 
@@ -65,6 +65,18 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 - 颜色条目显示大色块与 HEX / RGB / HSL；文件条目列出路径并支持逐个拖拽
 - 预览中 `↑` `↓` 切换条目，`↵` 复制并关闭，`esc` 返回列表
 
+### 多选与合并复制
+
+![HaoPaste 多选合并](Docs/screenshot-multi-select.png)
+
+- `⌘`-点击切换多选，`⇧`-点击选择连续范围
+- `⇧↑` / `⇧↓` 扩展选择，`⌘⇧A` 全选当前结果
+- 选中 2 条以上后出现浮动操作条，按 `↵` 或点击「合并复制」
+- 文本 / 代码 / 链接 / 颜色按可见顺序用换行合并为纯文本
+- 全部为文件时复制多个文件 URL；文本与文件混合时附带文件路径
+- 图片暂不支持合并，操作条会明确提示
+- 合并结果不会写入历史；`esc` 取消多选
+
 
 ## 功能
 
@@ -77,12 +89,14 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
   | 快捷键 | 行为 |
   | --- | --- |
   | `↑` `↓` | 切换选中条目 |
-  | `↵` | 复制选中条目并关闭面板 |
+  | `⇧↑` `⇧↓` | 从锚点扩展多选范围 |
+  | `⌘⇧A` | 全选当前结果 |
+  | `↵` | 复制选中条目；多选时合并复制并关闭面板 |
   | `⌘1` – `⌘9` | 直接复制对应序号的条目 |
   | `⌘P` | 置顶 / 取消置顶 |
   | `⌘Y` | 打开 / 关闭选中条目的预览 |
   | `⌘⌫` | 删除选中条目 |
-  | `esc` | 有搜索词时清除搜索，否则关闭面板 |
+  | `esc` | 多选时取消多选；有搜索词时清除搜索；否则关闭面板 |
 
 - **卡片交互**：悬停高亮、1pt 微位移、弹簧动效；悬停后显示置顶与删除按钮；支持右键菜单。
 - **点击外部关闭**：点击面板外侧、透明阴影留白区域或切换到其他应用时自动收起。
@@ -94,6 +108,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 - **快捷动作**：右键打开链接 / 文件、保存图片、复制 Markdown 链接、复制颜色的 RGB / HSL 表示。
 - **快速预览**：`⌘Y` 或悬停眼睛按钮打开预览；支持图片大图、全文 / 富文本、颜色色块与文件列表。
 - **拖拽导出**：把文本、图片或单个文件条目直接拖到其他应用；预览中的图片与文件行同样可拖拽。
+- **多选合并**：`⌘`-点击或 `⇧`-点击多选，按 `↵` 将多条文本合并复制；多个文件条目复制为文件 URL 列表。
 - **Snippets 片段**：在设置中管理常用文本与模板，面板「片段」标签中搜索、键盘选择并一键复制；不会写入历史。
 - **富文本保留**：从浏览器 / 备忘录等复制的 RTF / HTML 格式会随内容保存，复制时优先保留格式；右键可复制为纯文本。
 - **颜色可视化**：HEX 条目显示真实颜色色块，支持复制 HEX / RGB / HSL。
@@ -127,7 +142,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 # 开发调试
 make run       # Debug 构建并打开
 make demo      # 用可复现的示例数据启动，便于查看界面
-make test      # 运行 54 个 XCTest（自动化测试）
+make test      # 运行 65 个 XCTest（自动化测试）
 
 # 日常使用 / 发布
 make release   # Release 构建
@@ -141,17 +156,18 @@ make install   # 安装到 /Applications 并启动
 
 ## 质量与测试
 
-- **54 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、去重/裁剪、存储读写、备份导入导出。
+- **65 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、多选 / 合并、去重/裁剪、存储读写、备份导入导出。
 - 测试宿主会自动跳过菜单栏、剪贴板轮询和全局快捷键注册，不影响正常使用。
 - GitHub Actions 工作流：`.github/workflows/ci.yml`，在 macOS 上执行测试并构建 Release。
 - 运行：`make test`。
 
 ## 快捷键与交互细节
 
-- 在搜索框中输入会即时过滤；`esc` 第一次清空搜索，第二次关闭面板。
+- 在搜索框中输入会即时过滤；多选时 `esc` 先取消多选，之后清空搜索，最后关闭面板。
 - 面板失焦时自动关闭，并把焦点还给之前的应用。
 - 鼠标悬停在条目上显示预览、置顶与删除按钮；点击条目主体复制。
 - 选中条目后按 `⌘Y` 打开预览；预览中按 `esc` 返回列表，按 `↵` 复制并关闭。
+- 按住 `⌘` 点击条目切换多选，按住 `⇧` 点击选择连续范围；多选时底部出现合并操作条。
 - 被选中条目使用系统强调色底色与边框，键盘与鼠标操作共享同一套选中状态。
 - `⌘1`–`⌘9` 对应当前过滤结果中的前九条。
 
@@ -230,6 +246,7 @@ HaoPaste/
 │   ├── SnippetManager.swift         # 片段 CRUD / 过滤 / 合并
 │   ├── ItemPreview.swift            # 预览文本 / 富文本构建
 │   ├── ItemDragProvider.swift       # 拖拽粘贴板 Provider
+│   ├── MergedContentBuilder.swift   # 多选内容合并规则
 │   ├── SearchMatcher.swift          # 中文 / 拼音 / 模糊搜索
 │   ├── ContentClassifier.swift      # 文本 / URL / JSON / 代码 / HEX 识别
 │   ├── ContentHasher.swift          # SHA-256 指纹
@@ -240,7 +257,7 @@ HaoPaste/
 │   ├── RichTextPayload.swift        # RTF / HTML 缓存
 │   └── HotKeyConfiguration.swift    # 快捷键键码与显示
 ├── State/PanelViewState.swift       # 搜索、筛选、选中项与焦点
-├── Views/                           # ContentView、ItemRowView、PreviewOverlayView、Settings
+├── Views/                           # ContentView、ItemRowView、PreviewOverlayView、MultiSelectionBar、Settings
 ├── Utilities/ImageSavePanel.swift   # 图片另存为 PNG
 ├── Theme/Theme.swift                # 圆角、间距、弹簧动效、细描边
 └── Support/                         # DEMO 数据与离屏截图工具（仅 Debug）
@@ -276,6 +293,11 @@ launchctl unsetenv HAOPASTE_RENDER_APPEARANCE
 launchctl setenv HAOPASTE_RENDER_PREVIEW image
 open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/preview.png --storage /tmp/haopaste-preview-image
 launchctl unsetenv HAOPASTE_RENDER_PREVIEW
+
+# 多选界面渲染（选中前 3 条）
+launchctl setenv HAOPASTE_RENDER_MULTI 3
+open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/multi.png --storage /tmp/haopaste-preview-multi
+launchctl unsetenv HAOPASTE_RENDER_MULTI
 ```
 
 `make demo` 等价于以 `--demo --show --storage /tmp/haopaste-demo` 启动一个 Debug 实例。
@@ -295,6 +317,8 @@ launchctl unsetenv HAOPASTE_RENDER_PREVIEW
 - 多图列表和 GIF 尚未纳入。
 - 多文件条目暂不支持整体拖拽，可点击复制全部文件 URL；预览中可逐个拖拽文件。
 - 超长文本预览只渲染前 12 万个字符，复制仍使用完整内容。
+- 合并复制目前只支持文本 / 文件：图片会提示不支持；富文本条目按纯文本合并。
+- 合并结果不会写入剪贴板历史，也不会改变原条目的时间顺序。
 - 富文本的 RTF / HTML 各自限制在 2MB 以内；超过时自动回退为纯文本。
 - 备份中的文件条目同样只保存路径引用，跨设备恢复后可能不可用。
 - 点击条目只复制，不自动粘贴（不申请辅助功能权限）。

@@ -59,6 +59,7 @@ Release 构建输出：
 | `HAOPASTE_RENDER_APPEARANCE=dark` | Debug 离屏渲染时使用深色外观 |
 | `HAOPASTE_RENDER_SETTINGS_TAB=general\|history\|snippets\|privacy\|about` | Debug 设置渲染的标签页 |
 | `HAOPASTE_RENDER_PREVIEW=image\|text` | Debug 渲染预览界面（图片或富文本） |
+| `HAOPASTE_RENDER_MULTI=<数量>` | Debug 渲染多选界面并选中前 N 条 |
 | `--show-settings` | Debug：启动后直接打开设置窗口 |
 | `--export-history <path>` | Debug：将指定 storage 的历史导出为 zip 后退出 |
 | `--import-history <path>` | Debug：将 zip 合并导入指定 storage 后退出 |
@@ -127,8 +128,8 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste-0.4.0.dmg                 # 安装包（app + Applications 快捷方式）
-dist/HaoPaste-0.4.0.dmg.sha256          # SHA-256 校验
+dist/HaoPaste-0.5.0.dmg                 # 安装包（app + Applications 快捷方式）
+dist/HaoPaste-0.5.0.dmg.sha256          # SHA-256 校验
 ```
 
 > `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
@@ -175,11 +176,11 @@ codesign --force --deep --options runtime --timestamp \
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash
-xcrun notarytool submit "dist/HaoPaste-0.4.0.dmg" \
+xcrun notarytool submit "dist/HaoPaste-0.5.0.dmg" \
   --keychain-profile "haopaste-notary" --wait
 
-xcrun stapler staple "dist/HaoPaste-0.4.0.dmg"
-xcrun stapler validate "dist/HaoPaste-0.4.0.dmg"
+xcrun stapler staple "dist/HaoPaste-0.5.0.dmg"
+xcrun stapler validate "dist/HaoPaste-0.5.0.dmg"
 ```
 
 也可以对 `.app` 先公证再打包（Apple 推荐流程根据分发方式调整）。需要 Apple Developer Program 账号。
@@ -189,8 +190,8 @@ xcrun stapler validate "dist/HaoPaste-0.4.0.dmg"
 版本号位于 `project.yml`：
 
 ```yaml
-MARKETING_VERSION: "0.4.0"
-CURRENT_PROJECT_VERSION: "10"
+MARKETING_VERSION: "0.5.0"
+CURRENT_PROJECT_VERSION: "11"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：
@@ -242,7 +243,7 @@ xcodebuild \
   test
 ```
 
-当前 54 个测试覆盖：
+当前 65 个测试覆盖：
 
 - 内容分类器：URL / HEX / JSON / 代码 / SQL / 普通文本边界。
 - `HotKeyConfiguration`：默认值、修饰符、显示顺序、校验。
@@ -253,6 +254,8 @@ xcodebuild \
 - `HistoryArchiveService`：导出 → 空库导入 → 重复导入去重、无效归档报错。
 - 预览：状态生命周期、超长文本截断、富文本格式保留与颜色归一化。
 - 拖拽：文本 / RTF / 图片 Provider 的类型注册与数据内容。
+- 多选：⌘ 切换、⇧ 范围、锚点、全选与删除后的选择裁剪。
+- 合并：文本顺序、文件 URL、混合路径、去重、图片限制与剪贴板写入。
 
 测试宿主使用的是真实 app target，但 `AppDelegate` 会检测 XCTest 环境并跳过菜单栏、轮询和全局快捷键初始化。CI 工作流位于 `.github/workflows/ci.yml`，会运行测试并额外执行一次 Release 构建。
 
@@ -261,6 +264,8 @@ xcodebuild \
 ```bash
 make demo
 ```
+
+多选回归：按住 `⌘` 点击两条文本 → 按 `↵`，确认剪贴板内容按可见顺序换行合并；选中图片时合并按钮应禁用并显示提示。
 
 除了示例数据，还可以用系统剪贴板快速验证：
 
