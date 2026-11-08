@@ -13,6 +13,7 @@ struct ShortcutRecorderView: View {
     let registrationError: String?
     let onRecord: (HotKeyConfiguration) -> Void
     let onReset: () -> Void
+    var resetConfiguration: HotKeyConfiguration = .default
 
     @State private var isRecording = false
     @State private var validationMessage: String?
@@ -75,8 +76,8 @@ struct ShortcutRecorderView: View {
                     .frame(maxWidth: 310, alignment: .trailing)
             }
 
-            if configuration != .default || registrationError != nil {
-                Button("恢复默认（\(HotKeyConfiguration.default.displayString)）", action: onReset)
+            if configuration != resetConfiguration || registrationError != nil {
+                Button("恢复默认（\(resetConfiguration.displayString)）", action: onReset)
                     .buttonStyle(.plain)
                     .font(.system(size: 10.5, design: .rounded))
                     .foregroundStyle(Color.accentColor)

@@ -17,9 +17,12 @@ final class AppSettingsTests: XCTestCase {
         let settings = AppSettings(defaults: defaults)
         XCTAssertEqual(settings.maxUnpinnedItems, 200)
         XCTAssertEqual(settings.hotKey, .default)
+        XCTAssertEqual(settings.translationHotKey, .translationDefault)
+        XCTAssertTrue(settings.autoTranslateLatestOnOpen)
         XCTAssertTrue(settings.capturesImages)
         XCTAssertTrue(settings.excludedApplications.isEmpty)
         XCTAssertNil(settings.hotKeyRegistrationError)
+        XCTAssertNil(settings.translationHotKeyRegistrationError)
     }
 
     func testSettingsPersistence() throws {
@@ -34,11 +37,18 @@ final class AppSettingsTests: XCTestCase {
             keyCode: UInt32(kVK_ANSI_K),
             carbonModifiers: UInt32(cmdKey | optionKey)
         )
+        settings.translationHotKey = HotKeyConfiguration(
+            keyCode: UInt32(kVK_ANSI_L),
+            carbonModifiers: UInt32(controlKey | optionKey)
+        )
+        settings.autoTranslateLatestOnOpen = false
 
         let reloaded = AppSettings(defaults: defaults)
         XCTAssertEqual(reloaded.maxUnpinnedItems, 500)
         XCTAssertFalse(reloaded.capturesImages)
         XCTAssertEqual(reloaded.hotKey.displayString, "⌥⌘K")
+        XCTAssertEqual(reloaded.translationHotKey.displayString, "⌃⌥L")
+        XCTAssertFalse(reloaded.autoTranslateLatestOnOpen)
     }
 
     func testExcludedApplicationsPersistAndDeduplicate() throws {

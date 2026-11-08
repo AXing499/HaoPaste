@@ -135,6 +135,27 @@ final class OCRTests: XCTestCase {
         XCTAssertEqual(reloaded.batchProgressCurrent, 2)
     }
 
+    func testOCRCallsAutoTranslateCallback() async throws {
+        let expectation = expectation(description: "auto translate")
+        let service = OCRService(
+            recognizer: { _, _ in "Hello from image" },
+            cache: InMemoryOCRCache()
+        )
+        service.onAutoTranslate = { text, title in
+            XCTAssertEqual(text, "Hello from image")
+            XCTAssertEqual(title, "图片文字 · 图片")
+            expectation.fulfill()
+        }
+
+        service.present(
+            item: makeImageItem(),
+            imageURL: URL(fileURLWithPath: "/tmp/auto.png"),
+            translateAfterRecognition: true
+        )
+        await service.waitForCurrentRecognition()
+        await fulfillment(of: [expectation], timeout: 2)
+    }
+
     func testDiskCachePersistsAndClears() throws {
         let directory = try TestFixtures.temporaryDirectory()
         defer { TestFixtures.remove(directory) }

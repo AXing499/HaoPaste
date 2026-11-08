@@ -55,11 +55,14 @@ final class OCRService {
         }
     }
 
+    @ObservationIgnored var onAutoTranslate: ((String, String) -> Void)?
+
     @ObservationIgnored private let recognizer: Recognizer
     @ObservationIgnored private let cacheStore: OCRCacheStoring
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var task: Task<Void, Never>?
     @ObservationIgnored private var sourceCacheKey: String?
+    @ObservationIgnored private var translateAfterRecognition = false
 
     private enum Keys {
         static let recognitionLanguage = "ocr.recognitionLanguage"
@@ -81,9 +84,14 @@ final class OCRService {
 
     // MARK: - Single image
 
-    func present(item: ClipboardItem, imageURL: URL) {
+    func present(
+        item: ClipboardItem,
+        imageURL: URL,
+        translateAfterRecognition: Bool = false
+    ) {
         task?.cancel()
 
+        self.translateAfterRecognition = translateAfterRecognition
         isBatchMode = false
         batchEntries = []
         batchProgressCurrent = 0
@@ -98,6 +106,7 @@ final class OCRService {
         if let cached = sourceCacheKey.flatMap(cacheStore.load(key:)) {
             text = cached
             phase = cached.isEmpty ? .empty : .success
+            notifyAutoTranslate(cached)
             return
         }
 
@@ -130,6 +139,7 @@ final class OCRService {
                 text = trimmed
                 phase = trimmed.isEmpty ? .empty : .success
                 cacheStore.save(trimmed, key: cacheKey)
+                notifyAutoTranslate(trimmed)
             } catch is CancellationError {
                 return
             } catch {
@@ -158,6 +168,7 @@ final class OCRService {
         guard !items.isEmpty else { return }
 
         task?.cancel()
+        translateAfterRecognition = false
         isPresenting = true
         isBatchMode = true
         sourceTitle = ""
@@ -283,6 +294,7 @@ final class OCRService {
         errorMessage = nil
         text = ""
         sourceCacheKey = nil
+        translateAfterRecognition = false
         batchEntries = []
         batchProgressCurrent = 0
         batchProgressTotal = 0
@@ -295,6 +307,21 @@ final class OCRService {
     /// Used by tests and visual QA.
     func waitForCurrentRecognition() async {
         await task?.value
+    }
+
+    private func notifyAutoTranslate(_ value: String) {
+        guard translateAfterRecognition else { return }
+        translateAfterRecognition = false
+
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let title = sourceTitle.isEmpty
+            ? "图片文字"
+            : "图片文字 · \(sourceTitle)"
+        DispatchQueue.main.async { [weak self] in
+            self?.onAutoTranslate?(trimmed, title)
+        }
     }
 
     #if DEBUG

@@ -31,6 +31,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     let snippetManager: SnippetManager
     let translationService: TranslationService
     let ocrService: OCRService
+    let settings: AppSettings
     let state = PanelViewState()
 
     private let panel: ClipboardPanel
@@ -41,17 +42,20 @@ final class PanelController: NSObject, NSWindowDelegate {
     private var previousApplication: NSRunningApplication?
     private var presentationGeneration = 0
     private var isHiding = false
+    private var lastAutoTranslatedSignature: String?
 
     init(
         manager: ClipboardManager,
         snippetManager: SnippetManager,
         translationService: TranslationService,
-        ocrService: OCRService
+        ocrService: OCRService,
+        settings: AppSettings
     ) {
         self.manager = manager
         self.snippetManager = snippetManager
         self.translationService = translationService
         self.ocrService = ocrService
+        self.settings = settings
         self.panel = ClipboardPanel(
             contentRect: NSRect(origin: .zero, size: Theme.windowSize),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -64,6 +68,11 @@ final class PanelController: NSObject, NSWindowDelegate {
         configurePanel()
         installContent()
         observeApplicationDeactivation()
+
+        let translation = translationService
+        ocrService.onAutoTranslate = { [weak translation] text, title in
+            translation?.present(text: text, title: title)
+        }
     }
 
     deinit {
@@ -120,6 +129,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         )
 
         activatePanel()
+        scheduleAutoTranslationIfNeeded()
 
         if !reduceMotion {
             NSAnimationContext.runAnimationGroup { context in
@@ -176,6 +186,48 @@ final class PanelController: NSObject, NSWindowDelegate {
         } completionHandler: {
             DispatchQueue.main.async(execute: finish)
         }
+    }
+
+    private func scheduleAutoTranslationIfNeeded() {
+        guard settings.autoTranslateLatestOnOpen else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            self?.autoTranslateLatestIfNeeded()
+        }
+    }
+
+    private func autoTranslateLatestIfNeeded() {
+        guard
+            panel.isVisible,
+            !translationService.isPresenting,
+            !isSnippetMode,
+            state.searchText.isEmpty,
+            !state.isPreviewing,
+            !ocrService.isPresenting
+        else {
+            return
+        }
+
+        guard
+            let item = manager.filteredItems(query: "", filter: .all).first,
+            item.isTranslatable
+        else {
+            return
+        }
+
+        guard state.selectedID == item.id else { return }
+
+        guard AutoTranslationPolicy.shouldTranslate(
+            item: item,
+            targetLanguageID: translationService.settings.targetLanguageID,
+            lastSignature: lastAutoTranslatedSignature,
+            enabled: settings.autoTranslateLatestOnOpen
+        ) else {
+            return
+        }
+
+        lastAutoTranslatedSignature = AutoTranslationPolicy.signature(for: item)
+        translationService.present(item: item)
     }
 
     // MARK: - Copying

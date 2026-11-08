@@ -149,6 +149,14 @@ struct ContentView: View {
                     onExtractText: {
                         guard let imageURL = manager.imageURL(for: previewItem) else { return }
                         ocrService.present(item: previewItem, imageURL: imageURL)
+                    },
+                    onExtractAndTranslate: {
+                        guard let imageURL = manager.imageURL(for: previewItem) else { return }
+                        ocrService.present(
+                            item: previewItem,
+                            imageURL: imageURL,
+                            translateAfterRecognition: true
+                        )
                     }
                 )
                 .zIndex(1)
@@ -414,6 +422,14 @@ struct ContentView: View {
                             onExtractText: {
                                 guard let imageURL = manager.imageURL(for: item) else { return }
                                 ocrService.present(item: item, imageURL: imageURL)
+                            },
+                            onExtractAndTranslate: {
+                                guard let imageURL = manager.imageURL(for: item) else { return }
+                                ocrService.present(
+                                    item: item,
+                                    imageURL: imageURL,
+                                    translateAfterRecognition: true
+                                )
                             },
                             onTogglePin: {
                                 withAnimation(reduceMotion ? nil : Theme.spring) {

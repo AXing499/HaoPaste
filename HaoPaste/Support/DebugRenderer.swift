@@ -175,6 +175,48 @@ enum DebugRenderer {
         )
     }
 
+    static func renderQuickTranslation(
+        service: TranslationService,
+        to url: URL,
+        completion: @escaping @MainActor () -> Void
+    ) {
+        service.seedPreview(
+            sourceTitle: "剪贴板翻译",
+            sourceText: "Design is not just what it looks like. Design is how it works.",
+            target: .simplifiedChinese,
+            result: "设计不只是看起来怎样，设计是它如何运作。",
+            provider: .googleUnofficial
+        )
+
+        let content = ZStack {
+            LinearGradient(
+                colors: [
+                    Color(nsColor: NSColor(calibratedRed: 0.90, green: 0.93, blue: 0.97, alpha: 1)),
+                    Color(nsColor: NSColor(calibratedRed: 0.70, green: 0.76, blue: 0.86, alpha: 1))
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            TranslationPaneView(
+                service: service,
+                onCopyTranslation: { _ in },
+                onCopyBilingual: { _ in },
+                onSaveSnippet: { _ in },
+                onClose: {},
+                showsScrim: false
+            )
+        }
+        .frame(width: 700, height: 540)
+
+        render(
+            content: content,
+            size: CGSize(width: 700, height: 540),
+            to: url,
+            completion: completion
+        )
+    }
+
     static func renderSettings(
         manager: ClipboardManager,
         settings: AppSettings,

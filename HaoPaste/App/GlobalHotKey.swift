@@ -34,14 +34,20 @@ final class GlobalHotKey {
     }
 
     private static let signature: OSType = 0x48415053 // 'HAPS'
-    private static let hotKeyID: UInt32 = 1
 
     private let action: () -> Void
+    private let hotKeyID: UInt32
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
 
-    init(keyCode: UInt32, modifiers: UInt32, action: @escaping () -> Void) throws {
+    init(
+        keyCode: UInt32,
+        modifiers: UInt32,
+        id: UInt32 = 1,
+        action: @escaping () -> Void
+    ) throws {
         self.action = action
+        self.hotKeyID = id
 
         var eventType = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),
@@ -61,7 +67,7 @@ final class GlobalHotKey {
             throw RegistrationError.eventHandler(status)
         }
 
-        let identifier = EventHotKeyID(signature: Self.signature, id: Self.hotKeyID)
+        let identifier = EventHotKeyID(signature: Self.signature, id: hotKeyID)
         let registerStatus = RegisterEventHotKey(
             keyCode,
             modifiers,
@@ -117,6 +123,10 @@ final class GlobalHotKey {
         }
 
         let hotKey = Unmanaged<GlobalHotKey>.fromOpaque(userData).takeUnretainedValue()
+        guard identifier.id == hotKey.hotKeyID else {
+            return OSStatus(eventNotHandledErr)
+        }
+
         hotKey.invoke()
         return noErr
     }

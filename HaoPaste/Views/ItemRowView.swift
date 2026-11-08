@@ -22,6 +22,7 @@ struct ItemRowView: View {
     let onPreview: () -> Void
     let onTranslate: () -> Void
     let onExtractText: () -> Void
+    let onExtractAndTranslate: () -> Void
     let onTogglePin: () -> Void
     let onDelete: () -> Void
 
@@ -127,6 +128,12 @@ struct ItemRowView: View {
                     onExtractText()
                 } label: {
                     Label("提取文字…", systemImage: "text.viewfinder")
+                }
+
+                Button {
+                    onExtractAndTranslate()
+                } label: {
+                    Label("识图并翻译…", systemImage: "character.bubble")
                 }
 
                 Button {
@@ -357,6 +364,14 @@ struct ItemRowView: View {
             }
 
             HStack(spacing: 2) {
+                if item.isTranslatable {
+                    RoundIconButton(
+                        symbolName: "character.bubble",
+                        help: "翻译（⌘T）",
+                        action: onTranslate
+                    )
+                }
+
                 RoundIconButton(
                     symbolName: "eye",
                     help: "预览（⌘Y）",
@@ -379,7 +394,11 @@ struct ItemRowView: View {
             .scaleEffect(isHovering ? 1 : 0.9)
             .allowsHitTesting(isHovering)
         }
-        .frame(width: 76, height: 26, alignment: .trailing)
+        .frame(
+            width: item.isTranslatable ? 100 : 76,
+            height: 26,
+            alignment: .trailing
+        )
         .animation(reduceMotion ? nil : Theme.spring, value: isHovering)
     }
 

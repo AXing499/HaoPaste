@@ -17,6 +17,11 @@ struct HotKeyConfiguration: Equatable, Sendable {
         carbonModifiers: UInt32(cmdKey | optionKey)
     )
 
+    static let translationDefault = HotKeyConfiguration(
+        keyCode: UInt32(kVK_ANSI_T),
+        carbonModifiers: UInt32(cmdKey | optionKey)
+    )
+
     var hasPrimaryModifier: Bool {
         carbonModifiers & UInt32(cmdKey | optionKey | controlKey) != 0
     }

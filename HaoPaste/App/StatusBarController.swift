@@ -12,12 +12,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let manager: ClipboardManager
     private let settings: AppSettings
     private weak var panelController: PanelController?
+    private weak var quickTranslationController: QuickTranslationPanelController?
     private let onOpenSettings: () -> Void
 
     private let statusItem: NSStatusItem
     private let menu = NSMenu()
 
     private let showItem = NSMenuItem()
+    private let translateItem = NSMenuItem()
     private let historyInfoItem = NSMenuItem()
     private let pauseItem = NSMenuItem()
     private let clearItem = NSMenuItem()
@@ -25,12 +27,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     init(
         manager: ClipboardManager,
         panelController: PanelController,
+        quickTranslationController: QuickTranslationPanelController,
         settings: AppSettings,
         onOpenSettings: @escaping () -> Void
     ) {
         self.manager = manager
         self.settings = settings
         self.panelController = panelController
+        self.quickTranslationController = quickTranslationController
         self.onOpenSettings = onOpenSettings
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
@@ -86,6 +90,17 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         showItem.target = self
         showItem.image = symbolImage(named: "macwindow", pointSize: 13, weight: .regular)
         menu.addItem(showItem)
+
+        translateItem.title = "翻译剪贴板（\(settings.translationHotKey.displayString)）"
+        translateItem.action = #selector(translateClipboard)
+        translateItem.keyEquivalent = ""
+        translateItem.target = self
+        translateItem.image = symbolImage(
+            named: "character.bubble",
+            pointSize: 13,
+            weight: .regular
+        )
+        menu.addItem(translateItem)
 
         historyInfoItem.title = "暂无记录"
         historyInfoItem.isEnabled = false
@@ -144,6 +159,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     private func updatePresentation() {
         showItem.title = "打开 HaoPaste（\(settings.hotKey.displayString)）"
+        translateItem.title = "翻译剪贴板（\(settings.translationHotKey.displayString)）"
 
         historyInfoItem.title = manager.items.isEmpty
             ? "暂无记录"
@@ -169,6 +185,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     @objc
     private func showPanel() {
         panelController?.show()
+    }
+
+    @objc
+    private func translateClipboard() {
+        quickTranslationController?.translateClipboard()
     }
 
     @objc

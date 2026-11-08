@@ -14,6 +14,8 @@ struct TranslationPaneView: View {
     let onCopyBilingual: (String) -> Void
     let onSaveSnippet: (String) -> Void
     let onClose: () -> Void
+    var showsScrim = true
+    var onOpenSettings: (() -> Void)?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isPresented = false
@@ -22,11 +24,13 @@ struct TranslationPaneView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.30)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    onClose()
-                }
+            if showsScrim {
+                Color.black.opacity(0.30)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        onClose()
+                    }
+            }
 
             card
                 .scaleEffect(isPresented ? 1 : 0.96)
@@ -439,10 +443,14 @@ struct TranslationPaneView: View {
 
             if service.availableProviderIDs.isEmpty {
                 Button("打开翻译设置…") {
-                    NotificationCenter.default.post(
-                        name: .haopasteOpenTranslationSettings,
-                        object: nil
-                    )
+                    if let onOpenSettings {
+                        onOpenSettings()
+                    } else {
+                        NotificationCenter.default.post(
+                            name: .haopasteOpenTranslationSettings,
+                            object: nil
+                        )
+                    }
                 }
                 .buttonStyle(.link)
                 .font(.system(size: 11, design: .rounded))

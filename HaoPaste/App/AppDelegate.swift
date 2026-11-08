@@ -17,11 +17,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBarController: StatusBarController!
     private var settings: AppSettings!
     private var translationService: TranslationService!
+    private var quickTranslationService: TranslationService!
+    private var quickTranslationController: QuickTranslationPanelController!
     private var ocrService: OCRService!
     private var settingsWindowController: SettingsWindowController?
 
     private var hotKey: GlobalHotKey?
     private var activeHotKeyConfiguration: HotKeyConfiguration?
+    private var translationHotKey: GlobalHotKey?
+    private var activeTranslationHotKeyConfiguration: HotKeyConfiguration?
 
     private var isRunningUnitTests: Bool {
         let environment = ProcessInfo.processInfo.environment
@@ -71,11 +75,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             manager: manager,
             snippetManager: snippetManager,
             translationService: translationService,
-            ocrService: ocrService
+            ocrService: ocrService,
+            settings: settings
         )
+
+        quickTranslationService = TranslationService(
+            settings: translationService.settings,
+            credentials: translationService.credentials
+        )
+        quickTranslationController = QuickTranslationPanelController(
+            manager: manager,
+            service: quickTranslationService,
+            snippetManager: snippetManager
+        )
+        quickTranslationController.onWillPresent = { [weak self] in
+            self?.panelController?.hide(restoreFocus: false)
+        }
+
         statusBarController = StatusBarController(
             manager: manager,
             panelController: panelController,
+            quickTranslationController: quickTranslationController,
             settings: settings,
             onOpenSettings: { [weak self] in
                 self?.showSettings()
@@ -86,6 +106,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.applyHotKey(configuration)
         }
         applyHotKey(settings.hotKey)
+
+        settings.onTranslationHotKeyChange = { [weak self] configuration in
+            self?.applyTranslationHotKey(configuration)
+        }
+        applyTranslationHotKey(settings.translationHotKey)
 
         NotificationCenter.default.addObserver(
             forName: .haopasteOpenTranslationSettings,
@@ -188,6 +213,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         statusBarController?.refreshShortcutDisplay()
+    }
+
+    private func applyTranslationHotKey(_ configuration: HotKeyConfiguration) {
+        let fallback = activeTranslationHotKeyConfiguration ?? .translationDefault
+
+        do {
+            try installTranslationHotKey(configuration)
+            activeTranslationHotKeyConfiguration = configuration
+            settings.setTranslationHotKeyRegistrationError(nil)
+        } catch {
+            var message = "无法注册翻译快捷键 \(configuration.displayString)：\(error.localizedDescription)"
+
+            if configuration != fallback {
+                do {
+                    try installTranslationHotKey(fallback)
+                    activeTranslationHotKeyConfiguration = fallback
+                    settings.revertTranslationHotKey(to: fallback)
+                    message += " 已恢复为 \(fallback.displayString)。"
+                } catch {
+                    activeTranslationHotKeyConfiguration = nil
+                    message += " 原翻译快捷键也无法注册。"
+                }
+            } else {
+                activeTranslationHotKeyConfiguration = nil
+            }
+
+            settings.setTranslationHotKeyRegistrationError(message)
+            NSLog("HaoPaste: \(message)")
+        }
+
+        statusBarController?.refreshShortcutDisplay()
+    }
+
+    private func installTranslationHotKey(_ configuration: HotKeyConfiguration) throws {
+        translationHotKey = nil
+        translationHotKey = try GlobalHotKey(
+            keyCode: configuration.keyCode,
+            modifiers: configuration.carbonModifiers,
+            id: 2
+        ) { [weak self] in
+            DispatchQueue.main.async {
+                self?.quickTranslationController?.translateClipboard()
+            }
+        }
     }
 
     private func installHotKey(_ configuration: HotKeyConfiguration) throws {
@@ -294,6 +363,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return nil
             }
             return arguments[index + 1]
+        }
+
+        if let path = value(after: "--render-quick") {
+            manager.seedDemoDataIfNeeded()
+            DebugRenderer.renderQuickTranslation(
+                service: translationService,
+                to: URL(fileURLWithPath: path)
+            ) {
+                NSApp.terminate(nil)
+            }
+            return true
         }
 
         if let path = value(after: "--render-settings") {

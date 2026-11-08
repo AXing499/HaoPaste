@@ -285,6 +285,38 @@ struct SettingsView: View {
             }
         }
 
+        SettingsCard("翻译") {
+            SettingsRow(
+                "快捷翻译剪贴板",
+                subtitle: "在任意应用复制文本后按下快捷键，直接打开翻译卡片"
+            ) {
+                ShortcutRecorderView(
+                    configuration: settings.translationHotKey,
+                    registrationError: settings.translationHotKeyRegistrationError,
+                    onRecord: { configuration in
+                        settings.translationHotKey = configuration
+                    },
+                    onReset: {
+                        settings.resetTranslationHotKeyToDefault()
+                    },
+                    resetConfiguration: .translationDefault
+                )
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                "打开面板时翻译最新记录",
+                subtitle: "仅对与目标语言不同的新文本自动执行；每条记录只自动翻译一次，图片不会自动翻译"
+            ) {
+                Toggle("", isOn: $settings.autoTranslateLatestOnOpen)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .tint(Color.accentColor)
+            }
+        }
+
         SettingsCard("监听") {
             SettingsRow(
                 "监听剪贴板",

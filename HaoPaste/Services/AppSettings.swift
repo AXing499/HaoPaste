@@ -21,6 +21,9 @@ final class AppSettings {
         static let hotKeyModifiers = "settings.hotKeyModifiers"
         static let capturesImages = "settings.capturesImages"
         static let excludedApplications = "settings.excludedApplications"
+        static let translationHotKeyCode = "settings.translationHotKeyCode"
+        static let translationHotKeyModifiers = "settings.translationHotKeyModifiers"
+        static let autoTranslateLatestOnOpen = "settings.autoTranslateLatestOnOpen"
     }
 
     var maxUnpinnedItems: Int {
@@ -53,6 +56,35 @@ final class AppSettings {
         }
     }
 
+    var translationHotKey: HotKeyConfiguration {
+        didSet {
+            guard oldValue != translationHotKey else { return }
+
+            defaults.set(
+                Int(translationHotKey.keyCode),
+                forKey: Keys.translationHotKeyCode
+            )
+            defaults.set(
+                Int(translationHotKey.carbonModifiers),
+                forKey: Keys.translationHotKeyModifiers
+            )
+
+            if !isRevertingTranslationHotKey {
+                onTranslationHotKeyChange?(translationHotKey)
+            }
+        }
+    }
+
+    var autoTranslateLatestOnOpen: Bool {
+        didSet {
+            guard oldValue != autoTranslateLatestOnOpen else { return }
+            defaults.set(
+                autoTranslateLatestOnOpen,
+                forKey: Keys.autoTranslateLatestOnOpen
+            )
+        }
+    }
+
     var capturesImages: Bool {
         didSet {
             guard oldValue != capturesImages else { return }
@@ -63,6 +95,7 @@ final class AppSettings {
     private(set) var excludedApplications: [ExcludedApplication]
 
     private(set) var hotKeyRegistrationError: String?
+    private(set) var translationHotKeyRegistrationError: String?
 
     private(set) var launchAtLoginEnabled: Bool
     private(set) var launchAtLoginRequiresApproval: Bool
@@ -70,9 +103,11 @@ final class AppSettings {
 
     @ObservationIgnored var onHistoryLimitChange: ((Int) -> Void)?
     @ObservationIgnored var onHotKeyChange: ((HotKeyConfiguration) -> Void)?
+    @ObservationIgnored var onTranslationHotKeyChange: ((HotKeyConfiguration) -> Void)?
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var isRevertingHotKey = false
+    @ObservationIgnored private var isRevertingTranslationHotKey = false
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -89,6 +124,28 @@ final class AppSettings {
             carbonModifiers: UInt32(clamping: storedModifiers)
         )
         self.hotKey = storedHotKey.isValid ? storedHotKey : .default
+
+        let storedTranslationKeyCode = defaults.integer(
+            forKey: Keys.translationHotKeyCode
+        )
+        let storedTranslationModifiers = defaults.integer(
+            forKey: Keys.translationHotKeyModifiers
+        )
+        let storedTranslationHotKey = HotKeyConfiguration(
+            keyCode: UInt32(clamping: storedTranslationKeyCode),
+            carbonModifiers: UInt32(clamping: storedTranslationModifiers)
+        )
+        self.translationHotKey = storedTranslationHotKey.isValid
+            ? storedTranslationHotKey
+            : .translationDefault
+
+        if defaults.object(forKey: Keys.autoTranslateLatestOnOpen) == nil {
+            self.autoTranslateLatestOnOpen = true
+        } else {
+            self.autoTranslateLatestOnOpen = defaults.bool(
+                forKey: Keys.autoTranslateLatestOnOpen
+            )
+        }
 
         if defaults.object(forKey: Keys.capturesImages) == nil {
             self.capturesImages = true
@@ -130,6 +187,21 @@ final class AppSettings {
 
     func resetHotKeyToDefault() {
         hotKey = .default
+    }
+
+    func setTranslationHotKeyRegistrationError(_ message: String?) {
+        translationHotKeyRegistrationError = message
+    }
+
+    func revertTranslationHotKey(to configuration: HotKeyConfiguration) {
+        guard translationHotKey != configuration else { return }
+        isRevertingTranslationHotKey = true
+        translationHotKey = configuration
+        isRevertingTranslationHotKey = false
+    }
+
+    func resetTranslationHotKeyToDefault() {
+        translationHotKey = .translationDefault
     }
 
     // MARK: - Launch at login
