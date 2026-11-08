@@ -12,15 +12,17 @@ struct ShelfCardView: View {
     let item: ClipboardItem
     let cardWidth: CGFloat
     let thumbnailURL: URL?
+    let imageURL: URL?
     let isHovering: Bool
     let isCopied: Bool
     let baseAngle: Double
     let canDragOut: Bool
     let dragProvider: () -> NSItemProvider
     let onCopy: () -> Void
-    let onCopyPlainText: () -> Void
+    let onCopyText: (String) -> Void
     let onTogglePin: () -> Void
     let onDelete: () -> Void
+    let onPreview: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -62,6 +64,12 @@ struct ShelfCardView: View {
         .accessibilityHint("复制到剪贴板")
         .contextMenu {
             Button {
+                onPreview()
+            } label: {
+                Label("预览", systemImage: "eye")
+            }
+
+            Button {
                 onCopy()
             } label: {
                 Label("复制", systemImage: "doc.on.doc")
@@ -76,11 +84,84 @@ struct ShelfCardView: View {
                 )
             }
 
-            if item.isTextLike {
+            if item.hasRichText {
                 Button {
-                    onCopyPlainText()
+                    onCopyText(item.plainText)
                 } label: {
                     Label("复制纯文本", systemImage: "textformat")
+                }
+            }
+
+            if item.type == .url, let url = URL(string: item.content) {
+                Divider()
+
+                Button {
+                    NSWorkspace.shared.open(url)
+                } label: {
+                    Label("打开链接", systemImage: "safari")
+                }
+
+                Button {
+                    let title = url.host ?? item.displayTitle
+                    onCopyText("[\(title)](\(item.content))")
+                } label: {
+                    Label("复制为 Markdown 链接", systemImage: "doc.on.doc")
+                }
+            }
+
+            if item.type == .file {
+                Divider()
+
+                Button {
+                    for url in item.availableFileURLs {
+                        NSWorkspace.shared.open(url)
+                    }
+                } label: {
+                    Label("打开文件", systemImage: "arrow.up.forward.app")
+                }
+                .disabled(item.availableFileURLs.isEmpty)
+
+                Button {
+                    NSWorkspace.shared.activateFileViewerSelecting(
+                        item.availableFileURLs
+                    )
+                } label: {
+                    Label("在 Finder 中显示", systemImage: "folder")
+                }
+                .disabled(item.availableFileURLs.isEmpty)
+            }
+
+            if item.type == .image, imageURL != nil {
+                Divider()
+
+                Button {
+                    if let imageURL {
+                        ImageSavePanel.present(imageURL: imageURL)
+                    }
+                } label: {
+                    Label("保存图片…", systemImage: "square.and.arrow.down")
+                }
+            }
+
+            if item.type == .colorHex, let color = HexColor(hex: item.content) {
+                Divider()
+
+                Button {
+                    onCopyText(color.normalizedHex)
+                } label: {
+                    Label("复制 HEX（\(color.normalizedHex)）", systemImage: "paintpalette")
+                }
+
+                Button {
+                    onCopyText(color.rgbString)
+                } label: {
+                    Label("复制 RGB（\(color.rgbString)）", systemImage: "paintpalette")
+                }
+
+                Button {
+                    onCopyText(color.hslString)
+                } label: {
+                    Label("复制 HSL（\(color.hslString)）", systemImage: "paintpalette")
                 }
             }
 

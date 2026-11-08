@@ -12,7 +12,8 @@ import SwiftUI
 @MainActor
 final class ClipboardShelfController: NSObject {
     private enum Timing {
-        static let pollInterval: TimeInterval = 1.0 / 30.0
+        static let visiblePollInterval: TimeInterval = 1.0 / 30.0
+        static let hiddenPollInterval: TimeInterval = 1.0 / 10.0
         static let revealDelay: TimeInterval = 0.25
         static let retractDelay: TimeInterval = 0.5
     }
@@ -22,6 +23,7 @@ final class ClipboardShelfController: NSObject {
     private let panel: ClipboardShelfPanel
 
     private var mouseTimer: Timer?
+    private var pollInterval: TimeInterval?
     private var menuClickMonitors: [Any] = []
     private var spaceChangeObserver: NSObjectProtocol?
     private var screenChangeObserver: NSObjectProtocol?
@@ -34,9 +36,11 @@ final class ClipboardShelfController: NSObject {
     private var awaySince: Date?
     private let hitTargetStore: ShelfHitTargetStore
     private let interaction: ShelfInteractionState
+    private let actionRelay: ShelfActionRelay
     private var menuBarSuppressed = false
 
     var onVisibilityChanged: (() -> Void)?
+    var onPreviewItem: ((ClipboardItem) -> Void)?
     /// Return true while another HaoPaste window owns the screen.
     var isRevealBlocked: (() -> Bool)?
 
@@ -54,12 +58,18 @@ final class ClipboardShelfController: NSObject {
         let interactionState = ShelfInteractionState()
         self.interaction = interactionState
 
+        let actionRelay = ShelfActionRelay()
+        self.actionRelay = actionRelay
+
         let rootView = ClipboardShelfView(
             manager: manager,
             settings: settings,
             interaction: interactionState,
             onHitTargetsChanged: { targets in
                 hitTargetStore.targets = targets
+            },
+            onPreviewItem: { item in
+                actionRelay.onPreview?(item)
             }
         )
         let hostingView = ShelfHostingView(rootView: rootView)
@@ -72,6 +82,10 @@ final class ClipboardShelfController: NSObject {
 
         super.init()
 
+        actionRelay.onPreview = { [weak self] item in
+            self?.onPreviewItem?(item)
+        }
+
         if let screen = ClipboardShelfLayout.screenUnderPointer() {
             placePanel(on: screen)
         }
@@ -80,7 +94,7 @@ final class ClipboardShelfController: NSObject {
         observeSpaceAndScreenChanges()
 
         if settings.shelfEnabled {
-            startMouseTracking()
+            startMouseTracking(interval: Timing.hiddenPollInterval)
         }
     }
 
@@ -102,7 +116,7 @@ final class ClipboardShelfController: NSObject {
     func setEnabled(_ enabled: Bool) {
         if enabled {
             menuBarSuppressed = false
-            startMouseTracking()
+            startMouseTracking(interval: Timing.hiddenPollInterval)
         } else {
             stopMouseTracking()
             hide()
@@ -140,22 +154,29 @@ final class ClipboardShelfController: NSObject {
 
     // MARK: - Mouse tracking
 
-    private func startMouseTracking() {
-        guard mouseTimer == nil else { return }
+    private func startMouseTracking(interval: TimeInterval) {
+        if mouseTimer != nil, pollInterval == interval {
+            return
+        }
 
-        let timer = Timer(timeInterval: Timing.pollInterval, repeats: true) {
+        mouseTimer?.invalidate()
+
+        let timer = Timer(timeInterval: interval, repeats: true) {
             [weak self] _ in
             MainActor.assumeIsolated {
                 self?.tick()
             }
         }
+        timer.tolerance = interval * 0.2
         RunLoop.main.add(timer, forMode: .common)
         mouseTimer = timer
+        pollInterval = interval
     }
 
     private func stopMouseTracking() {
         mouseTimer?.invalidate()
         mouseTimer = nil
+        pollInterval = nil
         hotZoneSince = nil
         awaySince = nil
     }
@@ -297,6 +318,7 @@ final class ClipboardShelfController: NSObject {
         isRevealed = true
         awaySince = nil
         interaction.hoveredItemID = nil
+        startMouseTracking(interval: Timing.visiblePollInterval)
 
         if !reduceMotion {
             NSAnimationContext.runAnimationGroup { context in
@@ -318,6 +340,7 @@ final class ClipboardShelfController: NSObject {
         isRevealed = false
         isHiding = true
         interaction.hoveredItemID = nil
+        startMouseTracking(interval: Timing.hiddenPollInterval)
         manualOpen = false
         manualVisited = false
         hotZoneSince = nil
@@ -438,6 +461,10 @@ final class ClipboardShelfController: NSObject {
 
 private final class ShelfHitTargetStore {
     var targets: [ShelfHitTarget] = []
+}
+
+private final class ShelfActionRelay {
+    var onPreview: ((ClipboardItem) -> Void)?
 }
 
 /// The shelf is shown while another app is active, so the first click must

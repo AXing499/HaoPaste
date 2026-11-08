@@ -44,6 +44,7 @@ struct ClipboardShelfView: View {
     @Bindable var interaction: ShelfInteractionState
 
     let onHitTargetsChanged: ([ShelfHitTarget]) -> Void
+    let onPreviewItem: (ClipboardItem) -> Void
 
     @State private var filter: ClipboardShelfFilter = .all
     @State private var copiedID: UUID?
@@ -112,15 +113,17 @@ struct ClipboardShelfView: View {
                         item: item,
                         cardWidth: cardWidth,
                         thumbnailURL: manager.thumbnailURL(for: item),
+                        imageURL: manager.imageURL(for: item),
                         isHovering: isHovering,
                         isCopied: copiedID == item.id,
                         baseAngle: cardAngles[index % cardAngles.count],
                         canDragOut: canDragOut(item),
                         dragProvider: { dragProvider(for: item) },
                         onCopy: { copy(item) },
-                        onCopyPlainText: { copyPlainText(item) },
+                        onCopyText: { text in copyText(text, for: item) },
                         onTogglePin: { togglePin(item) },
-                        onDelete: { delete(item) }
+                        onDelete: { delete(item) },
+                        onPreview: { onPreviewItem(item) }
                     )
                     .frame(
                         width: cardWidth,
@@ -191,8 +194,8 @@ struct ClipboardShelfView: View {
         flashCopied(item)
     }
 
-    private func copyPlainText(_ item: ClipboardItem) {
-        guard manager.copyTextToPasteboard(item.plainText) else { return }
+    private func copyText(_ text: String, for item: ClipboardItem) {
+        guard manager.copyTextToPasteboard(text) else { return }
         flashCopied(item)
     }
 

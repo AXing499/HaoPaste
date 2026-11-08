@@ -112,6 +112,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         shelfController.onVisibilityChanged = { [weak self] in
             self?.statusBarController?.refreshShortcutDisplay()
         }
+        shelfController.onPreviewItem = { [weak self] item in
+            self?.shelfController?.hideIfVisible()
+            self?.panelController?.showPreview(for: item)
+        }
         panelController.onWillPresent = { [weak self] in
             self?.shelfController?.hideIfVisible()
         }

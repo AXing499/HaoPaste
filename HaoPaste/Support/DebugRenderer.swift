@@ -186,7 +186,8 @@ enum DebugRenderer {
                 manager: manager,
                 settings: settings,
                 interaction: ShelfInteractionState(),
-                onHitTargetsChanged: { _ in }
+                onHitTargetsChanged: { _ in },
+                onPreviewItem: { _ in }
             )
         }
         .frame(

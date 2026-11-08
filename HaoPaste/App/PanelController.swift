@@ -153,6 +153,11 @@ final class PanelController: NSObject, NSWindowDelegate {
         }
     }
 
+    func showPreview(for item: ClipboardItem) {
+        show()
+        state.beginPreview(item)
+    }
+
     func hide(restoreFocus: Bool = true) {
         guard panel.isVisible, !isHiding else { return }
 
