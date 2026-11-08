@@ -65,6 +65,8 @@ struct ClipboardShelfView: View {
 
     @State private var filter: ClipboardShelfFilter = .all
     @State private var copiedID: UUID?
+    @State private var scrollHintVisible = false
+    @State private var scrollHintToken = UUID()
 
     private let cardAngles: [Double] = [-1.1, 0.6, -0.4, 0.9, -0.7, 0.3]
 
@@ -273,7 +275,7 @@ struct ClipboardShelfView: View {
                     .zIndex(isHovering ? 100 : 10 - Double(index))
                 }
 
-                if maxOffset > 0.5 {
+                if scrollHintVisible && maxOffset > 0.5 {
                     ShelfScrollIndicator(
                         edge: edge,
                         offset: scrollOffset,
@@ -312,10 +314,30 @@ struct ClipboardShelfView: View {
             )
             .onPreferenceChange(ShelfScrollMetricsKey.self) { maxOffset in
                 onMaxScrollOffsetChanged(maxOffset)
+                if maxOffset > 0.5 {
+                    flashScrollHint()
+                }
+            }
+            .onChange(of: scrollOffset) { _, _ in
+                flashScrollHint()
             }
             .animation(Theme.gentleSpring, value: count)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func flashScrollHint() {
+        let token = UUID()
+        scrollHintToken = token
+        withAnimation(.easeOut(duration: 0.12)) {
+            scrollHintVisible = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) {
+            guard scrollHintToken == token else { return }
+            withAnimation(.easeIn(duration: 0.35)) {
+                scrollHintVisible = false
+            }
+        }
     }
 
     private var emptyState: some View {
@@ -482,14 +504,14 @@ private struct ShelfRackView: View, Animatable {
                 rope,
                 with: .linearGradient(
                     Gradient(colors: [
-                        Color.primary.opacity(0.38),
-                        Color.primary.opacity(0.26),
-                        Color.primary.opacity(0.38)
+                        Color.primary.opacity(0.46),
+                        Color.primary.opacity(0.32),
+                        Color.primary.opacity(0.46)
                     ]),
                     startPoint: CGPoint(x: start, y: lineY),
                     endPoint: CGPoint(x: end, y: lineY)
                 ),
-                lineWidth: 1.2
+                lineWidth: 1.4
             )
 
             for x in [start, end] {
@@ -587,9 +609,9 @@ private struct ShelfSideRackView: View, Animatable {
                 rail,
                 with: .linearGradient(
                     Gradient(colors: [
-                        Color.primary.opacity(0.38),
-                        Color.primary.opacity(0.26),
-                        Color.primary.opacity(0.38)
+                        Color.primary.opacity(0.46),
+                        Color.primary.opacity(0.32),
+                        Color.primary.opacity(0.46)
                     ]),
                     startPoint: CGPoint(x: railX, y: start),
                     endPoint: CGPoint(x: railX, y: end)
@@ -609,7 +631,7 @@ private struct ShelfSideRackView: View, Animatable {
             for index in visibleRange where index < cardTops.count {
                 let y = cardTops[index]
                     - scrollOffset
-                    + ClipboardShelfLayout.clipHeight / 2
+                    + ClipboardShelfLayout.clipLoopY
                 var arm = Path()
                 arm.move(to: CGPoint(x: railX, y: y))
                 arm.addLine(to: CGPoint(x: clipCenterX, y: y))
@@ -690,29 +712,29 @@ private struct ShelfScrollIndicator: View {
     private var horizontalIndicator: some View {
         ZStack(alignment: .leading) {
             Capsule()
-                .fill(Color.primary.opacity(0.10))
-                .frame(width: trackLength, height: 3)
+                .fill(Color.primary.opacity(0.06))
+                .frame(width: trackLength, height: 6)
 
             Capsule()
-                .fill(Color.primary.opacity(0.34))
+                .fill(Color.primary.opacity(0.38))
                 .frame(width: thumbLength, height: 3)
-                .offset(x: thumbStart)
+                .offset(x: thumbStart, y: 1.5)
         }
-        .frame(width: trackLength, height: 3)
+        .frame(width: trackLength, height: 6)
     }
 
     private var verticalIndicator: some View {
         ZStack(alignment: .top) {
             Capsule()
-                .fill(Color.primary.opacity(0.10))
-                .frame(width: 3, height: trackLength)
+                .fill(Color.primary.opacity(0.06))
+                .frame(width: 6, height: trackLength)
 
             Capsule()
-                .fill(Color.primary.opacity(0.34))
+                .fill(Color.primary.opacity(0.38))
                 .frame(width: 3, height: thumbLength)
-                .offset(y: thumbStart)
+                .offset(x: 1.5, y: thumbStart)
         }
-        .frame(width: 3, height: trackLength)
+        .frame(width: 6, height: trackLength)
     }
 }
 

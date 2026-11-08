@@ -558,74 +558,65 @@ private struct ShelfClipView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isOpen = false
 
-    private var wood: LinearGradient {
+    private var gold: LinearGradient {
         LinearGradient(
             colors: [
-                Color(red: 0.84, green: 0.69, blue: 0.49),
-                Color(red: 0.60, green: 0.44, blue: 0.27)
+                Color(red: 0.97, green: 0.75, blue: 0.30),
+                Color(red: 0.86, green: 0.56, blue: 0.10)
             ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
+            startPoint: .top,
+            endPoint: .bottom
         )
     }
 
-    private var spring: Color {
-        Color(red: 0.36, green: 0.31, blue: 0.25)
+    private var wire: Color {
+        Color(red: 0.18, green: 0.16, blue: 0.19)
+    }
+
+    private var feet: Color {
+        Color(red: 0.55, green: 0.54, blue: 0.92)
     }
 
     var body: some View {
         ZStack {
-            Capsule()
-                .fill(wood)
-                .frame(width: 3.6, height: 12)
-                .rotationEffect(
-                    .degrees(isOpen ? 22 : -6),
-                    anchor: .top
+            BinderClipBody()
+                .fill(gold)
+
+            BinderClipWire()
+                .stroke(
+                    wire,
+                    style: StrokeStyle(
+                        lineWidth: 1.4,
+                        lineCap: .round,
+                        lineJoin: .round
+                    )
                 )
-                .offset(x: 2.2, y: 4)
+
+            HStack(spacing: 1.2) {
+                Capsule().fill(feet).frame(width: 3, height: 2.5)
+                Capsule().fill(feet).frame(width: 4, height: 2.5)
+                Capsule().fill(feet).frame(width: 3, height: 2.5)
+            }
+            .offset(y: 6.2)
 
             Capsule()
-                .fill(wood)
-                .frame(width: 3.6, height: 12)
-                .rotationEffect(
-                    .degrees(isOpen ? -22 : 6),
-                    anchor: .top
-                )
-                .offset(x: -2.2, y: 4)
-
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                .fill(wood)
-                .frame(width: 11, height: 8)
-                .offset(y: -4)
-
-            Circle()
-                .fill(Color.black.opacity(0.22))
-                .frame(width: 2.2, height: 2.2)
-                .offset(y: -4)
-
-            Capsule()
-                .fill(spring)
-                .frame(width: 10.5, height: 2)
-                .offset(y: 0.5)
-
-            Circle()
-                .stroke(spring, lineWidth: 1.2)
-                .frame(width: 4, height: 4)
-                .offset(x: 5.2, y: 0.5)
-
-            Capsule()
-                .fill(Color.white.opacity(0.34))
-                .frame(width: 1.2, height: 5)
-                .offset(x: -2.6, y: -4)
+                .fill(Color.white.opacity(0.38))
+                .frame(width: 1.4, height: 4.2)
+                .offset(x: -3.6, y: -0.8)
 
             if isPinned {
                 Circle()
                     .fill(Color.accentColor)
                     .frame(width: 2.2, height: 2.2)
-                    .offset(y: -4)
+                    .offset(x: -3.4, y: 4.6)
             }
         }
         .frame(width: 14, height: ClipboardShelfLayout.clipHeight)
+        .rotationEffect(
+            .degrees(isOpen ? -14 : 0),
+            anchor: .top
+        )
+        .offset(y: isOpen ? -3 : 0)
         .scaleEffect(isHovering ? 1.06 : 1)
         .shadow(color: Color.black.opacity(0.18), radius: 1.5, y: 1)
         .contentShape(Rectangle())
@@ -637,6 +628,12 @@ private struct ShelfClipView: View {
         .accessibilityAction {
             unclip()
         }
+        .animation(
+            reduceMotion
+                ? nil
+                : .spring(response: 0.18, dampingFraction: 0.62),
+            value: isOpen
+        )
     }
 
     private func unclip() {
@@ -651,6 +648,50 @@ private struct ShelfClipView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
             onDelete()
         }
+    }
+}
+
+private struct BinderClipBody: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let top: CGFloat = 5.6
+        path.move(to: CGPoint(x: 2.4, y: top))
+        path.addQuadCurve(
+            to: CGPoint(x: 3.4, y: 4.9),
+            control: CGPoint(x: 2.6, y: 4.9)
+        )
+        path.addLine(to: CGPoint(x: 10.6, y: 4.9))
+        path.addQuadCurve(
+            to: CGPoint(x: 11.6, y: top),
+            control: CGPoint(x: 11.4, y: 4.9)
+        )
+        path.addLine(to: CGPoint(x: 11.0, y: 13.7))
+        path.addQuadCurve(
+            to: CGPoint(x: 10.1, y: 14.4),
+            control: CGPoint(x: 10.9, y: 14.4)
+        )
+        path.addLine(to: CGPoint(x: 3.9, y: 14.4))
+        path.addQuadCurve(
+            to: CGPoint(x: 3.0, y: 13.7),
+            control: CGPoint(x: 3.1, y: 14.4)
+        )
+        path.closeSubpath()
+        return path
+    }
+}
+
+private struct BinderClipWire: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: 4.5, y: 15.0))
+        path.addLine(to: CGPoint(x: 4.5, y: 7.0))
+        path.addCurve(
+            to: CGPoint(x: 9.5, y: 7.0),
+            control1: CGPoint(x: 4.5, y: -1.0),
+            control2: CGPoint(x: 9.5, y: -1.0)
+        )
+        path.addLine(to: CGPoint(x: 9.5, y: 15.0))
+        return path
     }
 }
 

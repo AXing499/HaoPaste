@@ -22,12 +22,13 @@ enum ClipboardShelfLayout {
     static let panelHeight: CGFloat = 232
     static let railTop: CGFloat = 8
     static let lineTop: CGFloat = 16
-    static let clipHeight: CGFloat = 16
+    static let clipHeight: CGFloat = 18
+    static let clipLoopY: CGFloat = 4.5
     static let clipOverlap: CGFloat = 4
     static let bodyOffset = clipHeight - clipOverlap
-    static let cardBodyHeight: CGFloat = 128
+    static let cardBodyHeight: CGFloat = 126
     static let cardHeight = clipHeight + cardBodyHeight - clipOverlap
-    static let cardTopOffset: CGFloat = -clipHeight / 2
+    static let cardTopOffset: CGFloat = -clipLoopY
     static let minCardHeight: CGFloat = 110
     static let maxTopCardHeight: CGFloat = 150
     static let maxSideCardHeight: CGFloat = 240
@@ -495,8 +496,19 @@ enum ClipboardShelfLayout {
         at point: CGPoint,
         in targets: [ShelfHitTarget]
     ) -> ShelfHitTarget? {
-        let hits = targets.filter {
-            $0.rect.insetBy(dx: -4, dy: -4).contains(point)
+        let hits = targets.filter { target in
+            let isCard: Bool
+            if case .card = target.kind {
+                isCard = true
+            } else {
+                isCard = false
+            }
+            // Hovering lifts the card (and its clip) a few points, so the
+            // card hit area must be more forgiving than the filter bar.
+            return target.rect.insetBy(
+                dx: isCard ? -10 : -4,
+                dy: isCard ? -12 : -4
+            ).contains(point)
         }
         // Side cards can scroll under the floating filter bar; the bar is
         // visually on top, so it must win hit testing in the overlap.

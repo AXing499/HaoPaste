@@ -386,17 +386,9 @@ final class ClipboardShelfController: NSObject {
             for: edge,
             distance: slideDistance
         )
-        let overshootSlide = ClipboardShelfLayout.slideOffset(
-            for: edge,
-            distance: -10
-        )
         let start = reduceMotion
             ? target
             : target.offsetBy(dx: slide.width, dy: slide.height)
-        let overshoot = target.offsetBy(
-            dx: overshootSlide.width,
-            dy: overshootSlide.height
-        )
 
         panel.alphaValue = 1
         panel.setFrame(start, display: false)
@@ -411,22 +403,11 @@ final class ClipboardShelfController: NSObject {
 
         if !reduceMotion {
             NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.36
+                context.duration = 0.44
                 context.timingFunction = CAMediaTimingFunction(
-                    controlPoints: 0.16, 0.92, 0.28, 1
+                    controlPoints: 0.18, 1.04, 0.3, 1.0
                 )
-                panel.animator().setFrame(overshoot, display: true)
-            } completionHandler: { [weak self] in
-                guard let self, self.isRevealed, !self.isHiding else {
-                    return
-                }
-                NSAnimationContext.runAnimationGroup { context in
-                    context.duration = 0.16
-                    context.timingFunction = CAMediaTimingFunction(
-                        name: .easeInEaseOut
-                    )
-                    self.panel.animator().setFrame(target, display: true)
-                }
+                panel.animator().setFrame(target, display: true)
             }
         }
 
@@ -479,8 +460,10 @@ final class ClipboardShelfController: NSObject {
         }
 
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.26
-            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            context.duration = 0.34
+            context.timingFunction = CAMediaTimingFunction(
+                controlPoints: 0.45, 0.0, 0.7, 0.95
+            )
             panel.animator().setFrame(end, display: true)
         } completionHandler: {
             DispatchQueue.main.async(execute: finish)
