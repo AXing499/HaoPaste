@@ -19,6 +19,4 @@ final class ShelfInteractionState {
     /// against the metrics reported by the shelf layout.
     var scrollOffset: CGFloat = 0
 
-    /// 0...1 reveal mask so the shelf grows out from its edge.
-    var revealProgress: CGFloat = 1
 }

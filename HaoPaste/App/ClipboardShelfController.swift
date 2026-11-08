@@ -379,8 +379,19 @@ final class ClipboardShelfController: NSObject {
         placePanel(on: screen)
         let target = ClipboardShelfLayout.panelFrame(on: screen, edge: edge)
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let slideDistance = edge == .top
+            ? ClipboardShelfLayout.panelHeight + 24
+            : ClipboardShelfLayout.sidePanelWidth + 24
+        let slide = ClipboardShelfLayout.slideOffset(
+            for: edge,
+            distance: slideDistance
+        )
+        let start = reduceMotion
+            ? target
+            : target.offsetBy(dx: slide.width, dy: slide.height)
+
         panel.alphaValue = 1
-        panel.setFrame(target, display: false)
+        panel.setFrame(start, display: false)
         panel.ignoresMouseEvents = true
         panel.orderFrontRegardless()
 
@@ -391,18 +402,16 @@ final class ClipboardShelfController: NSObject {
         startMouseTracking(interval: Timing.visiblePollInterval)
 
         if reduceMotion {
-            interaction.revealProgress = 1
             isRevealing = false
         } else {
             isRevealing = true
-            interaction.revealProgress = 0
-            withAnimation(
-                .timingCurve(0.22, 0.8, 0.3, 1.0, duration: 0.7)
-            ) {
-                interaction.revealProgress = 1
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-                [weak self] in
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.75
+                context.timingFunction = CAMediaTimingFunction(
+                    controlPoints: 0.16, 0.9, 0.3, 1.0
+                )
+                panel.animator().setFrame(target, display: true)
+            } completionHandler: { [weak self] in
                 self?.isRevealing = false
             }
         }
@@ -427,27 +436,42 @@ final class ClipboardShelfController: NSObject {
         panel.ignoresMouseEvents = true
 
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let screen = panel.screen ?? NSScreen.main ?? NSScreen.screens.first
+        let target = screen.map {
+            ClipboardShelfLayout.panelFrame(on: $0, edge: edge)
+        } ?? panel.frame
+        let slideDistance = edge == .top
+            ? ClipboardShelfLayout.panelHeight + 24
+            : ClipboardShelfLayout.sidePanelWidth + 24
+        let slide = ClipboardShelfLayout.slideOffset(
+            for: edge,
+            distance: slideDistance
+        )
+        let end = reduceMotion
+            ? target
+            : target.offsetBy(dx: slide.width, dy: slide.height)
+
         let finish = { [weak self] in
             guard let self else { return }
             self.panel.orderOut(nil)
             self.panel.alphaValue = 1
-            self.interaction.revealProgress = 1
+            self.panel.setFrame(target, display: false)
             self.isHiding = false
             self.onVisibilityChanged?()
         }
 
         guard !reduceMotion else {
-            interaction.revealProgress = 0
             finish()
             return
         }
 
-        withAnimation(
-            .timingCurve(0.45, 0.0, 0.7, 0.95, duration: 0.55)
-        ) {
-            interaction.revealProgress = 0
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.6
+            context.timingFunction = CAMediaTimingFunction(
+                controlPoints: 0.5, 0.0, 0.75, 0.95
+            )
+            panel.animator().setFrame(end, display: true)
+        } completionHandler: {
             DispatchQueue.main.async(execute: finish)
         }
     }

@@ -68,7 +68,7 @@ struct ClipboardShelfView: View {
     @State private var scrollHintVisible = false
     @State private var scrollHintToken = UUID()
 
-    private let cardAngles: [Double] = [-1.1, 0.6, -0.4, 0.9, -0.7, 0.3]
+    private let cardAngles: [Double] = [0, 0, 0, 0, 0, 0]
 
     var body: some View {
         GeometryReader { proxy in
@@ -170,27 +170,27 @@ struct ClipboardShelfView: View {
             let filterY = height
                 - ClipboardShelfLayout.filterBarBottom
                 - ClipboardShelfLayout.filterBarHeight / 2
-            let revealProgress = min(
-                max(interaction.revealProgress, 0),
-                1
+            let maskHeight = max(
+                0,
+                height
+                    - ClipboardShelfLayout.filterBarBottom
+                    - ClipboardShelfLayout.filterBarHeight
             )
-            let maskWidth = isSide ? width * revealProgress : width
-            let maskHeight = isSide ? height : height * revealProgress
             let railX = edge == .left
-                ? ClipboardShelfLayout.sideRailInset
-                : width - ClipboardShelfLayout.sideRailInset
+                ? width / 2
+                    - cardWidth / 2
+                    + 7
+                : width / 2
+                    + cardWidth / 2
+                    - 7
 
             ZStack(alignment: .top) {
-                if isSide {
+                ZStack(alignment: .top) {
+                    if isSide {
                     ShelfSideRackView(
                         railX: railX,
-                        cardCenterX: width / 2,
-                        cardWidth: cardWidth,
                         start: sideRack.lowerBound,
-                        end: sideRack.upperBound,
-                        scrollOffset: scrollOffset,
-                        cardTops: sideTops,
-                        visibleRange: visibleRange
+                        end: sideRack.upperBound
                     )
                     .animation(Theme.gentleSpring, value: sideRack.lowerBound)
                     .animation(Theme.gentleSpring, value: sideRack.upperBound)
@@ -281,21 +281,42 @@ struct ClipboardShelfView: View {
                     .zIndex(isHovering ? 100 : 10 - Double(index))
                 }
 
-                if scrollHintVisible && maxOffset > 0.5 {
-                    ShelfScrollIndicator(
-                        edge: edge,
-                        offset: scrollOffset,
-                        maxOffset: maxOffset,
-                        contentLength: isSide
-                            ? sideContentHeight
-                            : totalCardWidth,
-                        viewportLength: isSide ? visibleBottom : width,
-                        panelWidth: width,
-                        panelHeight: height
-                    )
-                    .allowsHitTesting(false)
-                    .transition(.opacity)
-                    .zIndex(200)
+                    if scrollHintVisible && maxOffset > 0.5 {
+                        ShelfScrollIndicator(
+                            edge: edge,
+                            offset: scrollOffset,
+                            maxOffset: maxOffset,
+                            contentLength: isSide
+                                ? sideContentHeight
+                                : totalCardWidth,
+                            viewportLength: isSide ? visibleBottom : width,
+                            panelWidth: width,
+                            panelHeight: height
+                        )
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                        .zIndex(200)
+                    }
+                }
+                .frame(
+                    maxWidth: .infinity,
+                    maxHeight: .infinity,
+                    alignment: .top
+                )
+                .mask {
+                    VStack(spacing: 0) {
+                        LinearGradient(
+                            stops: [
+                                .init(color: .black, location: 0),
+                                .init(color: .black, location: 0.94),
+                                .init(color: .clear, location: 1)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .frame(height: maskHeight)
+                        Spacer(minLength: 0)
+                    }
                 }
 
                 ShelfFilterBar(
@@ -309,10 +330,6 @@ struct ClipboardShelfView: View {
                 .shelfHitArea(.filterBar)
                 .position(x: width / 2, y: filterY)
                 .zIndex(300)
-            }
-            .mask(alignment: maskAlignment(for: edge)) {
-                Rectangle()
-                    .frame(width: maskWidth, height: maskHeight)
             }
             .coordinateSpace(name: "ClipboardShelf")
             .onPreferenceChange(ShelfHitTargetsKey.self) { targets in
@@ -334,16 +351,6 @@ struct ClipboardShelfView: View {
             .animation(Theme.gentleSpring, value: count)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private func maskAlignment(
-        for edge: ClipboardShelfEdge
-    ) -> Alignment {
-        switch edge {
-        case .top: return .top
-        case .left: return .leading
-        case .right: return .trailing
-        }
     }
 
     private func flashScrollHint() {
@@ -556,29 +563,20 @@ private struct ShelfRackView: View, Animatable {
 /// clipped to their outer top edge; the rail stays visible near the screen edge.
 private struct ShelfSideRackView: View, Animatable {
     var railX: CGFloat
-    var cardCenterX: CGFloat
-    var cardWidth: CGFloat
     var start: CGFloat
     var end: CGFloat
-    var scrollOffset: CGFloat
-    var cardTops: [CGFloat]
-    var visibleRange: Range<Int>
 
     var animatableData: AnimatablePair<
         AnimatablePair<CGFloat, CGFloat>,
-        AnimatablePair<CGFloat, CGFloat>
+        CGFloat
     > {
         get {
-            AnimatablePair(
-                AnimatablePair(start, end),
-                AnimatablePair(railX, cardCenterX)
-            )
+            AnimatablePair(AnimatablePair(start, end), railX)
         }
         set {
             start = newValue.first.first
             end = newValue.first.second
-            railX = newValue.second.first
-            cardCenterX = newValue.second.second
+            railX = newValue.second
         }
     }
 
@@ -586,10 +584,6 @@ private struct ShelfSideRackView: View, Animatable {
         Canvas { context, _ in
             let plateWidth: CGFloat = 20
             let plateHeight: CGFloat = 7
-            let isLeft = railX < cardCenterX
-            let clipCenterX = isLeft
-                ? cardCenterX - cardWidth / 2 + 6.5
-                : cardCenterX + cardWidth / 2 - 6.5
 
             for y in [start, end] {
                 let plate = CGRect(
@@ -622,11 +616,11 @@ private struct ShelfSideRackView: View, Animatable {
                 )
             }
 
-            var rail = Path()
-            rail.move(to: CGPoint(x: railX, y: start))
-            rail.addLine(to: CGPoint(x: railX, y: end))
+            var line = Path()
+            line.move(to: CGPoint(x: railX, y: start))
+            line.addLine(to: CGPoint(x: railX, y: end))
             context.stroke(
-                rail,
+                line,
                 with: .linearGradient(
                     Gradient(colors: [
                         Color.primary.opacity(0.46),
@@ -647,31 +641,6 @@ private struct ShelfSideRackView: View, Animatable {
                 with: .color(Color.white.opacity(0.16)),
                 lineWidth: 0.6
             )
-
-            for index in visibleRange where index < cardTops.count {
-                let y = cardTops[index]
-                    - scrollOffset
-                    + ClipboardShelfLayout.clipLoopY
-                var arm = Path()
-                arm.move(to: CGPoint(x: railX, y: y))
-                arm.addLine(to: CGPoint(x: clipCenterX, y: y))
-                context.stroke(
-                    arm,
-                    with: .color(Color.primary.opacity(0.24)),
-                    lineWidth: 1.0
-                )
-
-                let peg = CGRect(
-                    x: railX - 1.6,
-                    y: y - 1.6,
-                    width: 3.2,
-                    height: 3.2
-                )
-                context.fill(
-                    Path(ellipseIn: peg),
-                    with: .color(Color.primary.opacity(0.30))
-                )
-            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .allowsHitTesting(false)
@@ -723,7 +692,7 @@ private struct ShelfScrollIndicator: View {
                         y: panelHeight
                             - ClipboardShelfLayout.filterBarBottom
                             - ClipboardShelfLayout.filterBarHeight
-                            - 10
+                            - 18
                     )
             }
         }

@@ -19,11 +19,11 @@ struct ShelfHitTarget: Equatable {
 }
 
 enum ClipboardShelfLayout {
-    static let panelHeight: CGFloat = 232
+    static let panelHeight: CGFloat = 260
     static let railTop: CGFloat = 8
     static let lineTop: CGFloat = 16
     static let clipHeight: CGFloat = 18
-    static let clipLoopY: CGFloat = 4.5
+    static let clipLoopY: CGFloat = 4.2
     static let clipOverlap: CGFloat = 8
     static let bodyOffset = clipHeight - clipOverlap
     static let cardBodyHeight: CGFloat = 130
@@ -48,8 +48,8 @@ enum ClipboardShelfLayout {
     static let sideRevealDepth: CGFloat = 9
     static let filterBarHeight: CGFloat = 28
     static let filterBarBottom: CGFloat = 12
-    static let minSag: CGFloat = 12
-    static let maxSag: CGFloat = 24
+    static let minSag: CGFloat = 16
+    static let maxSag: CGFloat = 36
 
     static func totalWidth(count: Int, cardWidth: CGFloat) -> CGFloat {
         guard count > 0 else { return 0 }
@@ -313,7 +313,7 @@ enum ClipboardShelfLayout {
     }
 
     static func sag(span: CGFloat) -> CGFloat {
-        min(maxSag, max(minSag, span * 0.018))
+        min(maxSag, max(minSag, span * 0.026))
     }
 
     static func ropeY(

@@ -689,14 +689,19 @@ private struct BinderClipWire: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         // The wire fans outward at the top, then converges into the clip feet.
-        path.move(to: CGPoint(x: 4.7, y: 15.0))
-        path.addLine(to: CGPoint(x: 2.7, y: 7.1))
+        path.move(to: CGPoint(x: 4.6, y: 15.0))
+        path.addLine(to: CGPoint(x: 3.8, y: 7.6))
         path.addCurve(
-            to: CGPoint(x: 11.3, y: 7.1),
-            control1: CGPoint(x: 1.3, y: -3.6),
-            control2: CGPoint(x: 12.7, y: -3.6)
+            to: CGPoint(x: 7.0, y: 1.0),
+            control1: CGPoint(x: 3.3, y: 3.2),
+            control2: CGPoint(x: 4.7, y: 1.0)
         )
-        path.addLine(to: CGPoint(x: 9.3, y: 15.0))
+        path.addCurve(
+            to: CGPoint(x: 10.2, y: 7.6),
+            control1: CGPoint(x: 9.3, y: 1.0),
+            control2: CGPoint(x: 10.7, y: 3.2)
+        )
+        path.addLine(to: CGPoint(x: 9.4, y: 15.0))
         return path
     }
 }
