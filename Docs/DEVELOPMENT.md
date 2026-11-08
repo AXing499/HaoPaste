@@ -63,6 +63,7 @@ Release 构建输出：
 | `HAOPASTE_RENDER_TRANSLATION=success\|consent\|error` | Debug 渲染翻译面板状态 |
 | `HAOPASTE_RENDER_OCR=success\|empty\|batch` | Debug 渲染单张 / 批量识图状态 |
 | `--render-quick <path>` | Debug 渲染快捷翻译卡片 |
+| `--show-quick` | Debug：启动后用示例剪贴板文本显示快捷翻译卡片 |
 | `--show-settings` | Debug：启动后直接打开设置窗口 |
 | `--export-history <path>` | Debug：将指定 storage 的历史导出为 zip 后退出 |
 | `--import-history <path>` | Debug：将 zip 合并导入指定 storage 后退出 |
@@ -131,8 +132,8 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste-0.9.0.dmg                 # 安装包（app + Applications 快捷方式）
-dist/HaoPaste-0.9.0.dmg.sha256          # SHA-256 校验
+dist/HaoPaste-0.9.1.dmg                 # 安装包（app + Applications 快捷方式）
+dist/HaoPaste-0.9.1.dmg.sha256          # SHA-256 校验
 ```
 
 > `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
@@ -179,11 +180,11 @@ codesign --force --deep --options runtime --timestamp \
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash
-xcrun notarytool submit "dist/HaoPaste-0.9.0.dmg" \
+xcrun notarytool submit "dist/HaoPaste-0.9.1.dmg" \
   --keychain-profile "haopaste-notary" --wait
 
-xcrun stapler staple "dist/HaoPaste-0.9.0.dmg"
-xcrun stapler validate "dist/HaoPaste-0.9.0.dmg"
+xcrun stapler staple "dist/HaoPaste-0.9.1.dmg"
+xcrun stapler validate "dist/HaoPaste-0.9.1.dmg"
 ```
 
 也可以对 `.app` 先公证再打包（Apple 推荐流程根据分发方式调整）。需要 Apple Developer Program 账号。
@@ -193,8 +194,8 @@ xcrun stapler validate "dist/HaoPaste-0.9.0.dmg"
 版本号位于 `project.yml`：
 
 ```yaml
-MARKETING_VERSION: "0.9.0"
-CURRENT_PROJECT_VERSION: "15"
+MARKETING_VERSION: "0.9.1"
+CURRENT_PROJECT_VERSION: "16"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：
