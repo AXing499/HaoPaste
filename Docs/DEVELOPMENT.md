@@ -62,6 +62,7 @@ Release 构建输出：
 | `HAOPASTE_RENDER_MULTI=<数量>` | Debug 渲染多选界面并选中前 N 条 |
 | `HAOPASTE_RENDER_TRANSLATION=success\|consent\|error` | Debug 渲染翻译面板状态 |
 | `HAOPASTE_RENDER_OCR=success\|empty\|batch` | Debug 渲染单张 / 批量识图状态 |
+| `--render-quick <path>` | Debug 渲染快捷翻译卡片 |
 | `--show-settings` | Debug：启动后直接打开设置窗口 |
 | `--export-history <path>` | Debug：将指定 storage 的历史导出为 zip 后退出 |
 | `--import-history <path>` | Debug：将 zip 合并导入指定 storage 后退出 |
@@ -130,8 +131,8 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste-0.8.0.dmg                 # 安装包（app + Applications 快捷方式）
-dist/HaoPaste-0.8.0.dmg.sha256          # SHA-256 校验
+dist/HaoPaste-0.9.0.dmg                 # 安装包（app + Applications 快捷方式）
+dist/HaoPaste-0.9.0.dmg.sha256          # SHA-256 校验
 ```
 
 > `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
@@ -178,11 +179,11 @@ codesign --force --deep --options runtime --timestamp \
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash
-xcrun notarytool submit "dist/HaoPaste-0.8.0.dmg" \
+xcrun notarytool submit "dist/HaoPaste-0.9.0.dmg" \
   --keychain-profile "haopaste-notary" --wait
 
-xcrun stapler staple "dist/HaoPaste-0.8.0.dmg"
-xcrun stapler validate "dist/HaoPaste-0.8.0.dmg"
+xcrun stapler staple "dist/HaoPaste-0.9.0.dmg"
+xcrun stapler validate "dist/HaoPaste-0.9.0.dmg"
 ```
 
 也可以对 `.app` 先公证再打包（Apple 推荐流程根据分发方式调整）。需要 Apple Developer Program 账号。
@@ -192,8 +193,8 @@ xcrun stapler validate "dist/HaoPaste-0.8.0.dmg"
 版本号位于 `project.yml`：
 
 ```yaml
-MARKETING_VERSION: "0.8.0"
-CURRENT_PROJECT_VERSION: "14"
+MARKETING_VERSION: "0.9.0"
+CURRENT_PROJECT_VERSION: "15"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：
@@ -245,7 +246,7 @@ xcodebuild \
   test
 ```
 
-当前 88 个测试覆盖：
+当前 91 个测试覆盖：
 
 - 内容分类器：URL / HEX / JSON / 代码 / SQL / 普通文本边界。
 - `HotKeyConfiguration`：默认值、修饰符、显示顺序、校验。
@@ -260,7 +261,8 @@ xcodebuild \
 - 合并：文本顺序、文件 URL、混合路径、去重、图片限制与剪贴板写入。
 - 翻译 Provider：Google / Bing / DeepL / Azure / 百度 / Google Cloud 的请求参数、签名与响应解析。
 - 翻译服务：多引擎回退、授权、长文本分块、缓存、同语言方向切换与未配置引擎跳过。
-- 翻译设置：目标语言、启用状态、引擎顺序与授权持久化。
+- 翻译设置：目标语言、启用状态、引擎顺序、授权与快捷翻译快捷键持久化。
+- 快捷翻译：自动翻译策略、剪贴板读取、翻译快捷键默认值。
 - OCR：成功 / 空结果 / 失败状态、编辑后缓存复用、批量识别与缓存复用、识别语言持久化，以及真实 Vision 中英文图片识别。
 
 测试宿主使用的是真实 app target，但 `AppDelegate` 会检测 XCTest 环境并跳过菜单栏、轮询和全局快捷键初始化。CI 工作流位于 `.github/workflows/ci.yml`，会运行测试并额外执行一次 Release 构建。
@@ -277,6 +279,8 @@ make demo
 
 识图回归：复制一张带文字的截图 → `⌘R` 或图片预览「提取文字」→ 确认文字可编辑、复制、保存片段，并可直接进入翻译；没有文字的图片应显示「未识别到文字」。
 批量识图回归：复制两张带文字的图片 → `⌘` 多选 → 底部「识别文字」→ 确认两张结果依次出现，可逐张编辑 / 复制 / 翻译，并可复制全部；重新打开同一批图片时应直接命中本地缓存。切换识别语言后再次识别，应使用新的语言配置。
+
+快捷翻译回归：复制英文文本 → 在任意应用按 `⌥⌘T` → 确认翻译卡片出现并自动翻译，`↵` 复制译文后回到原应用；右键菜单栏图标选择「翻译剪贴板」；在设置 → 通用中修改快捷翻译快捷键；复制一条新的英文文本后打开面板，确认「打开面板时翻译最新记录」只自动触发一次。
 
 除了示例数据，还可以用系统剪贴板快速验证：
 

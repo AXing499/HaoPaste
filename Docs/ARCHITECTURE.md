@@ -49,6 +49,9 @@ NSApplication (accessory / LSUIElement)
 │   │             ├── history.json
 │   │             └── Images/
 │   │
+│   ├── QuickTranslationPanelController
+│   │   └── TranslationService (quick instance, shared settings/consent)
+│   │
 │   ├── TranslationService
 │   │   ├── TranslationSettingsStore (UserDefaults)
 │   │   ├── KeychainTranslationCredentialStore
@@ -88,7 +91,8 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | --- | --- |
 | `HaoPasteApplication.swift` | AppKit 入口，持有 AppDelegate，设置 accessory 激活策略 |
 | `AppDelegate.swift` | 依赖装配、主菜单、首次启动展示、应用代理生命周期 |
-| `PanelController.swift` | 无边框悬浮面板的创建 / 定位 / 显隐动画、键盘事件、焦点恢复 |
+| `PanelController.swift` | 无边框悬浮面板的创建 / 定位 / 显隐动画、键盘事件、焦点恢复、自动翻译最新记录 |
+| `QuickTranslationPanelController.swift` | `⌥⌘T` 快捷翻译卡片：读取剪贴板、定位、键盘与焦点恢复 |
 | `StatusBarController.swift` | 菜单栏图标、左键呼出面板、右键菜单、暂停、清空、退出 |
 | `GlobalHotKey.swift` | Carbon 系统级快捷键注册和事件分发，失败时抛出冲突错误 |
 | `SettingsWindowController.swift` | 设置窗口托管与激活 |
@@ -110,6 +114,7 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `TranslationService.swift` | 翻译状态、引擎优先级、自动回退、授权、长文本分块与内存缓存 |
 | `TranslationSettingsStore.swift` | 目标语言、引擎顺序、启用状态与授权持久化 |
 | `TranslationCredentialStore.swift` | API 凭证的 Keychain 读写（含测试用内存实现） |
+| `QuickTranslationSupport.swift` | 自动翻译策略、剪贴板文本读取 |
 | `Translation/` | Google / Bing / DeepL 非官方通道，Azure / DeepL API / 百度 / Google Cloud 官方适配 |
 | `OCRService.swift` | Vision 本地 OCR、单张 / 批量识别、语言选择、结果编辑与状态管理 |
 | `OCRCacheStore.swift` | 按图片哈希与识别语言持久化 OCR 文字（`OCR/`） |
@@ -260,6 +265,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 文本按 Provider 的 `maxCharactersPerRequest` 分段翻译，再按换行拼接；翻译结果只做内存 LRU 缓存（50 条）。
 - 本地用 `NLLanguageRecognizer` 检测源语言；若原文已是目标语言，本次翻译会尝试切换中英方向。
 - 复制译文复用 `ClipboardManager.copyTextToPasteboard`，同步 `changeCount`，不会生成历史记录。
+- 快捷翻译卡片 `QuickTranslationPanelController` 使用独立的 `TranslationService` 状态，但共享 `TranslationSettingsStore` 与 Keychain 凭证；读取 `NSPasteboard.general` 当前纯文本，`⌥⌘T` / 菜单栏均可触发。
+- 面板打开时可自动翻译最新记录：`AutoTranslationPolicy` 检查开关、记录签名、可翻译类型、检测语言与目标语言；每条记录只自动触发一次，图片与同语言文本跳过。默认开启，可在设置 → 通用关闭。
 - Google / Bing 使用非官方 HTTP 接口；DeepL 非官方为实验性 JSON-RPC 通道。官方适配使用各家标准 HTTPS API。
 - API 凭证保存在 Keychain；导出备份、日志与 UserDefaults 不包含密钥。
 
@@ -281,7 +288,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 方向键：更新 `PanelViewState.selectedID`；按住 `⇧` 时扩展多选范围；
 - `⌘⇧A`：全选当前可见结果；
 - 回车：复制选中项；多选时合并复制并关闭；
-- `⌘P` / `⌘Y` / `⌘T` / `⌘R` / `⌘⌫` / `⌘W` / `⌘1–9`；
+- `⌘P` / `⌘Y` / `⌘T` / `⌘R` / `⌘⌫` / `⌘W` / `⌘1–9`；全局 `⌥⌘T` 由独立的 Carbon hotkey 打开快捷翻译卡片。
 - `esc`：取消多选；清空搜索；预览中关闭预览；翻译中关闭翻译；识图中关闭识图；否则关闭面板。
 - 预览打开时，方向键切换预览条目，回车 / `⌘C` 复制并关闭，其他命令快捷键被忽略。
 
@@ -344,7 +351,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-88 个 XCTest 由 app target 作为测试宿主运行：
+91 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。
@@ -366,7 +373,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 合并复制：文本顺序、文件 URL、混合路径、去重、图片限制与剪贴板写入。
 - 翻译 Provider：Google / Bing / DeepL / Azure / 百度 / Google Cloud 的请求参数、签名与响应解析。
 - 翻译服务：多引擎回退、授权、长文本分块、内存缓存、同语言方向切换与未配置官方引擎跳过。
-- 翻译设置：目标语言、启用状态、引擎顺序与授权持久化。
+- 翻译设置：目标语言、启用状态、引擎顺序、授权与快捷翻译快捷键持久化。
+- 快捷翻译：自动翻译策略、剪贴板文本读取、翻译快捷键默认值。
 - OCR：成功 / 空结果 / 失败状态、编辑后缓存复用、批量识别与缓存复用、识别语言持久化，以及真实 Vision 中英文图片识别。
 
 运行：`make test`。CI：`.github/workflows/ci.yml`，执行测试并构建 Release。
