@@ -95,6 +95,9 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `ContentClassifier.swift` | 文本、URL、HEX、JSON、代码的启发式分类 |
 | `ContentHasher.swift` | 加类型盐的 SHA-256 去重指纹 |
 | `ImageProcessor.swift` | 解码、PNG 归一化、获取像素尺寸、生成最大 560px 缩略图 |
+| `ItemPreview.swift` | 预览文本构建：RTF / HTML 归一化、字体大小收敛、12 万字符上限 |
+| `ItemDragProvider.swift` | 为文本 / 图片 / 单文件构建 `NSItemProvider`，附带 RTF / HTML 数据 |
+| `ImageSavePanel.swift`（Utilities） | 共享的 PNG 另存为流程与错误提示 |
 | 富文本 | `RichTextPayload` + `RichText/<id>.json`（RTF / HTML 原始数据） |
 
 ### UI / State
@@ -102,11 +105,12 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | 文件 | 职责 |
 | --- | --- |
 | `ContentView.swift` | 面板布局：搜索栏、分类、数量、列表、页脚 |
-| `ItemRowView.swift` | 条目卡片：图标 / 缩略图、预览、徽章、来源、时间、快捷复制、悬停操作 |
+| `ItemRowView.swift` | 条目卡片：图标 / 缩略图、徽章、来源、时间、快捷复制、悬停预览 / 置顶 / 删除、拖拽 |
+| `PreviewOverlayView.swift` | 预览卡片：图片棋盘格、全文 / 富文本、颜色色块、文件列表、拖拽与动作 |
 | `FilterTabsView.swift` | 胶囊分类按钮与 matched geometry 滑动选中态 |
 | `EmptyStateView.swift` | 空历史 / 无搜索结果状态 |
 | `PanelFooterView.swift` | 监听状态与键盘提示 |
-| `PanelViewState.swift` | 搜索、分类、选中项、焦点触发器 |
+| `PanelViewState.swift` | 搜索、分类、选中项、预览状态、焦点触发器 |
 | `HotKeyConfiguration.swift` | Carbon 键码 / 修饰符、显示文案与校验 |
 | `Snippet.swift` | 可复用文本片段模型 |
 | `SnippetRowView.swift` | 面板片段列表行 |
@@ -201,18 +205,29 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 6.6 快捷动作
 
-- 行内右键菜单按类型提供动作：URL 打开 / 复制 Markdown、文件打开 / Finder 定位、图片保存、颜色复制 HEX / RGB / HSL。
+- 行内右键菜单按类型提供动作：预览、URL 打开 / 复制 Markdown、文件打开 / Finder 定位、图片保存、颜色复制 HEX / RGB / HSL。
 - 动作写回剪贴板时复用 `ClipboardManager.copyTextToPasteboard`，会同步 `changeCount`，不会产生额外的历史条目。
 - 文件 / URL 直接交给 `NSWorkspace` 打开；图片保存使用 `NSSavePanel` 写出原始 PNG。
 
-### 6.7 键盘事件
+### 6.7 预览与拖拽
+
+- 预览状态保存在 `PanelViewState.previewingItemID`，`ContentView` 将其解析为当前可见条目并叠加 `PreviewOverlayView`。
+- `⌘Y`、悬停眼睛按钮、右键「预览」都能打开；预览中 `↑` `↓` 在可见条目间切换，`↵` 复制并关闭，`esc` 返回列表。
+- 图片预览读取原始 PNG，用棋盘格展示透明区域；文本预览优先解析 RTF，其次 HTML，最终回退纯文本。
+- 富文本在显示前会统一前景色、移除背景色，并把字号限制在 10–20pt，避免网页粘贴内容在深色模式下不可读。
+- 超过 12 万字符的文本只渲染前缀并提示，复制仍使用完整内容。
+- 列表行通过 `.onDrag` 提供 `NSItemProvider`：文本附带纯文本 / RTF / HTML，图片附带 PNG 数据与文件 URL，单文件条目附带文件 URL。
+- 预览中的图片和文件行也可拖拽；多文件条目暂不支持整体拖拽。
+
+### 6.8 键盘事件
 
 `PanelController` 使用 `NSEvent.addLocalMonitorForEvents(matching: .keyDown)` 在面板为 key window 时处理：
 
 - 方向键：更新 `PanelViewState.selectedID`；
 - 回车：复制选中项并关闭；
-- `⌘P` / `⌘⌫` / `⌘W` / `⌘1–9`；
-- `esc`：清空搜索或关闭。
+- `⌘P` / `⌘Y` / `⌘⌫` / `⌘W` / `⌘1–9`；
+- `esc`：清空搜索；预览中关闭预览；否则关闭面板。
+- 预览打开时，方向键切换预览条目，回车 / `⌘C` 复制并关闭，其他命令快捷键被忽略。
 
 其余按键原样交还 AppKit / 输入法，因此搜索框和中文输入法保持正常工作。
 
@@ -243,7 +258,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 轮询使用 `Task.sleep(350ms)`，并持有 `ProcessInfo` 活动令牌以避免 App Nap 降低监听及时性。
 - 历史写盘防抖 400ms，避免快速复制导致频繁 I/O。
 - 列表使用 `LazyVStack`，仅渲染视口附近卡片。
-- 图片列表只加载 560px 缩略图，原图只在复制时读取。
+- 图片列表只加载 560px 缩略图，原图只在复制或预览时读取。
+- 富文本预览按需读取缓存 JSON；拖拽 Provider 也延迟到拖拽开始时构建，不增加列表渲染开销。
 - 去重哈希在采集线程（主线程）执行；对常规文本 / 图片足够快，超大内容可后续迁移到后台任务。
 - 搜索在当前 200 条规模内同步执行；只对含 CJK 的内容按需做拼音转换，结果按相关性排序，无持久化索引。
 - 当前默认上限为 200 条未置顶 + 任意置顶项，可在设置中调整为 100 / 200 / 500 / 1000；排序与搜索为 O(n log n) 级别，规模可控。
@@ -265,7 +281,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-49 个 XCTest 由 app target 作为测试宿主运行：
+54 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。
@@ -281,7 +297,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 拼音 / 模糊搜索命中与相关性排序。
 - Snippets CRUD、持久化、过滤、面板选中与备份合并。
 - 富文本 RTF/HTML 缓存、回写与备份迁移。
-- `HexColor` 解析与 RGB / HSL 输出；动作文本复制。
+- 预览状态生命周期、超长文本截断、富文本格式保留与颜色归一化。
+- 文本 / 富文本 / 图片拖拽 Provider 的类型与数据内容。
 
 运行：`make test`。CI：`.github/workflows/ci.yml`，执行测试并构建 Release。
 

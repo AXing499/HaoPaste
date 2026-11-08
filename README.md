@@ -1,6 +1,6 @@
 # HaoPaste
 
-当前版本：**v0.3.4**
+当前版本：**v0.4.0**
 
 一款原生、轻快、键盘优先的 macOS 剪切板管理器。用 `⌥⌘V` 从任何应用呼出无标题栏悬浮面板，搜索、选择、复制，一气呵成。
 
@@ -21,11 +21,11 @@
    ```bash
    make dmg
    # 输出：
-   # dist/HaoPaste-0.3.4.dmg
-   # dist/HaoPaste-0.3.4.dmg.sha256
+   # dist/HaoPaste-0.4.0.dmg
+   # dist/HaoPaste-0.4.0.dmg.sha256
    ```
 
-2. 双击打开 `dist/HaoPaste-0.3.4.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
+2. 双击打开 `dist/HaoPaste-0.4.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
 3. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
 4. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
 
@@ -53,6 +53,18 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 - 片段不会写入剪贴板历史，也不会占用历史上限
 - 备份包会自动包含片段
 
+### 快速预览与拖拽
+
+| 图片预览 | 富文本预览 |
+| --- | --- |
+| ![HaoPaste 图片预览](Docs/screenshot-preview.png) | ![HaoPaste 富文本预览](Docs/screenshot-preview-text.png) |
+
+- 悬停条目点击眼睛按钮，或选中后按 `⌘Y`，打开大图 / 全文预览
+- 图片按原始比例展示，带透明棋盘格；可拖拽到其他应用，或直接保存为 PNG
+- 文本与代码显示完整内容并支持选择；富文本按 RTF / HTML 渲染粗体、斜体等格式
+- 颜色条目显示大色块与 HEX / RGB / HSL；文件条目列出路径并支持逐个拖拽
+- 预览中 `↑` `↓` 切换条目，`↵` 复制并关闭，`esc` 返回列表
+
 
 ## 功能
 
@@ -68,6 +80,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
   | `↵` | 复制选中条目并关闭面板 |
   | `⌘1` – `⌘9` | 直接复制对应序号的条目 |
   | `⌘P` | 置顶 / 取消置顶 |
+  | `⌘Y` | 打开 / 关闭选中条目的预览 |
   | `⌘⌫` | 删除选中条目 |
   | `esc` | 有搜索词时清除搜索，否则关闭面板 |
 
@@ -79,6 +92,8 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 - **智能识别**：自动区分纯文本、链接、代码 / JSON、颜色值（HEX）、图片与文件。
 - **文件支持**：从 Finder 复制单个或多个文件/文件夹；文件条目可复制回其他应用，右键可在 Finder 中显示；文件丢失时会明确提示。
 - **快捷动作**：右键打开链接 / 文件、保存图片、复制 Markdown 链接、复制颜色的 RGB / HSL 表示。
+- **快速预览**：`⌘Y` 或悬停眼睛按钮打开预览；支持图片大图、全文 / 富文本、颜色色块与文件列表。
+- **拖拽导出**：把文本、图片或单个文件条目直接拖到其他应用；预览中的图片与文件行同样可拖拽。
 - **Snippets 片段**：在设置中管理常用文本与模板，面板「片段」标签中搜索、键盘选择并一键复制；不会写入历史。
 - **富文本保留**：从浏览器 / 备忘录等复制的 RTF / HTML 格式会随内容保存，复制时优先保留格式；右键可复制为纯文本。
 - **颜色可视化**：HEX 条目显示真实颜色色块，支持复制 HEX / RGB / HSL。
@@ -112,7 +127,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 # 开发调试
 make run       # Debug 构建并打开
 make demo      # 用可复现的示例数据启动，便于查看界面
-make test      # 运行 49 个 XCTest（自动化测试）
+make test      # 运行 54 个 XCTest（自动化测试）
 
 # 日常使用 / 发布
 make release   # Release 构建
@@ -126,7 +141,7 @@ make install   # 安装到 /Applications 并启动
 
 ## 质量与测试
 
-- **49 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、去重/裁剪、存储读写、备份导入导出。
+- **54 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、去重/裁剪、存储读写、备份导入导出。
 - 测试宿主会自动跳过菜单栏、剪贴板轮询和全局快捷键注册，不影响正常使用。
 - GitHub Actions 工作流：`.github/workflows/ci.yml`，在 macOS 上执行测试并构建 Release。
 - 运行：`make test`。
@@ -135,7 +150,8 @@ make install   # 安装到 /Applications 并启动
 
 - 在搜索框中输入会即时过滤；`esc` 第一次清空搜索，第二次关闭面板。
 - 面板失焦时自动关闭，并把焦点还给之前的应用。
-- 鼠标悬停在条目上显示置顶 / 删除按钮；点击条目主体复制。
+- 鼠标悬停在条目上显示预览、置顶与删除按钮；点击条目主体复制。
+- 选中条目后按 `⌘Y` 打开预览；预览中按 `esc` 返回列表，按 `↵` 复制并关闭。
 - 被选中条目使用系统强调色底色与边框，键盘与鼠标操作共享同一套选中状态。
 - `⌘1`–`⌘9` 对应当前过滤结果中的前九条。
 
@@ -212,6 +228,8 @@ HaoPaste/
 │   ├── AppSettings.swift            # 快捷键 / 历史上限 / 登录项偏好
 │   ├── SnippetStore.swift           # snippets.json 持久化
 │   ├── SnippetManager.swift         # 片段 CRUD / 过滤 / 合并
+│   ├── ItemPreview.swift            # 预览文本 / 富文本构建
+│   ├── ItemDragProvider.swift       # 拖拽粘贴板 Provider
 │   ├── SearchMatcher.swift          # 中文 / 拼音 / 模糊搜索
 │   ├── ContentClassifier.swift      # 文本 / URL / JSON / 代码 / HEX 识别
 │   ├── ContentHasher.swift          # SHA-256 指纹
@@ -219,9 +237,11 @@ HaoPaste/
 ├── Models/
 │   ├── ClipboardItem.swift
 │   ├── Snippet.swift                # 可复用文本片段
+│   ├── RichTextPayload.swift        # RTF / HTML 缓存
 │   └── HotKeyConfiguration.swift    # 快捷键键码与显示
 ├── State/PanelViewState.swift       # 搜索、筛选、选中项与焦点
-├── Views/                           # ContentView、ItemRowView、Settings
+├── Views/                           # ContentView、ItemRowView、PreviewOverlayView、Settings
+├── Utilities/ImageSavePanel.swift   # 图片另存为 PNG
 ├── Theme/Theme.swift                # 圆角、间距、弹簧动效、细描边
 └── Support/                         # DEMO 数据与离屏截图工具（仅 Debug）
 ```
@@ -251,6 +271,11 @@ open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/panel.png 
 launchctl setenv HAOPASTE_RENDER_APPEARANCE dark
 open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/panel-dark.png --storage /tmp/haopaste-preview-dark
 launchctl unsetenv HAOPASTE_RENDER_APPEARANCE
+
+# 预览界面渲染（image / text）
+launchctl setenv HAOPASTE_RENDER_PREVIEW image
+open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/preview.png --storage /tmp/haopaste-preview-image
+launchctl unsetenv HAOPASTE_RENDER_PREVIEW
 ```
 
 `make demo` 等价于以 `--demo --show --storage /tmp/haopaste-demo` 启动一个 Debug 实例。
@@ -268,6 +293,8 @@ launchctl unsetenv HAOPASTE_RENDER_APPEARANCE
 
 - 文件条目保存的是路径引用，不包含文件本体；文件被移动或删除后，条目会提示不可用。
 - 多图列表和 GIF 尚未纳入。
+- 多文件条目暂不支持整体拖拽，可点击复制全部文件 URL；预览中可逐个拖拽文件。
+- 超长文本预览只渲染前 12 万个字符，复制仍使用完整内容。
 - 富文本的 RTF / HTML 各自限制在 2MB 以内；超过时自动回退为纯文本。
 - 备份中的文件条目同样只保存路径引用，跨设备恢复后可能不可用。
 - 点击条目只复制，不自动粘贴（不申请辅助功能权限）。
