@@ -1,6 +1,6 @@
 # HaoPaste
 
-当前版本：**v0.3.3**
+当前版本：**v0.3.4**
 
 一款原生、轻快、键盘优先的 macOS 剪切板管理器。用 `⌥⌘V` 从任何应用呼出无标题栏悬浮面板，搜索、选择、复制，一气呵成。
 
@@ -21,11 +21,11 @@
    ```bash
    make dmg
    # 输出：
-   # dist/HaoPaste-0.3.3.dmg
-   # dist/HaoPaste-0.3.3.dmg.sha256
+   # dist/HaoPaste-0.3.4.dmg
+   # dist/HaoPaste-0.3.4.dmg.sha256
    ```
 
-2. 双击打开 `dist/HaoPaste-0.3.3.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
+2. 双击打开 `dist/HaoPaste-0.3.4.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
 3. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
 4. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
 
@@ -80,6 +80,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 - **文件支持**：从 Finder 复制单个或多个文件/文件夹；文件条目可复制回其他应用，右键可在 Finder 中显示；文件丢失时会明确提示。
 - **快捷动作**：右键打开链接 / 文件、保存图片、复制 Markdown 链接、复制颜色的 RGB / HSL 表示。
 - **Snippets 片段**：在设置中管理常用文本与模板，面板「片段」标签中搜索、键盘选择并一键复制；不会写入历史。
+- **富文本保留**：从浏览器 / 备忘录等复制的 RTF / HTML 格式会随内容保存，复制时优先保留格式；右键可复制为纯文本。
 - **颜色可视化**：HEX 条目显示真实颜色色块，支持复制 HEX / RGB / HSL。
 - **来源应用**：记录复制内容时最前方的应用名称。
 - **图片缩略图**：原图与缩略图分文件缓存，列表只加载缩略图。
@@ -111,7 +112,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 # 开发调试
 make run       # Debug 构建并打开
 make demo      # 用可复现的示例数据启动，便于查看界面
-make test      # 运行 47 个 XCTest（自动化测试）
+make test      # 运行 49 个 XCTest（自动化测试）
 
 # 日常使用 / 发布
 make release   # Release 构建
@@ -125,7 +126,7 @@ make install   # 安装到 /Applications 并启动
 
 ## 质量与测试
 
-- **47 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件复制、颜色解析、拼音 / 模糊搜索、Snippets、去重/裁剪、存储读写、备份导入导出。
+- **49 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、去重/裁剪、存储读写、备份导入导出。
 - 测试宿主会自动跳过菜单栏、剪贴板轮询和全局快捷键注册，不影响正常使用。
 - GitHub Actions 工作流：`.github/workflows/ci.yml`，在 macOS 上执行测试并构建 Release。
 - 运行：`make test`。
@@ -146,9 +147,11 @@ make install   # 安装到 /Applications 并启动
 ~/Library/Application Support/HaoPaste/
 ├── history.json          # [ClipboardItem]
 ├── snippets.json         # [Snippet]
-└── Images/
-    ├── <UUID>.png        # 原图
-    └── <UUID>-thumb.png  # 列表缩略图
+├── Images/
+│   ├── <UUID>.png        # 原图
+│   └── <UUID>-thumb.png  # 列表缩略图
+└── RichText/
+    └── <UUID>.json       # RTF / HTML 缓存
 ```
 
 导出的备份是一个未加密的 zip：
@@ -158,7 +161,8 @@ HaoPasteBackup/
 ├── manifest.json        # schema、版本、导出时间、数量
 ├── history.json         # 全部记录（含置顶与来源应用）
 ├── snippets.json        # 全部片段
-└── Images/              # 原图与缩略图
+├── Images/              # 原图与缩略图
+└── RichText/            # RTF / HTML 缓存
 ```
 
 开发与测试可以通过环境变量或启动参数覆盖存储位置：
@@ -185,6 +189,7 @@ struct ClipboardItem {
     var thumbnailFileName: String?
     var imageDimensions: ImageDimensions?
     var filePaths: [String]?             // .file 的单个 / 多选路径
+    var richTextFileName: String?        // RichText 缓存文件名
 }
 ```
 
@@ -225,14 +230,14 @@ HaoPaste/
 
 1. 每 350ms 比较一次 `NSPasteboard.general.changeCount`。
 2. 检测到变化后，先过滤隐藏 / 临时 / 密码管理器类型。
-3. 依次尝试文件 URL、图片、纯文本；对文本做类型识别与 SHA-256 指纹。
+3. 依次尝试文件 URL、图片、纯文本；纯文本同时读取 RTF / HTML 格式，并纳入 SHA-256 指纹。
 4. 与历史指纹比较：命中则更新时间并移到顶部，否则创建新记录。
 5. 图片写入磁盘并生成缩略图；记录写入 JSON（400ms 防抖）。
 6. 按设置上限裁剪未置顶历史；置顶记录始终保留。
 
 ### 复制流程
 
-应用自身写入剪贴板后立即同步 `changeCount`，避免把「再次复制历史条目」误采集为一条新记录。同时刷新该条目的使用时间，使下次打开面板时位于更靠前的位置。
+应用自身写入剪贴板后立即同步 `changeCount`，避免把「再次复制历史条目」误采集为一条新记录。同时刷新该条目的使用时间，使下次打开面板时位于更靠前的位置。富文本条目会同时写入纯文本、RTF 与 HTML，右键可只复制纯文本。
 
 ## 调试工具
 
@@ -262,7 +267,8 @@ launchctl unsetenv HAOPASTE_RENDER_APPEARANCE
 ## 已知边界
 
 - 文件条目保存的是路径引用，不包含文件本体；文件被移动或删除后，条目会提示不可用。
-- 富文本、多图列表和 GIF 尚未纳入。
+- 多图列表和 GIF 尚未纳入。
+- 富文本的 RTF / HTML 各自限制在 2MB 以内；超过时自动回退为纯文本。
 - 备份中的文件条目同样只保存路径引用，跨设备恢复后可能不可用。
 - 点击条目只复制，不自动粘贴（不申请辅助功能权限）。
 - 未实现 iCloud 同步。
