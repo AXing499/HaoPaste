@@ -1,6 +1,6 @@
 # HaoPaste
 
-当前版本：**v0.3.0**
+当前版本：**v0.3.1**
 
 一款原生、轻快、键盘优先的 macOS 剪切板管理器。用 `⌥⌘V` 从任何应用呼出无标题栏悬浮面板，搜索、选择、复制，一气呵成。
 
@@ -21,11 +21,11 @@
    ```bash
    make dmg
    # 输出：
-   # dist/HaoPaste-0.3.0.dmg
-   # dist/HaoPaste-0.3.0.dmg.sha256
+   # dist/HaoPaste-0.3.1.dmg
+   # dist/HaoPaste-0.3.1.dmg.sha256
    ```
 
-2. 双击打开 `dist/HaoPaste-0.3.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
+2. 双击打开 `dist/HaoPaste-0.3.1.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
 3. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
 4. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
 
@@ -65,6 +65,8 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 - **备份与迁移**：将历史与图片导出为 `.zip`，导入时自动合并、去重并保留置顶状态。
 - **智能识别**：自动区分纯文本、链接、代码 / JSON、颜色值（HEX）、图片与文件。
 - **文件支持**：从 Finder 复制单个或多个文件/文件夹；文件条目可复制回其他应用，右键可在 Finder 中显示；文件丢失时会明确提示。
+- **快捷动作**：右键打开链接 / 文件、保存图片、复制 Markdown 链接、复制颜色的 RGB / HSL 表示。
+- **颜色可视化**：HEX 条目显示真实颜色色块，支持复制 HEX / RGB / HSL。
 - **来源应用**：记录复制内容时最前方的应用名称。
 - **图片缩略图**：原图与缩略图分文件缓存，列表只加载缩略图。
 - **安全过滤**：忽略 `org.nspasteboard.ConcealedType`、临时类型、自动生成类型以及常见密码管理器的私有类型。
@@ -95,7 +97,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 # 开发调试
 make run       # Debug 构建并打开
 make demo      # 用可复现的示例数据启动，便于查看界面
-make test      # 运行 33 个 XCTest（自动化测试）
+make test      # 运行 38 个 XCTest（自动化测试）
 
 # 日常使用 / 发布
 make release   # Release 构建
@@ -109,7 +111,7 @@ make install   # 安装到 /Applications 并启动
 
 ## 质量与测试
 
-- **33 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件复制、去重/裁剪、存储读写、备份导入导出。
+- **38 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件复制、颜色解析、去重/裁剪、存储读写、备份导入导出。
 - 测试宿主会自动跳过菜单栏、剪贴板轮询和全局快捷键注册，不影响正常使用。
 - GitHub Actions 工作流：`.github/workflows/ci.yml`，在 macOS 上执行测试并构建 Release。
 - 运行：`make test`。

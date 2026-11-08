@@ -106,6 +106,7 @@ ContentView / ItemRowView (SwiftUI)
 | `HotKeyConfiguration.swift` | Carbon 键码 / 修饰符、显示文案与校验 |
 | `ExcludedApplication.swift` | 按应用的隐私排除规则 |
 | `Theme.swift` | 圆角、间距、弹簧动效、描边颜色、字体辅助 |
+| `HexColor.swift` | HEX 解析、色块、RGB / HSL 表示 |
 | `SettingsView.swift` | 设置窗口：通用、历史、隐私、关于 |
 | `ShortcutRecorderView.swift` | 快捷键捕获与冲突错误展示 |
 
@@ -186,7 +187,13 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 图片导入会生成新的本地文件 ID 与缩略图，避免覆盖现有资产；重复导入不会重复入库。
 - 导入后按当前历史上限裁剪，置顶记录保留；备份包未加密，包含完整剪贴板内容。
 
-### 6.6 键盘事件
+### 6.6 快捷动作
+
+- 行内右键菜单按类型提供动作：URL 打开 / 复制 Markdown、文件打开 / Finder 定位、图片保存、颜色复制 HEX / RGB / HSL。
+- 动作写回剪贴板时复用 `ClipboardManager.copyTextToPasteboard`，会同步 `changeCount`，不会产生额外的历史条目。
+- 文件 / URL 直接交给 `NSWorkspace` 打开；图片保存使用 `NSSavePanel` 写出原始 PNG。
+
+### 6.7 键盘事件
 
 `PanelController` 使用 `NSEvent.addLocalMonitorForEvents(matching: .keyDown)` 在面板为 key window 时处理：
 
@@ -245,7 +252,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-33 个 XCTest 由 app target 作为测试宿主运行：
+38 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。
@@ -255,6 +262,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - `ClipboardManager`：FIFO 裁剪、置顶保护、清空。
 - `HistoryArchiveService`：导出、导入、重复导入去重、无效归档报错。
 - 文件条目：展示、分类过滤、多文件哈希、文件 URL 复制。
+- `HexColor` 解析与 RGB / HSL 输出；动作文本复制。
 
 运行：`make test`。CI：`.github/workflows/ci.yml`，执行测试并构建 Release。
 
