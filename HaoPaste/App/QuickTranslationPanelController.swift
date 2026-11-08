@@ -25,7 +25,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
     var onWillPresent: (() -> Void)?
 
     private let cardSize = NSSize(width: 640, height: 480)
-    private let windowSize = NSSize(width: 700, height: 540)
+    private let windowSize = NSSize(width: 640, height: 480)
 
     init(
         manager: ClipboardManager,

@@ -348,27 +348,37 @@ struct ItemRowView: View {
 
     private var actionCluster: some View {
         ZStack(alignment: .trailing) {
-            if index < 9 {
-                Button(action: onCopy) {
-                    KeyboardShortcutBadge(
-                        text: "⌘\(index + 1)",
-                        emphasized: isSelected
+            HStack(spacing: 2) {
+                if let translateAction = rowTranslateAction {
+                    RoundIconButton(
+                        symbolName: translateAction.symbolName,
+                        help: translateAction.help,
+                        action: translateAction.action
                     )
                 }
-                .buttonStyle(.plain)
-                .focusable(false)
-                .help("快速复制")
-                .opacity(isHovering ? 0 : 1)
-                .scaleEffect(isHovering ? 0.92 : 1)
-                .allowsHitTesting(!isHovering)
+
+                if index < 9 {
+                    Button(action: onCopy) {
+                        KeyboardShortcutBadge(
+                            text: "⌘\(index + 1)",
+                            emphasized: isSelected
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .focusable(false)
+                    .help("快速复制")
+                }
             }
+            .opacity(isHovering ? 0 : 1)
+            .scaleEffect(isHovering ? 0.92 : 1)
+            .allowsHitTesting(!isHovering)
 
             HStack(spacing: 2) {
-                if item.isTranslatable {
+                if let translateAction = rowTranslateAction {
                     RoundIconButton(
-                        symbolName: "character.bubble",
-                        help: "翻译（⌘T）",
-                        action: onTranslate
+                        symbolName: translateAction.symbolName,
+                        help: translateAction.help,
+                        action: translateAction.action
                     )
                 }
 
@@ -394,12 +404,34 @@ struct ItemRowView: View {
             .scaleEffect(isHovering ? 1 : 0.9)
             .allowsHitTesting(isHovering)
         }
-        .frame(
-            width: item.isTranslatable ? 100 : 76,
-            height: 26,
-            alignment: .trailing
-        )
+        .frame(width: clusterWidth, height: 26, alignment: .trailing)
         .animation(reduceMotion ? nil : Theme.spring, value: isHovering)
+    }
+
+    private var clusterWidth: CGFloat {
+        let hasTranslate = rowTranslateAction != nil
+
+        if isHovering {
+            return hasTranslate ? 100 : 76
+        }
+        if index < 9 {
+            return hasTranslate ? 62 : 38
+        }
+        return hasTranslate ? 22 : 0
+    }
+
+    private var rowTranslateAction: (
+        symbolName: String,
+        help: String,
+        action: () -> Void
+    )? {
+        if item.isTranslatable {
+            return ("character.bubble", "翻译（⌘T）", onTranslate)
+        }
+        if item.type == .image {
+            return ("character.bubble", "识图并翻译", onExtractAndTranslate)
+        }
+        return nil
     }
 
     // MARK: - Styling

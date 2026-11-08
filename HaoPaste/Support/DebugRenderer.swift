@@ -207,11 +207,11 @@ enum DebugRenderer {
                 showsScrim: false
             )
         }
-        .frame(width: 700, height: 540)
+        .frame(width: 640, height: 480)
 
         render(
             content: content,
-            size: CGSize(width: 700, height: 540),
+            size: CGSize(width: 640, height: 480),
             to: url,
             completion: completion
         )

@@ -72,8 +72,18 @@ struct TranslationPaneView: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.10), lineWidth: Theme.hairline)
         }
-        .shadow(color: Color.black.opacity(0.28), radius: 24, x: 0, y: 10)
-        .shadow(color: Color.black.opacity(0.10), radius: 4, x: 0, y: 1)
+        .shadow(
+            color: showsScrim ? Color.black.opacity(0.28) : .clear,
+            radius: showsScrim ? 24 : 0,
+            x: 0,
+            y: showsScrim ? 10 : 0
+        )
+        .shadow(
+            color: showsScrim ? Color.black.opacity(0.10) : .clear,
+            radius: showsScrim ? 4 : 0,
+            x: 0,
+            y: showsScrim ? 1 : 0
+        )
     }
 
     private var divider: some View {

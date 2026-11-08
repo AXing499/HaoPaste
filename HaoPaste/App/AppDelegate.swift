@@ -124,6 +124,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         #if DEBUG
+        if CommandLine.arguments.contains("--show-quick") {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(
+                "Design is not just what it looks like. Design is how it works.",
+                forType: .string
+            )
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+                self?.quickTranslationController?.translateClipboard()
+            }
+            return
+        }
+
         if CommandLine.arguments.contains("--demo") {
             manager.seedDemoDataIfNeeded()
             snippetManager.seedDemoSnippetsIfNeeded()
