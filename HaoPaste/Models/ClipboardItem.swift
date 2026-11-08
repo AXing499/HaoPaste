@@ -200,6 +200,12 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         richTextFileName != nil
     }
 
+    /// Translation is intentionally limited to plain / rich text entries.
+    /// Code, URLs, colors, images and files use different actions.
+    var isTranslatable: Bool {
+        type == .text
+    }
+
     var fileCount: Int {
         filePaths?.count ?? 0
     }

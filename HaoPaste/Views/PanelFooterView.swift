@@ -35,6 +35,7 @@ struct PanelFooterView: View {
                 FooterShortcutHint(keys: "↑↓", label: "选择")
                 FooterShortcutHint(keys: "↵", label: "复制")
                 FooterShortcutHint(keys: "⌘1–9", label: "快速复制")
+                FooterShortcutHint(keys: "⌘T", label: "翻译")
                 FooterShortcutHint(keys: "⌘Y", label: "预览")
                 FooterShortcutHint(keys: "esc", label: isSearching ? "清除" : "关闭")
             }

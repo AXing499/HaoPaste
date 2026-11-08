@@ -11,6 +11,7 @@ import SwiftUI
 struct ContentView: View {
     @Environment(ClipboardManager.self) private var manager
     @Environment(SnippetManager.self) private var snippetManager
+    @Environment(TranslationService.self) private var translationService
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @Bindable var state: PanelViewState
@@ -121,9 +122,29 @@ struct ContentView: View {
                     onSaveImage: {
                         guard let imageURL = manager.imageURL(for: previewItem) else { return }
                         ImageSavePanel.present(imageURL: imageURL)
+                    },
+                    onTranslate: {
+                        translationService.present(item: previewItem)
                     }
                 )
                 .zIndex(1)
+                .transition(.opacity)
+            }
+
+            if translationService.isPresenting {
+                TranslationPaneView(
+                    service: translationService,
+                    onCopyTranslation: onCopyText,
+                    onCopyBilingual: onCopyText,
+                    onSaveSnippet: { text in
+                        saveTranslationSnippet(text)
+                    },
+                    onClose: {
+                        translationService.close()
+                        state.requestSearchFocus()
+                    }
+                )
+                .zIndex(2)
                 .transition(.opacity)
             }
         }
@@ -313,6 +334,9 @@ struct ContentView: View {
                             onPreview: {
                                 state.beginPreview(item)
                             },
+                            onTranslate: {
+                                translationService.present(item: item)
+                            },
                             onTogglePin: {
                                 withAnimation(reduceMotion ? nil : Theme.spring) {
                                     manager.togglePin(item)
@@ -461,6 +485,19 @@ struct ContentView: View {
         }
     }
 
+    private func saveTranslationSnippet(_ text: String) {
+        guard !text.isEmpty else { return }
+
+        let rawTitle = translationService.sourceTitle
+        let title = rawTitle.count > 24
+            ? String(rawTitle.prefix(24)) + "…"
+            : rawTitle
+        _ = snippetManager.create(
+            title: "翻译 · \(title)",
+            content: text
+        )
+    }
+
     private func copySelectedEntry() {
         if isSnippetMode {
             guard
@@ -496,6 +533,7 @@ struct ContentView: View {
     )
     .environment(manager)
     .environment(snippets)
+    .environment(TranslationService())
     .padding(30)
     .background(Color(nsColor: .windowBackgroundColor))
 }

@@ -21,12 +21,15 @@ final class PanelController: NSObject, NSWindowDelegate {
         static let downArrow: UInt16 = 125
         static let c: UInt16 = 8
         static let p: UInt16 = 35
+        static let r: UInt16 = 15
+        static let t: UInt16 = 17
         static let w: UInt16 = 13
         static let y: UInt16 = 16
     }
 
     let manager: ClipboardManager
     let snippetManager: SnippetManager
+    let translationService: TranslationService
     let state = PanelViewState()
 
     private let panel: ClipboardPanel
@@ -38,9 +41,14 @@ final class PanelController: NSObject, NSWindowDelegate {
     private var presentationGeneration = 0
     private var isHiding = false
 
-    init(manager: ClipboardManager, snippetManager: SnippetManager) {
+    init(
+        manager: ClipboardManager,
+        snippetManager: SnippetManager,
+        translationService: TranslationService
+    ) {
         self.manager = manager
         self.snippetManager = snippetManager
+        self.translationService = translationService
         self.panel = ClipboardPanel(
             contentRect: NSRect(origin: .zero, size: Theme.windowSize),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -127,6 +135,7 @@ final class PanelController: NSObject, NSWindowDelegate {
 
         isHiding = true
         state.endPreview()
+        translationService.close()
         presentationGeneration &+= 1
         let generation = presentationGeneration
 
@@ -297,6 +306,14 @@ final class PanelController: NSObject, NSWindowDelegate {
         let flags = event.modifierFlags.intersection([.command, .option, .control, .shift])
         let isCommandOnly = flags == .command
 
+        if translationService.isPresenting {
+            return handleTranslationKeyDown(
+                event,
+                flags: flags,
+                isCommandOnly: isCommandOnly
+            )
+        }
+
         if state.isPreviewing {
             return handlePreviewKeyDown(
                 event,
@@ -376,6 +393,11 @@ final class PanelController: NSObject, NSWindowDelegate {
             return true
         }
 
+        if isCommandOnly, event.keyCode == KeyCode.t {
+            openTranslationForSelectedItem()
+            return true
+        }
+
         if isCommandOnly, [KeyCode.delete, KeyCode.forwardDelete].contains(event.keyCode) {
             if !isSnippetMode {
                 deleteSelectedItem()
@@ -416,6 +438,15 @@ final class PanelController: NSObject, NSWindowDelegate {
             return true
         }
 
+        if isCommandOnly, event.keyCode == KeyCode.t {
+            if let id = state.previewingItemID,
+               let item = manager.items.first(where: { $0.id == id }),
+               item.isTranslatable {
+                translationService.present(item: item)
+            }
+            return true
+        }
+
         if isCommandOnly, (event.keyCode == KeyCode.y || event.keyCode == KeyCode.c) {
             if event.keyCode == KeyCode.y {
                 state.endPreview()
@@ -439,6 +470,71 @@ final class PanelController: NSObject, NSWindowDelegate {
         // while the preview is on screen. Plain typing still reaches the search
         // field and closes the preview through ContentView's observer.
         return isCommandOnly
+    }
+
+    private func handleTranslationKeyDown(
+        _ event: NSEvent,
+        flags: NSEvent.ModifierFlags,
+        isCommandOnly: Bool
+    ) -> Bool {
+        if event.keyCode == KeyCode.escape {
+            translationService.close()
+            state.requestSearchFocus()
+            return true
+        }
+
+        if (event.keyCode == KeyCode.returnKey || event.keyCode == KeyCode.keypadEnter),
+           flags.isEmpty {
+            copyTranslationAndHide()
+            return true
+        }
+
+        if isCommandOnly, event.keyCode == KeyCode.t {
+            translationService.close()
+            state.requestSearchFocus()
+            return true
+        }
+
+        if isCommandOnly, event.keyCode == KeyCode.c {
+            copyTranslationAndHide()
+            return true
+        }
+
+        if isCommandOnly, event.keyCode == KeyCode.r {
+            translationService.retry()
+            return true
+        }
+
+        // The translation pane is modal. Swallow other keys so the search field
+        // behind it cannot change while the user is reading.
+        return true
+    }
+
+    private func openTranslationForSelectedItem() {
+        guard !isSnippetMode else { return }
+
+        let item: ClipboardItem?
+        if let previewingItemID = state.previewingItemID {
+            item = manager.items.first { $0.id == previewingItemID }
+        } else {
+            item = state.selectedItem(in: currentVisibleItems)
+        }
+
+        guard let item, item.isTranslatable else {
+            NSSound.beep()
+            return
+        }
+
+        translationService.present(item: item)
+    }
+
+    private func copyTranslationAndHide() {
+        guard !translationService.resultText.isEmpty else {
+            NSSound.beep()
+            return
+        }
+
+        copyTextAndHide(translationService.resultText)
     }
 
     private func movePreviewSelection(by delta: Int) {
@@ -606,6 +702,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         )
         .environment(manager)
         .environment(snippetManager)
+        .environment(translationService)
 
         let hostingView = NSHostingView(rootView: rootView)
         hostingView.frame = NSRect(origin: .zero, size: Theme.windowSize)

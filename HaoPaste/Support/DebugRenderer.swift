@@ -16,6 +16,7 @@ enum DebugRenderer {
     static func renderPanel(
         manager: ClipboardManager,
         snippetManager: SnippetManager,
+        translationService: TranslationService,
         to url: URL,
         completion: @escaping @MainActor () -> Void
     ) {
@@ -40,6 +41,33 @@ enum DebugRenderer {
             state.selectedIDs = Set(selected.map(\.id))
             state.selectedID = selected.last?.id
             state.selectionAnchorID = selected.first?.id
+        }
+
+        switch ProcessInfo.processInfo.environment["HAOPASTE_RENDER_TRANSLATION"] {
+        case "1", "success":
+            translationService.seedPreview(
+                sourceTitle: "HaoPaste 设计格言",
+                sourceText: "Design is not just what it looks like. Design is how it works.",
+                target: .simplifiedChinese,
+                result: "设计不只是看起来怎样，设计是它如何运作。",
+                provider: .googleUnofficial
+            )
+        case "consent":
+            translationService.seedConsentPreview(
+                sourceTitle: "HaoPaste 设计格言",
+                sourceText: "Design is not just what it looks like. Design is how it works.",
+                target: .simplifiedChinese,
+                providers: [.googleUnofficial, .bingUnofficial]
+            )
+        case "error":
+            translationService.seedFailurePreview(
+                sourceTitle: "HaoPaste 设计格言",
+                sourceText: "Design is not just what it looks like. Design is how it works.",
+                target: .simplifiedChinese,
+                message: "Google：网络请求失败，请检查网络或切换翻译引擎。"
+            )
+        default:
+            break
         }
 
         switch ProcessInfo.processInfo.environment["HAOPASTE_RENDER_PREVIEW"] {
@@ -89,6 +117,7 @@ enum DebugRenderer {
             )
             .environment(manager)
             .environment(snippetManager)
+            .environment(translationService)
         }
         .frame(width: Theme.windowSize.width, height: Theme.windowSize.height)
 
@@ -104,6 +133,7 @@ enum DebugRenderer {
         manager: ClipboardManager,
         settings: AppSettings,
         snippetManager: SnippetManager,
+        translationService: TranslationService,
         to url: URL,
         completion: @escaping @MainActor () -> Void
     ) {
@@ -112,6 +142,7 @@ enum DebugRenderer {
         switch tabName {
         case "history": tab = .history
         case "snippets": tab = .snippets
+        case "intelligence": tab = .intelligence
         case "privacy": tab = .privacy
         case "about": tab = .about
         default: tab = .general
@@ -120,6 +151,7 @@ enum DebugRenderer {
         let content = SettingsView(
             settings: settings,
             manager: manager,
+            translationService: translationService,
             initialTab: tab
         )
         .environment(snippetManager)

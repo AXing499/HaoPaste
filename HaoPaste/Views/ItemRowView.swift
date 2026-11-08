@@ -20,6 +20,7 @@ struct ItemRowView: View {
     let onCopy: () -> Void
     let onCopyText: (String) -> Void
     let onPreview: () -> Void
+    let onTranslate: () -> Void
     let onTogglePin: () -> Void
     let onDelete: () -> Void
 
@@ -74,6 +75,14 @@ struct ItemRowView: View {
                 onPreview()
             } label: {
                 Label("预览", systemImage: "eye")
+            }
+
+            if item.isTranslatable {
+                Button {
+                    onTranslate()
+                } label: {
+                    Label("翻译…", systemImage: "character.bubble")
+                }
             }
 
             Divider()

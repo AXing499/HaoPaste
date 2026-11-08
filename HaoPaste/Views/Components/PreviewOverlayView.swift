@@ -19,6 +19,7 @@ struct PreviewOverlayView: View {
     let onOpenFiles: () -> Void
     let onRevealFiles: () -> Void
     let onSaveImage: () -> Void
+    let onTranslate: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isPresented = false
@@ -335,6 +336,12 @@ struct PreviewOverlayView: View {
             Spacer(minLength: 10)
 
             HStack(spacing: 7) {
+                if item.isTranslatable {
+                    secondaryButton("翻译", systemImage: "character.bubble") {
+                        onTranslate()
+                    }
+                }
+
                 if item.type == .image, imageURL != nil {
                     secondaryButton(
                         "保存…",

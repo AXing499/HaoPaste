@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panelController: PanelController!
     private var statusBarController: StatusBarController!
     private var settings: AppSettings!
+    private var translationService: TranslationService!
     private var settingsWindowController: SettingsWindowController?
 
     private var hotKey: GlobalHotKey?
@@ -39,6 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settings = AppSettings()
         settings.refreshLaunchAtLoginStatus()
         snippetManager = SnippetManager()
+        translationService = TranslationService()
 
         manager = ClipboardManager()
         manager.isSourceExcluded = { [weak settings] source in
@@ -65,7 +67,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         panelController = PanelController(
             manager: manager,
-            snippetManager: snippetManager
+            snippetManager: snippetManager,
+            translationService: translationService
         )
         statusBarController = StatusBarController(
             manager: manager,
@@ -80,6 +83,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.applyHotKey(configuration)
         }
         applyHotKey(settings.hotKey)
+
+        NotificationCenter.default.addObserver(
+            forName: .haopasteOpenTranslationSettings,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in
+                (NSApp.delegate as? AppDelegate)?
+                    .showSettings(initialTab: .intelligence)
+            }
+        }
 
         #if DEBUG
         if CommandLine.arguments.contains("--demo") {
@@ -118,14 +132,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Settings
 
-    private func showSettings() {
+    private func showSettings(initialTab: SettingsTab = .general) {
         panelController?.hide(restoreFocus: false)
 
         if settingsWindowController == nil {
             settingsWindowController = SettingsWindowController(
                 manager: manager,
                 settings: settings,
-                snippetManager: snippetManager
+                snippetManager: snippetManager,
+                translationService: translationService,
+                initialTab: initialTab
             )
         }
 
@@ -283,6 +299,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 manager: manager,
                 settings: settings,
                 snippetManager: snippetManager,
+                translationService: translationService,
                 to: URL(fileURLWithPath: path)
             ) {
                 NSApp.terminate(nil)
@@ -299,6 +316,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DebugRenderer.renderPanel(
             manager: manager,
             snippetManager: snippetManager,
+            translationService: translationService,
             to: URL(fileURLWithPath: path)
         ) {
             NSApp.terminate(nil)

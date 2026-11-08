@@ -14,6 +14,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case general
     case history
     case snippets
+    case intelligence
     case privacy
     case about
 
@@ -24,6 +25,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: return "通用"
         case .history: return "历史"
         case .snippets: return "片段"
+        case .intelligence: return "智能"
         case .privacy: return "隐私"
         case .about: return "关于"
         }
@@ -34,6 +36,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: return "启动、快捷键与监听"
         case .history: return "记录容量、存储位置与清理"
         case .snippets: return "常用文本，一键复制"
+        case .intelligence: return "翻译引擎、语言与在线授权"
         case .privacy: return "应用排除与内容类型"
         case .about: return "版本与隐私信息"
         }
@@ -44,6 +47,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: return "slider.horizontal.3"
         case .history: return "clock.arrow.circlepath"
         case .snippets: return "text.quote"
+        case .intelligence: return "character.bubble"
         case .privacy: return "hand.raised"
         case .about: return "info.circle"
         }
@@ -55,6 +59,7 @@ struct SettingsView: View {
 
     @Bindable var settings: AppSettings
     let manager: ClipboardManager
+    let translationService: TranslationService
 
     @State private var selectedTab: SettingsTab = .general
     @State private var showClearUnpinnedAlert = false
@@ -64,10 +69,12 @@ struct SettingsView: View {
     init(
         settings: AppSettings,
         manager: ClipboardManager,
+        translationService: TranslationService,
         initialTab: SettingsTab = .general
     ) {
         self._settings = Bindable(wrappedValue: settings)
         self.manager = manager
+        self.translationService = translationService
         self._selectedTab = State(initialValue: initialTab)
     }
 
@@ -174,7 +181,7 @@ struct SettingsView: View {
             Spacer()
 
             VStack(alignment: .leading, spacing: 4) {
-                Label("本地存储 · 无网络请求", systemImage: "lock.shield")
+                Label("本地存储 · 翻译按需联网", systemImage: "lock.shield")
                 Text("呼出快捷键 \(settings.hotKey.displayString)")
             }
             .font(.system(size: 10, design: .rounded))
@@ -199,6 +206,8 @@ struct SettingsView: View {
                     historyPage
                 case .snippets:
                     snippetsPage
+                case .intelligence:
+                    TranslationSettingsPage(service: translationService)
                 case .privacy:
                     privacyPage
                 case .about:
@@ -671,8 +680,8 @@ struct SettingsView: View {
 
             SettingsDivider()
 
-            SettingsRow("网络访问", subtitle: "无账号、无遥测、无网络请求") {
-                Image(systemName: "wifi.slash")
+            SettingsRow("网络访问", subtitle: "默认不联网；仅在线翻译时发送当前文本") {
+                Image(systemName: "network")
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.secondary)
             }
@@ -958,7 +967,7 @@ private struct SidebarTabButton: View {
     }
 }
 
-private struct SettingsCard<Content: View>: View {
+struct SettingsCard<Content: View>: View {
     let title: String?
     let content: Content
 
@@ -991,7 +1000,7 @@ private struct SettingsCard<Content: View>: View {
     }
 }
 
-private struct SettingsRow<Control: View>: View {
+struct SettingsRow<Control: View>: View {
     let title: String
     let subtitle: String?
     let control: Control
@@ -1027,7 +1036,7 @@ private struct SettingsRow<Control: View>: View {
     }
 }
 
-private struct SettingsDivider: View {
+struct SettingsDivider: View {
     var body: some View {
         Rectangle()
             .fill(Color.primary.opacity(0.06))
