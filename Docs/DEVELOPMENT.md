@@ -126,8 +126,8 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste-0.2.2.dmg                 # 安装包（app + Applications 快捷方式）
-dist/HaoPaste-0.2.2.dmg.sha256          # SHA-256 校验
+dist/HaoPaste-0.3.0.dmg                 # 安装包（app + Applications 快捷方式）
+dist/HaoPaste-0.3.0.dmg.sha256          # SHA-256 校验
 ```
 
 > `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
@@ -174,11 +174,11 @@ codesign --force --deep --options runtime --timestamp \
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash
-xcrun notarytool submit "dist/HaoPaste-0.2.2.dmg" \
+xcrun notarytool submit "dist/HaoPaste-0.3.0.dmg" \
   --keychain-profile "haopaste-notary" --wait
 
-xcrun stapler staple "dist/HaoPaste-0.2.2.dmg"
-xcrun stapler validate "dist/HaoPaste-0.2.2.dmg"
+xcrun stapler staple "dist/HaoPaste-0.3.0.dmg"
+xcrun stapler validate "dist/HaoPaste-0.3.0.dmg"
 ```
 
 也可以对 `.app` 先公证再打包（Apple 推荐流程根据分发方式调整）。需要 Apple Developer Program 账号。
@@ -188,8 +188,8 @@ xcrun stapler validate "dist/HaoPaste-0.2.2.dmg"
 版本号位于 `project.yml`：
 
 ```yaml
-MARKETING_VERSION: "0.2.2"
-CURRENT_PROJECT_VERSION: "4"
+MARKETING_VERSION: "0.3.0"
+CURRENT_PROJECT_VERSION: "5"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：
@@ -206,6 +206,7 @@ CURRENT_PROJECT_VERSION: "4"
 - [ ] 历史上限切换生效，置顶记录不受影响
 - [ ] 登录时自动启动可注册 / 注销；被系统要求批准时有提示
 - [ ] 排除来源应用后新内容不入库；移除排除后恢复
+- [ ] 文件 / 多选文件复制后出现在「文件」分类；文件删除后显示不可用
 - [ ] 关闭 / 开启图片记录后，相应类型按预期入库或忽略
 - [ ] 设置窗口的通用 / 历史 / 隐私 / 关于四个页面正常，窗口可关闭重开
 - [ ] 历史导出后可以在空库中完整导入；重复导入不会产生重复项
@@ -236,7 +237,7 @@ xcodebuild \
   test
 ```
 
-当前 30 个测试覆盖：
+当前 33 个测试覆盖：
 
 - 内容分类器：URL / HEX / JSON / 代码 / SQL / 普通文本边界。
 - `HotKeyConfiguration`：默认值、修饰符、显示顺序、校验。
@@ -292,6 +293,7 @@ defaults delete com.hao.HaoPaste 2>/dev/null || true
 - **修改 AppDelegate 的 first launch 行为**：调试时若不想自动弹面板，可先运行 `defaults delete com.hao.HaoPaste hasCompletedFirstLaunch`，或在 `--demo` 流程中验证。
 - **设置项存储**：快捷键与历史上限保存在 `UserDefaults`（`com.hao.HaoPaste`），没有单独的 settings 文件。登录项状态以 `SMAppService.mainApp.status` 为准。
 - **设置窗口调试**：`open -n .build/Build/Products/Debug/HaoPaste.app --args --show-settings`；或使用离屏渲染命令检查四个标签页。
+- **文件调试**：复制 Finder 中的文件后检查该文件的虚线记录；测试会通过临时文件验证文件 URL 复制。
 - **备份调试**：导出与导入使用 `/usr/bin/ditto` 生成 / 解包 zip，不依赖第三方库。
   ```bash
   open -n .build/Build/Products/Debug/HaoPaste.app --args \
