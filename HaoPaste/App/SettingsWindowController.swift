@@ -10,8 +10,13 @@ import SwiftUI
 
 @MainActor
 final class SettingsWindowController: NSWindowController {
-    init(manager: ClipboardManager, settings: AppSettings) {
+    init(
+        manager: ClipboardManager,
+        settings: AppSettings,
+        snippetManager: SnippetManager
+    ) {
         let rootView = SettingsView(settings: settings, manager: manager)
+            .environment(snippetManager)
         let hostingController = NSHostingController(rootView: rootView)
 
         let window = NSWindow(

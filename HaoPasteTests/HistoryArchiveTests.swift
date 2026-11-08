@@ -32,6 +32,10 @@ final class HistoryArchiveTests: XCTestCase {
             contentHash: ContentHasher.files([sampleFile.path]),
             filePaths: [sampleFile.path]
         )
+        let sourceSnippets = [
+            Snippet(title: "Email", content: "hello@example.com"),
+            Snippet(title: "Signature", content: "—— HaoPaste")
+        ]
         let sourceItems = [
             TestFixtures.makeTextItem(
                 "pinned note",
@@ -66,9 +70,13 @@ final class HistoryArchiveTests: XCTestCase {
         defer { sourceManager.shutdown() }
 
         let archiveURL = root.appendingPathComponent("backup.zip")
-        let exportSummary = try sourceManager.exportHistory(to: archiveURL)
+        let exportSummary = try sourceManager.exportHistory(
+            to: archiveURL,
+            snippets: sourceSnippets
+        )
         XCTAssertEqual(exportSummary.itemCount, 4)
         XCTAssertEqual(exportSummary.imageCount, 1)
+        XCTAssertEqual(exportSummary.snippetCount, 2)
         XCTAssertTrue(FileManager.default.fileExists(atPath: archiveURL.path))
 
         let destinationStore = ClipboardStore(baseURL: destinationDirectory)
@@ -111,6 +119,18 @@ final class HistoryArchiveTests: XCTestCase {
         )
         XCTAssertEqual(importedFile.filePaths, [sampleFile.path])
         XCTAssertTrue(importedFile.hasAvailableFiles)
+
+        let destinationSnippets = SnippetManager(
+            store: SnippetStore(baseURL: destinationDirectory)
+        )
+        let snippetMerge = destinationSnippets.mergeImported(firstImport.snippets)
+        XCTAssertEqual(firstImport.snippets.count, 2)
+        XCTAssertEqual(snippetMerge.added, 2)
+        XCTAssertEqual(destinationSnippets.snippets.count, 2)
+
+        let secondSnippetMerge = destinationSnippets.mergeImported(secondImport.snippets)
+        XCTAssertEqual(secondSnippetMerge.added, 0)
+        XCTAssertEqual(secondSnippetMerge.skipped, 2)
     }
 
     func testImportRejectsMissingHistoryFile() throws {

@@ -60,3 +60,45 @@ struct EmptyStateView: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+struct SnippetEmptyStateView: View {
+    let query: String
+
+    private var isSearching: Bool {
+        !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.primary.opacity(0.04))
+                    .frame(width: 64, height: 64)
+
+                Image(systemName: isSearching ? "magnifyingglass" : "text.quote")
+                    .font(.system(size: 23, weight: .light, design: .rounded))
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(spacing: 4) {
+                Text(isSearching ? "没有找到匹配片段" : "还没有片段")
+                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .foregroundStyle(.primary)
+
+                Text(
+                    isSearching
+                        ? "换个关键词再试试。"
+                        : "在 设置 → 片段 中创建常用文本，\n之后可在这里一键复制。"
+                )
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        .accessibilityElement(children: .combine)
+    }
+}

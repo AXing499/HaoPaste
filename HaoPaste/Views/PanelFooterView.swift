@@ -10,6 +10,7 @@ import SwiftUI
 struct PanelFooterView: View {
     let isPaused: Bool
     let itemCount: Int
+    let itemLabel: String
     let isSearching: Bool
 
     var body: some View {
@@ -24,7 +25,7 @@ struct PanelFooterView: View {
                 Text("·")
                     .foregroundStyle(.quaternary)
 
-                Text("\(itemCount) 条记录")
+                Text("\(itemCount) \(itemLabel)")
                     .contentTransition(.numericText())
             }
 

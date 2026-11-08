@@ -200,8 +200,11 @@ final class ClipboardManager {
 
     // MARK: - Backup
 
-    func exportHistory(to url: URL) throws -> HistoryArchiveService.ExportSummary {
-        try archiveService.export(items: items, to: url)
+    func exportHistory(
+        to url: URL,
+        snippets: [Snippet] = []
+    ) throws -> HistoryArchiveService.ExportSummary {
+        try archiveService.export(items: items, snippets: snippets, to: url)
     }
 
     func importHistory(from url: URL) throws -> HistoryArchiveService.ImportSummary {
@@ -293,7 +296,8 @@ final class ClipboardManager {
             importedCount: importedCount,
             mergedPinnedCount: mergedPinnedCount,
             skippedCount: skippedCount,
-            trimmedCount: removed.count
+            trimmedCount: removed.count,
+            snippets: archive.snippets
         )
     }
 

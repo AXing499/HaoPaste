@@ -13,6 +13,7 @@ import UniformTypeIdentifiers
 enum SettingsTab: String, CaseIterable, Identifiable {
     case general
     case history
+    case snippets
     case privacy
     case about
 
@@ -22,6 +23,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "通用"
         case .history: return "历史"
+        case .snippets: return "片段"
         case .privacy: return "隐私"
         case .about: return "关于"
         }
@@ -31,6 +33,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "启动、快捷键与监听"
         case .history: return "记录容量、存储位置与清理"
+        case .snippets: return "常用文本，一键复制"
         case .privacy: return "应用排除与内容类型"
         case .about: return "版本与隐私信息"
         }
@@ -40,6 +43,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "slider.horizontal.3"
         case .history: return "clock.arrow.circlepath"
+        case .snippets: return "text.quote"
         case .privacy: return "hand.raised"
         case .about: return "info.circle"
         }
@@ -47,12 +51,15 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 }
 
 struct SettingsView: View {
+    @Environment(SnippetManager.self) private var snippetManager
+
     @Bindable var settings: AppSettings
     let manager: ClipboardManager
 
     @State private var selectedTab: SettingsTab = .general
     @State private var showClearUnpinnedAlert = false
     @State private var showClearAllAlert = false
+    @State private var snippetEditor: SnippetEditorContext?
 
     init(
         settings: AppSettings,
@@ -105,6 +112,24 @@ struct SettingsView: View {
             NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
         ) { _ in
             settings.refreshLaunchAtLoginStatus()
+        }
+        .sheet(item: $snippetEditor) { context in
+            SnippetEditorSheet(
+                title: context.snippet?.title ?? "",
+                content: context.snippet?.content ?? "",
+                isEditing: context.snippet != nil,
+                onSave: { title, content in
+                    if let snippet = context.snippet {
+                        snippetManager.update(snippet, title: title, content: content)
+                    } else {
+                        snippetManager.create(title: title, content: content)
+                    }
+                    snippetEditor = nil
+                },
+                onCancel: {
+                    snippetEditor = nil
+                }
+            )
         }
     }
 
@@ -172,6 +197,8 @@ struct SettingsView: View {
                     generalPage
                 case .history:
                     historyPage
+                case .snippets:
+                    snippetsPage
                 case .privacy:
                     privacyPage
                 case .about:
@@ -362,6 +389,130 @@ struct SettingsView: View {
             ) {
                 showClearAllAlert = true
             }
+        }
+    }
+
+    @ViewBuilder
+    private var snippetsPage: some View {
+        SettingsCard("片段") {
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("常用文本与模板")
+                        .font(.system(.body, design: .rounded))
+                    Text("在面板的「片段」标签中一键复制；片段不会写入剪贴板历史。")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 10)
+
+                Button {
+                    snippetEditor = SnippetEditorContext(snippet: nil)
+                } label: {
+                    Label("新建片段…", systemImage: "plus")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(14)
+
+            SettingsDivider()
+
+            if snippetManager.snippets.isEmpty {
+                HStack(spacing: 9) {
+                    Image(systemName: "text.quote")
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.secondary)
+                    Text("还没有片段。创建后可在面板中快速复制。")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(14)
+            } else {
+                ForEach(Array(snippetManager.snippets.enumerated()), id: \.element.id) { index, snippet in
+                    if index > 0 {
+                        SettingsDivider()
+                    }
+
+                    HStack(spacing: 10) {
+                        Image(systemName: "text.quote")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(Color.accentColor)
+                            .frame(width: 30, height: 30)
+                            .background {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(Color.accentColor.opacity(0.08))
+                            }
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(snippet.title)
+                                .font(.system(.body, design: .rounded).weight(.medium))
+                                .lineLimit(1)
+                            Text(snippet.contentPreview)
+                                .font(.system(.caption, design: .rounded))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+
+                        Spacer(minLength: 8)
+
+                        Text("\(snippet.characterCount) 字符")
+                            .font(.system(size: 10, design: .rounded))
+                            .foregroundStyle(.tertiary)
+
+                        RoundIconButton(
+                            symbolName: "pencil",
+                            help: "编辑片段"
+                        ) {
+                            snippetEditor = SnippetEditorContext(snippet: snippet)
+                        }
+
+                        RoundIconButton(
+                            symbolName: "trash",
+                            help: "删除片段"
+                        ) {
+                            confirmDeleteSnippet(snippet)
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 9)
+                }
+            }
+
+            SettingsDivider()
+
+            Text("复制片段后会关闭面板并返回之前的应用，不会创建新的历史记录。")
+                .font(.system(size: 10.5, design: .rounded))
+                .foregroundStyle(.tertiary)
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+
+        SettingsCard("使用提示") {
+            SettingsRow(
+                "面板快速访问",
+                subtitle: "按 ⌥⌘V 打开面板，切换到「片段」标签，用方向键选择后按 ↵ 复制。"
+            ) {
+                Image(systemName: "keyboard")
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func confirmDeleteSnippet(_ snippet: Snippet) {
+        let alert = NSAlert()
+        alert.messageText = "删除片段「\(snippet.title)」？"
+        alert.informativeText = "此操作无法撤销。"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "删除")
+        alert.addButton(withTitle: "取消")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            snippetManager.delete(snippet)
         }
     }
 
@@ -592,10 +743,13 @@ struct SettingsView: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
 
         do {
-            let summary = try manager.exportHistory(to: url)
+            let summary = try manager.exportHistory(
+                to: url,
+                snippets: snippetManager.snippets
+            )
             showArchiveAlert(
                 title: "导出完成",
-                message: "已导出 \(summary.itemCount) 条记录、\(summary.imageCount) 张图片。\n\n\(url.path)",
+                message: "已导出 \(summary.itemCount) 条记录、\(summary.imageCount) 张图片、\(summary.snippetCount) 个片段。\n\n\(url.path)",
                 style: .informational
             )
         } catch {
@@ -620,10 +774,14 @@ struct SettingsView: View {
 
         do {
             let summary = try manager.importHistory(from: url)
+            let snippetMerge = snippetManager.mergeImported(summary.snippets)
 
             var message = "新增 \(summary.importedCount) 条，合并 \(summary.mergedPinnedCount) 条置顶，跳过 \(summary.skippedCount) 条重复或不可用内容。"
             if summary.trimmedCount > 0 {
                 message += " 受当前历史上限影响，清理了 \(summary.trimmedCount) 条最早记录。"
+            }
+            if snippetMerge.added > 0 || snippetMerge.updated > 0 {
+                message += " 片段新增 \(snippetMerge.added) 个，更新 \(snippetMerge.updated) 个。"
             }
 
             showArchiveAlert(
@@ -875,5 +1033,92 @@ private struct SettingsDivider: View {
             .fill(Color.primary.opacity(0.06))
             .frame(height: 0.5)
             .padding(.leading, 14)
+    }
+}
+
+
+private struct SnippetEditorContext: Identifiable {
+    let id = UUID()
+    let snippet: Snippet?
+}
+
+private struct SnippetEditorSheet: View {
+    let isEditing: Bool
+    let onSave: (String, String) -> Void
+    let onCancel: () -> Void
+
+    @State private var title: String
+    @State private var content: String
+    @FocusState private var titleFocused: Bool
+
+    init(
+        title: String,
+        content: String,
+        isEditing: Bool,
+        onSave: @escaping (String, String) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
+        self.isEditing = isEditing
+        self.onSave = onSave
+        self.onCancel = onCancel
+        self._title = State(initialValue: title)
+        self._content = State(initialValue: content)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(isEditing ? "编辑片段" : "新建片段")
+                .font(.system(size: 18, weight: .semibold, design: .rounded))
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("名称")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+
+                TextField("例如：工作邮箱", text: $title)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(.body, design: .rounded))
+                    .focused($titleFocused)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("内容")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+
+                TextEditor(text: $content)
+                    .font(.system(size: 13, design: .rounded))
+                    .scrollContentBackground(.hidden)
+                    .padding(7)
+                    .background {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Color.primary.opacity(0.04))
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
+                    }
+                    .frame(minHeight: 170)
+            }
+
+            HStack {
+                Spacer()
+
+                Button("取消", action: onCancel)
+                    .keyboardShortcut(.cancelAction)
+
+                Button(isEditing ? "保存" : "创建") {
+                    onSave(title, content)
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+                .disabled(content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+        .padding(24)
+        .frame(width: 528, height: 400)
+        .onAppear {
+            titleFocused = true
+        }
     }
 }

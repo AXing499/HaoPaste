@@ -15,12 +15,21 @@ enum DebugRenderer {
 
     static func renderPanel(
         manager: ClipboardManager,
+        snippetManager: SnippetManager,
         to url: URL,
         completion: @escaping @MainActor () -> Void
     ) {
         let state = PanelViewState()
         let firstItemID = manager.filteredItems(query: "", filter: .all).first?.id
         state.prepareForPresentation(firstItemID: firstItemID)
+
+        if ProcessInfo.processInfo.environment["HAOPASTE_RENDER_SNIPPETS"] == "1" {
+            state.filter = .snippets
+            state.selectedSnippetID = snippetManager
+                .filtered(query: "")
+                .first?
+                .id
+        }
 
         let isDark = ProcessInfo.processInfo.environment["HAOPASTE_RENDER_APPEARANCE"] == "dark"
 
@@ -47,8 +56,14 @@ enum DebugRenderer {
                 .blur(radius: 120)
                 .offset(x: 250, y: -240)
 
-            ContentView(state: state, onCopy: { _ in }, onCopyText: { _ in })
-                .environment(manager)
+            ContentView(
+                state: state,
+                onCopy: { _ in },
+                onCopyText: { _ in },
+                onCopySnippet: { _ in }
+            )
+            .environment(manager)
+            .environment(snippetManager)
         }
         .frame(width: Theme.windowSize.width, height: Theme.windowSize.height)
 
@@ -63,6 +78,7 @@ enum DebugRenderer {
     static func renderSettings(
         manager: ClipboardManager,
         settings: AppSettings,
+        snippetManager: SnippetManager,
         to url: URL,
         completion: @escaping @MainActor () -> Void
     ) {
@@ -70,6 +86,7 @@ enum DebugRenderer {
         let tab: SettingsTab
         switch tabName {
         case "history": tab = .history
+        case "snippets": tab = .snippets
         case "privacy": tab = .privacy
         case "about": tab = .about
         default: tab = .general
@@ -80,6 +97,7 @@ enum DebugRenderer {
             manager: manager,
             initialTab: tab
         )
+        .environment(snippetManager)
         .frame(width: 720, height: 480)
 
         render(

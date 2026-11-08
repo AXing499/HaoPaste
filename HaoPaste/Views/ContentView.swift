@@ -9,29 +9,48 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(ClipboardManager.self) private var manager
+    @Environment(SnippetManager.self) private var snippetManager
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @Bindable var state: PanelViewState
     let onCopy: (ClipboardItem) -> Void
     let onCopyText: (String) -> Void
+    let onCopySnippet: (Snippet) -> Void
 
     @FocusState private var isSearchFocused: Bool
 
+    private var isSnippetMode: Bool {
+        state.filter == .snippets
+    }
+
     private var visibleItems: [ClipboardItem] {
-        manager.filteredItems(query: state.searchText, filter: state.filter)
+        isSnippetMode
+            ? []
+            : manager.filteredItems(query: state.searchText, filter: state.filter)
+    }
+
+    private var visibleSnippets: [Snippet] {
+        isSnippetMode
+            ? snippetManager.filtered(query: state.searchText)
+            : []
     }
 
     private var visibleIDs: [UUID] {
         visibleItems.map(\.id)
     }
 
+    private var visibleSnippetIDs: [UUID] {
+        visibleSnippets.map(\.id)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             header
-            historyList
+            contentList
             PanelFooterView(
                 isPaused: manager.isMonitoringPaused,
-                itemCount: manager.items.count,
+                itemCount: isSnippetMode ? snippetManager.snippets.count : manager.items.count,
+                itemLabel: isSnippetMode ? "个片段" : "条记录",
                 isSearching: state.isSearching
             )
         }
@@ -45,20 +64,25 @@ struct ContentView: View {
         .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
         .padding(Theme.windowPadding)
         .onAppear {
-            state.ensureSelection(in: visibleItems)
+            ensureSelectionForCurrentMode()
             isSearchFocused = true
         }
         .onChange(of: state.focusToken) { _, _ in
             isSearchFocused = true
         }
         .onChange(of: state.searchText) { _, _ in
-            state.ensureSelection(in: visibleItems)
+            ensureSelectionForCurrentMode()
         }
         .onChange(of: state.filter) { _, _ in
-            state.ensureSelection(in: visibleItems)
+            ensureSelectionForCurrentMode()
         }
         .onChange(of: visibleIDs) { _, _ in
+            guard !isSnippetMode else { return }
             state.ensureSelection(in: visibleItems)
+        }
+        .onChange(of: visibleSnippetIDs) { _, _ in
+            guard isSnippetMode else { return }
+            state.ensureSnippetSelection(in: visibleSnippets)
         }
     }
 
@@ -73,11 +97,18 @@ struct ContentView: View {
 
                 Spacer(minLength: 8)
 
-                Text("\(visibleItems.count) 条")
-                    .font(.system(size: 10.5, weight: .medium, design: .rounded))
-                    .foregroundStyle(.tertiary)
-                    .contentTransition(.numericText())
-                    .animation(reduceMotion ? nil : Theme.spring, value: visibleItems.count)
+                Text(
+                    isSnippetMode
+                        ? "\(visibleSnippets.count) 个片段"
+                        : "\(visibleItems.count) 条"
+                )
+                .font(.system(size: 10.5, weight: .medium, design: .rounded))
+                .foregroundStyle(.tertiary)
+                .contentTransition(.numericText())
+                .animation(
+                    reduceMotion ? nil : Theme.spring,
+                    value: isSnippetMode ? visibleSnippets.count : visibleItems.count
+                )
             }
         }
         .padding(.horizontal, Theme.contentPadding)
@@ -92,15 +123,18 @@ struct ContentView: View {
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.secondary)
 
-            TextField("搜索剪切板历史…", text: $state.searchText)
-                .textFieldStyle(.plain)
-                .font(.system(.body, design: .rounded))
-                .focusEffectDisabled()
-                .focused($isSearchFocused)
-                .help("支持中文、拼音缩写、来源应用与模糊匹配")
-                .onSubmit {
-                    copySelectedItem()
-                }
+            TextField(
+                isSnippetMode ? "搜索片段…" : "搜索剪切板历史…",
+                text: $state.searchText
+            )
+            .textFieldStyle(.plain)
+            .font(.system(.body, design: .rounded))
+            .focusEffectDisabled()
+            .focused($isSearchFocused)
+            .help("支持中文、拼音缩写、来源应用与模糊匹配")
+            .onSubmit {
+                copySelectedEntry()
+            }
 
             if !state.searchText.isEmpty {
                 Button {
@@ -145,6 +179,15 @@ struct ContentView: View {
     }
 
     // MARK: - List
+
+    @ViewBuilder
+    private var contentList: some View {
+        if isSnippetMode {
+            snippetList
+        } else {
+            historyList
+        }
+    }
 
     private var historyList: some View {
         ScrollViewReader { proxy in
@@ -210,6 +253,57 @@ struct ContentView: View {
         .frame(maxHeight: .infinity)
     }
 
+    private var snippetList: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.vertical) {
+                LazyVStack(spacing: Theme.rowSpacing) {
+                    Color.clear
+                        .frame(height: 0)
+                        .id("list-top")
+
+                    ForEach(Array(visibleSnippets.enumerated()), id: \.element.id) { index, snippet in
+                        SnippetRowView(
+                            snippet: snippet,
+                            index: index,
+                            isSelected: state.selectedSnippetID == snippet.id,
+                            onCopy: {
+                                onCopySnippet(snippet)
+                            }
+                        )
+                        .id(snippet.id)
+                        .transition(
+                            .asymmetric(
+                                insertion: .opacity.combined(with: .move(edge: .top)),
+                                removal: .opacity.combined(with: .scale(scale: 0.98))
+                            )
+                        )
+                    }
+                }
+                .padding(.horizontal, Theme.contentPadding)
+                .padding(.top, 2)
+                .padding(.bottom, 6)
+                .animation(reduceMotion ? nil : Theme.gentleSpring, value: visibleSnippetIDs)
+            }
+            .scrollIndicators(.never)
+            .overlay {
+                if visibleSnippets.isEmpty {
+                    SnippetEmptyStateView(query: state.searchText)
+                }
+            }
+            .onChange(of: state.selectedSnippetID) { _, selectedID in
+                guard let selectedID else { return }
+                withAnimation(reduceMotion ? nil : Theme.spring) {
+                    proxy.scrollTo(selectedID, anchor: .center)
+                }
+            }
+            .onChange(of: state.presentationToken) { _, _ in
+                isSearchFocused = true
+                proxy.scrollTo("list-top", anchor: .top)
+            }
+        }
+        .frame(maxHeight: .infinity)
+    }
+
     // MARK: - Background
 
     private var panelBackground: some View {
@@ -230,6 +324,28 @@ struct ContentView: View {
 
     // MARK: - Actions
 
+    private func ensureSelectionForCurrentMode() {
+        if isSnippetMode {
+            state.ensureSnippetSelection(in: visibleSnippets)
+        } else {
+            state.ensureSelection(in: visibleItems)
+        }
+    }
+
+    private func copySelectedEntry() {
+        if isSnippetMode {
+            guard
+                let snippet = state.selectedSnippet(in: visibleSnippets)
+                    ?? visibleSnippets.first
+            else {
+                return
+            }
+            onCopySnippet(snippet)
+        } else {
+            copySelectedItem()
+        }
+    }
+
     private func copySelectedItem() {
         guard let item = state.selectedItem(in: visibleItems) ?? visibleItems.first else {
             return
@@ -241,13 +357,16 @@ struct ContentView: View {
 #if DEBUG
 #Preview("HaoPaste Panel") {
     let manager = ClipboardManager()
+    let snippets = SnippetManager()
     ContentView(
         state: PanelViewState(),
         onCopy: { _ in },
-        onCopyText: { _ in }
+        onCopyText: { _ in },
+        onCopySnippet: { _ in }
     )
     .environment(manager)
-        .padding(30)
-        .background(Color(nsColor: .windowBackgroundColor))
+    .environment(snippets)
+    .padding(30)
+    .background(Color(nsColor: .windowBackgroundColor))
 }
 #endif

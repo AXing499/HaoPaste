@@ -238,3 +238,33 @@ enum DemoContent {
     }
 }
 #endif
+
+#if DEBUG
+@MainActor
+extension SnippetManager {
+    func seedDemoSnippetsIfNeeded() {
+        guard snippets.isEmpty else { return }
+
+        _ = create(
+            title: "工作邮箱",
+            content: "hello@haopaste.app"
+        )
+        _ = create(
+            title: "HaoPaste 签名",
+            content: "—— 来自 HaoPaste\nClipboard, reimagined."
+        )
+        _ = create(
+            title: "构建命令",
+            content: "swift build && swift test"
+        )
+        _ = create(
+            title: "会议纪要模板",
+            content: """
+            议题：
+            结论：
+            下一步：
+            """
+        )
+    }
+}
+#endif

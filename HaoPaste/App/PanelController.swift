@@ -23,6 +23,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     }
 
     let manager: ClipboardManager
+    let snippetManager: SnippetManager
     let state = PanelViewState()
 
     private let panel: ClipboardPanel
@@ -34,8 +35,9 @@ final class PanelController: NSObject, NSWindowDelegate {
     private var presentationGeneration = 0
     private var isHiding = false
 
-    init(manager: ClipboardManager) {
+    init(manager: ClipboardManager, snippetManager: SnippetManager) {
         self.manager = manager
+        self.snippetManager = snippetManager
         self.panel = ClipboardPanel(
             contentRect: NSRect(origin: .zero, size: Theme.windowSize),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -171,10 +173,25 @@ final class PanelController: NSObject, NSWindowDelegate {
         hide()
     }
 
+    func copySnippetAndHide(_ snippet: Snippet) {
+        guard manager.copyTextToPasteboard(snippet.content) else { return }
+        hide()
+    }
+
     // MARK: - Keyboard
 
+    private var isSnippetMode: Bool {
+        state.filter == .snippets
+    }
+
     private var currentVisibleItems: [ClipboardItem] {
-        manager.filteredItems(query: state.searchText, filter: state.filter)
+        guard !isSnippetMode else { return [] }
+        return manager.filteredItems(query: state.searchText, filter: state.filter)
+    }
+
+    private var currentVisibleSnippets: [Snippet] {
+        guard isSnippetMode else { return [] }
+        return snippetManager.filtered(query: state.searchText)
     }
 
     private func installKeyMonitor() {
@@ -273,8 +290,13 @@ final class PanelController: NSObject, NSWindowDelegate {
 
         if event.keyCode == KeyCode.escape {
             if !state.searchText.isEmpty {
-                let itemsAfterClear = manager.filteredItems(query: "", filter: state.filter)
-                state.clearSearch(in: itemsAfterClear)
+                state.searchText = ""
+                if isSnippetMode {
+                    state.ensureSnippetSelection(in: currentVisibleSnippets)
+                } else {
+                    state.ensureSelection(in: currentVisibleItems)
+                }
+                state.requestSearchFocus()
             } else {
                 hide()
             }
@@ -282,27 +304,39 @@ final class PanelController: NSObject, NSWindowDelegate {
         }
 
         if event.keyCode == KeyCode.upArrow, !isCommandOnly {
-            state.moveSelection(in: currentVisibleItems, by: -1)
+            if isSnippetMode {
+                state.moveSnippetSelection(in: currentVisibleSnippets, by: -1)
+            } else {
+                state.moveSelection(in: currentVisibleItems, by: -1)
+            }
             return true
         }
 
         if event.keyCode == KeyCode.downArrow, !isCommandOnly {
-            state.moveSelection(in: currentVisibleItems, by: 1)
+            if isSnippetMode {
+                state.moveSnippetSelection(in: currentVisibleSnippets, by: 1)
+            } else {
+                state.moveSelection(in: currentVisibleItems, by: 1)
+            }
             return true
         }
 
         if (event.keyCode == KeyCode.returnKey || event.keyCode == KeyCode.keypadEnter) && flags.isEmpty {
-            copySelectedItem()
+            copySelectedEntry()
             return true
         }
 
         if isCommandOnly, event.keyCode == KeyCode.p {
-            togglePinForSelectedItem()
+            if !isSnippetMode {
+                togglePinForSelectedItem()
+            }
             return true
         }
 
         if isCommandOnly, [KeyCode.delete, KeyCode.forwardDelete].contains(event.keyCode) {
-            deleteSelectedItem()
+            if !isSnippetMode {
+                deleteSelectedItem()
+            }
             return true
         }
 
@@ -323,6 +357,20 @@ final class PanelController: NSObject, NSWindowDelegate {
         return false
     }
 
+    private func copySelectedEntry() {
+        if isSnippetMode {
+            guard
+                let snippet = state.selectedSnippet(in: currentVisibleSnippets)
+                    ?? currentVisibleSnippets.first
+            else {
+                return
+            }
+            copySnippetAndHide(snippet)
+        } else {
+            copySelectedItem()
+        }
+    }
+
     private func copySelectedItem() {
         let items = currentVisibleItems
         guard let item = state.selectedItem(in: items) ?? items.first else { return }
@@ -330,9 +378,15 @@ final class PanelController: NSObject, NSWindowDelegate {
     }
 
     private func copyItem(at index: Int) {
-        let items = currentVisibleItems
-        guard items.indices.contains(index) else { return }
-        copyAndHide(items[index])
+        if isSnippetMode {
+            let snippets = currentVisibleSnippets
+            guard snippets.indices.contains(index) else { return }
+            copySnippetAndHide(snippets[index])
+        } else {
+            let items = currentVisibleItems
+            guard items.indices.contains(index) else { return }
+            copyAndHide(items[index])
+        }
     }
 
     private func togglePinForSelectedItem() {
@@ -429,9 +483,13 @@ final class PanelController: NSObject, NSWindowDelegate {
             },
             onCopyText: { [weak self] text in
                 self?.copyTextAndHide(text)
+            },
+            onCopySnippet: { [weak self] snippet in
+                self?.copySnippetAndHide(snippet)
             }
         )
         .environment(manager)
+        .environment(snippetManager)
 
         let hostingView = NSHostingView(rootView: rootView)
         hostingView.frame = NSRect(origin: .zero, size: Theme.windowSize)

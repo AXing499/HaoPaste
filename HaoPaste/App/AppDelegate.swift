@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private var manager: ClipboardManager!
+    private var snippetManager: SnippetManager!
     private var panelController: PanelController!
     private var statusBarController: StatusBarController!
     private var settings: AppSettings!
@@ -37,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         settings = AppSettings()
         settings.refreshLaunchAtLoginStatus()
+        snippetManager = SnippetManager()
 
         manager = ClipboardManager()
         manager.isSourceExcluded = { [weak settings] source in
@@ -61,7 +63,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         #endif
 
-        panelController = PanelController(manager: manager)
+        panelController = PanelController(
+            manager: manager,
+            snippetManager: snippetManager
+        )
         statusBarController = StatusBarController(
             manager: manager,
             panelController: panelController,
@@ -79,6 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         #if DEBUG
         if CommandLine.arguments.contains("--demo") {
             manager.seedDemoDataIfNeeded()
+            snippetManager.seedDemoSnippetsIfNeeded()
         }
 
         if CommandLine.arguments.contains("--show-settings") {
@@ -118,7 +124,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if settingsWindowController == nil {
             settingsWindowController = SettingsWindowController(
                 manager: manager,
-                settings: settings
+                settings: settings,
+                snippetManager: snippetManager
             )
         }
 
@@ -220,10 +227,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let path = value(after: "--export-history") {
             do {
                 let summary = try manager.exportHistory(
-                    to: URL(fileURLWithPath: path)
+                    to: URL(fileURLWithPath: path),
+                    snippets: snippetManager.snippets
                 )
                 NSLog(
-                    "HaoPaste: exported \(summary.itemCount) items and \(summary.imageCount) images"
+                    "HaoPaste: exported \(summary.itemCount) items, \(summary.imageCount) images, \(summary.snippetCount) snippets"
                 )
             } catch {
                 NSLog("HaoPaste: export failed — \(error.localizedDescription)")
@@ -238,8 +246,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let summary = try manager.importHistory(
                     from: URL(fileURLWithPath: path)
                 )
+                let snippetMerge = snippetManager.mergeImported(summary.snippets)
                 NSLog(
-                    "HaoPaste: imported \(summary.importedCount), merged pins \(summary.mergedPinnedCount), skipped \(summary.skippedCount), trimmed \(summary.trimmedCount)"
+                    "HaoPaste: imported \(summary.importedCount), merged pins \(summary.mergedPinnedCount), skipped \(summary.skippedCount), trimmed \(summary.trimmedCount), snippets added \(snippetMerge.added)"
                 )
             } catch {
                 NSLog("HaoPaste: import failed — \(error.localizedDescription)")
@@ -269,9 +278,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let path = value(after: "--render-settings") {
             manager.seedDemoDataIfNeeded()
+            snippetManager.seedDemoSnippetsIfNeeded()
             DebugRenderer.renderSettings(
                 manager: manager,
                 settings: settings,
+                snippetManager: snippetManager,
                 to: URL(fileURLWithPath: path)
             ) {
                 NSApp.terminate(nil)
@@ -284,8 +295,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         manager.seedDemoDataIfNeeded()
+        snippetManager.seedDemoSnippetsIfNeeded()
         DebugRenderer.renderPanel(
             manager: manager,
+            snippetManager: snippetManager,
             to: URL(fileURLWithPath: path)
         ) {
             NSApp.terminate(nil)

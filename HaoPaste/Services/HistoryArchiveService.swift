@@ -42,11 +42,13 @@ final class HistoryArchiveService {
         let exportedAt: Date
         let itemCount: Int
         let imageCount: Int
+        let snippetCount: Int?
     }
 
     struct ExportSummary {
         let itemCount: Int
         let imageCount: Int
+        let snippetCount: Int
     }
 
     struct ImportSummary {
@@ -54,16 +56,18 @@ final class HistoryArchiveService {
         let mergedPinnedCount: Int
         let skippedCount: Int
         let trimmedCount: Int
+        let snippets: [Snippet]
     }
 
     struct UnpackedArchive {
         let items: [ClipboardItem]
+        let snippets: [Snippet]
         let imagesDirectory: URL?
         let manifest: Manifest?
         let temporaryDirectory: URL
     }
 
-    private let supportedSchemaVersion = 1
+    private let supportedSchemaVersion = 2
     private let store: ClipboardStore
     private let fileManager = FileManager.default
 
@@ -73,7 +77,11 @@ final class HistoryArchiveService {
 
     // MARK: - Export
 
-    func export(items: [ClipboardItem], to destination: URL) throws -> ExportSummary {
+    func export(
+        items: [ClipboardItem],
+        snippets: [Snippet],
+        to destination: URL
+    ) throws -> ExportSummary {
         let temporaryDirectory = fileManager.temporaryDirectory
             .appendingPathComponent("HaoPasteExport-\(UUID().uuidString)", isDirectory: true)
         let payloadDirectory = temporaryDirectory
@@ -137,13 +145,20 @@ final class HistoryArchiveService {
                 options: .atomic
             )
 
+            let snippetsData = try encoder.encode(snippets)
+            try snippetsData.write(
+                to: payloadDirectory.appendingPathComponent("snippets.json"),
+                options: .atomic
+            )
+
             let manifest = Manifest(
                 schemaVersion: supportedSchemaVersion,
                 appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
                     ?? "unknown",
                 exportedAt: .now,
                 itemCount: items.count,
-                imageCount: imageCount
+                imageCount: imageCount,
+                snippetCount: snippets.count
             )
 
             let manifestEncoder = JSONEncoder()
@@ -168,7 +183,11 @@ final class HistoryArchiveService {
             throw ArchiveError.writeFailed(error.localizedDescription)
         }
 
-        return ExportSummary(itemCount: items.count, imageCount: imageCount)
+        return ExportSummary(
+            itemCount: items.count,
+            imageCount: imageCount,
+            snippetCount: snippets.count
+        )
     }
 
     // MARK: - Import
@@ -199,6 +218,17 @@ final class HistoryArchiveService {
             )
 
             let root = historyURL.deletingLastPathComponent()
+            let snippetsURL = root.appendingPathComponent("snippets.json")
+            let snippets: [Snippet]
+            if fileManager.fileExists(atPath: snippetsURL.path) {
+                snippets = try decoder.decode(
+                    [Snippet].self,
+                    from: Data(contentsOf: snippetsURL)
+                )
+            } else {
+                snippets = []
+            }
+
             let imagesURL = root.appendingPathComponent("Images", isDirectory: true)
             let imagesDirectory = fileManager.fileExists(atPath: imagesURL.path)
                 ? imagesURL
@@ -220,6 +250,7 @@ final class HistoryArchiveService {
 
             return UnpackedArchive(
                 items: items,
+                snippets: snippets,
                 imagesDirectory: imagesDirectory,
                 manifest: manifest,
                 temporaryDirectory: temporaryDirectory
