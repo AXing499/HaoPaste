@@ -5,6 +5,7 @@
 //  The floating clipboard panel: search, category pills and history list.
 //
 
+import AppKit
 import SwiftUI
 
 struct ContentView: View {
@@ -43,16 +44,59 @@ struct ContentView: View {
         visibleSnippets.map(\.id)
     }
 
+    private var previewItem: ClipboardItem? {
+        guard let id = state.previewingItemID else { return nil }
+        return visibleItems.first { $0.id == id }
+    }
+
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            contentList
-            PanelFooterView(
-                isPaused: manager.isMonitoringPaused,
-                itemCount: isSnippetMode ? snippetManager.snippets.count : manager.items.count,
-                itemLabel: isSnippetMode ? "个片段" : "条记录",
-                isSearching: state.isSearching
-            )
+        ZStack {
+            VStack(spacing: 0) {
+                header
+                contentList
+                PanelFooterView(
+                    isPaused: manager.isMonitoringPaused,
+                    itemCount: isSnippetMode ? snippetManager.snippets.count : manager.items.count,
+                    itemLabel: isSnippetMode ? "个片段" : "条记录",
+                    isSearching: state.isSearching
+                )
+            }
+
+            if let previewItem {
+                PreviewOverlayView(
+                    item: previewItem,
+                    imageURL: manager.imageURL(for: previewItem),
+                    richText: manager.richText(for: previewItem),
+                    onClose: {
+                        withAnimation(reduceMotion ? nil : Theme.spring) {
+                            state.endPreview()
+                        }
+                    },
+                    onCopy: {
+                        onCopy(previewItem)
+                    },
+                    onCopyText: onCopyText,
+                    onOpenURL: { url in
+                        NSWorkspace.shared.open(url)
+                    },
+                    onOpenFiles: {
+                        for url in previewItem.availableFileURLs {
+                            NSWorkspace.shared.open(url)
+                        }
+                    },
+                    onRevealFiles: {
+                        let urls = previewItem.availableFileURLs
+                        guard !urls.isEmpty else { return }
+                        NSWorkspace.shared.activateFileViewerSelecting(urls)
+                    },
+                    onSaveImage: {
+                        guard let imageURL = manager.imageURL(for: previewItem) else { return }
+                        ImageSavePanel.present(imageURL: imageURL)
+                    }
+                )
+                .zIndex(1)
+                .transition(.opacity)
+            }
         }
         .frame(width: Theme.panelSize.width, height: Theme.panelSize.height)
         .background {
@@ -71,13 +115,18 @@ struct ContentView: View {
             isSearchFocused = true
         }
         .onChange(of: state.searchText) { _, _ in
+            state.endPreview()
             ensureSelectionForCurrentMode()
         }
         .onChange(of: state.filter) { _, _ in
+            state.endPreview()
             ensureSelectionForCurrentMode()
         }
-        .onChange(of: visibleIDs) { _, _ in
+        .onChange(of: visibleIDs) { _, ids in
             guard !isSnippetMode else { return }
+            if let previewingItemID = state.previewingItemID, !ids.contains(previewingItemID) {
+                state.endPreview()
+            }
             state.ensureSelection(in: visibleItems)
         }
         .onChange(of: visibleSnippetIDs) { _, _ in
@@ -203,11 +252,21 @@ struct ContentView: View {
                             index: index,
                             thumbnailURL: manager.thumbnailURL(for: item),
                             imageURL: manager.imageURL(for: item),
+                            dragProvider: {
+                                ItemDragProvider.make(
+                                    for: item,
+                                    imageURL: manager.imageURL(for: item),
+                                    richText: manager.richText(for: item)
+                                )
+                            },
                             isSelected: state.selectedID == item.id,
                             onCopy: {
                                 onCopy(item)
                             },
                             onCopyText: onCopyText,
+                            onPreview: {
+                                state.beginPreview(item)
+                            },
                             onTogglePin: {
                                 withAnimation(reduceMotion ? nil : Theme.spring) {
                                     manager.togglePin(item)

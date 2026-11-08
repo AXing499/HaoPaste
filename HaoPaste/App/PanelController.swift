@@ -18,8 +18,10 @@ final class PanelController: NSObject, NSWindowDelegate {
         static let forwardDelete: UInt16 = 117
         static let upArrow: UInt16 = 126
         static let downArrow: UInt16 = 125
+        static let c: UInt16 = 8
         static let p: UInt16 = 35
         static let w: UInt16 = 13
+        static let y: UInt16 = 16
     }
 
     let manager: ClipboardManager
@@ -123,6 +125,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         guard panel.isVisible, !isHiding else { return }
 
         isHiding = true
+        state.endPreview()
         presentationGeneration &+= 1
         let generation = presentationGeneration
 
@@ -288,6 +291,14 @@ final class PanelController: NSObject, NSWindowDelegate {
         let flags = event.modifierFlags.intersection([.command, .option, .control, .shift])
         let isCommandOnly = flags == .command
 
+        if state.isPreviewing {
+            return handlePreviewKeyDown(
+                event,
+                flags: flags,
+                isCommandOnly: isCommandOnly
+            )
+        }
+
         if event.keyCode == KeyCode.escape {
             if !state.searchText.isEmpty {
                 state.searchText = ""
@@ -333,6 +344,13 @@ final class PanelController: NSObject, NSWindowDelegate {
             return true
         }
 
+        if isCommandOnly, event.keyCode == KeyCode.y {
+            if !isSnippetMode, let item = state.selectedItem(in: currentVisibleItems) {
+                state.togglePreview(item)
+            }
+            return true
+        }
+
         if isCommandOnly, [KeyCode.delete, KeyCode.forwardDelete].contains(event.keyCode) {
             if !isSnippetMode {
                 deleteSelectedItem()
@@ -355,6 +373,69 @@ final class PanelController: NSObject, NSWindowDelegate {
         }
 
         return false
+    }
+
+    private func handlePreviewKeyDown(
+        _ event: NSEvent,
+        flags: NSEvent.ModifierFlags,
+        isCommandOnly: Bool
+    ) -> Bool {
+        if event.keyCode == KeyCode.escape {
+            state.endPreview()
+            return true
+        }
+
+        if (event.keyCode == KeyCode.returnKey || event.keyCode == KeyCode.keypadEnter),
+           flags.isEmpty {
+            copyPreviewedItem()
+            return true
+        }
+
+        if isCommandOnly, (event.keyCode == KeyCode.y || event.keyCode == KeyCode.c) {
+            if event.keyCode == KeyCode.y {
+                state.endPreview()
+            } else {
+                copyPreviewedItem()
+            }
+            return true
+        }
+
+        if !isCommandOnly, event.keyCode == KeyCode.upArrow {
+            movePreviewSelection(by: -1)
+            return true
+        }
+
+        if !isCommandOnly, event.keyCode == KeyCode.downArrow {
+            movePreviewSelection(by: 1)
+            return true
+        }
+
+        // Other command shortcuts target the list underneath; ignore them
+        // while the preview is on screen. Plain typing still reaches the search
+        // field and closes the preview through ContentView's observer.
+        return isCommandOnly
+    }
+
+    private func movePreviewSelection(by delta: Int) {
+        let items = currentVisibleItems
+        guard !items.isEmpty else {
+            state.endPreview()
+            return
+        }
+
+        state.moveSelection(in: items, by: delta)
+        state.previewingItemID = state.selectedID
+    }
+
+    private func copyPreviewedItem() {
+        guard
+            let id = state.previewingItemID,
+            let item = manager.items.first(where: { $0.id == id })
+        else {
+            return
+        }
+
+        copyAndHide(item)
     }
 
     private func copySelectedEntry() {

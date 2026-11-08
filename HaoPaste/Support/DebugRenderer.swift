@@ -31,6 +31,19 @@ enum DebugRenderer {
                 .id
         }
 
+        switch ProcessInfo.processInfo.environment["HAOPASTE_RENDER_PREVIEW"] {
+        case "image":
+            state.previewingItemID = manager
+                .filteredItems(query: "", filter: .image)
+                .first?
+                .id
+        case "text":
+            let textItems = manager.filteredItems(query: "", filter: .text)
+            state.previewingItemID = (textItems.first(where: \.hasRichText) ?? textItems.first)?.id
+        default:
+            break
+        }
+
         let isDark = ProcessInfo.processInfo.environment["HAOPASTE_RENDER_APPEARANCE"] == "dark"
 
         let backgroundColors: [Color] = isDark

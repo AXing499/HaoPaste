@@ -7,16 +7,17 @@
 
 import AppKit
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct ItemRowView: View {
     let item: ClipboardItem
     let index: Int
     let thumbnailURL: URL?
     let imageURL: URL?
+    let dragProvider: () -> NSItemProvider
     let isSelected: Bool
     let onCopy: () -> Void
     let onCopyText: (String) -> Void
+    let onPreview: () -> Void
     let onTogglePin: () -> Void
     let onDelete: () -> Void
 
@@ -25,7 +26,17 @@ struct ItemRowView: View {
 
     private let iconSize: CGFloat = 32
 
+    @ViewBuilder
     var body: some View {
+        if canDragOut {
+            rowContent
+                .onDrag(dragProvider)
+        } else {
+            rowContent
+        }
+    }
+
+    private var rowContent: some View {
         HStack(spacing: 8) {
             copyButton
             actionCluster
@@ -57,6 +68,14 @@ struct ItemRowView: View {
         .animation(reduceMotion ? nil : Theme.spring, value: isSelected)
         .animation(reduceMotion ? nil : Theme.quickSpring, value: item.isPinned)
         .contextMenu {
+            Button {
+                onPreview()
+            } label: {
+                Label("预览", systemImage: "eye")
+            }
+
+            Divider()
+
             if item.type == .url, let url = URL(string: item.content) {
                 Button {
                     NSWorkspace.shared.open(url)
@@ -127,7 +146,7 @@ struct ItemRowView: View {
                 Button {
                     onCopyText(item.content)
                 } label: {
-                    Label("复制为纯文本", systemImage: "textformat")
+                    Label("复制为纯文本", systemImage: "doc.plaintext")
                 }
 
                 Divider()
@@ -313,6 +332,12 @@ struct ItemRowView: View {
 
             HStack(spacing: 2) {
                 RoundIconButton(
+                    symbolName: "eye",
+                    help: "预览（⌘Y）",
+                    action: onPreview
+                )
+
+                RoundIconButton(
                     symbolName: item.isPinned ? "pin.slash" : "pin",
                     help: item.isPinned ? "取消置顶" : "置顶",
                     action: onTogglePin
@@ -328,7 +353,7 @@ struct ItemRowView: View {
             .scaleEffect(isHovering ? 1 : 0.9)
             .allowsHitTesting(isHovering)
         }
-        .frame(width: 52, height: 26, alignment: .trailing)
+        .frame(width: 76, height: 26, alignment: .trailing)
         .animation(reduceMotion ? nil : Theme.spring, value: isHovering)
     }
 
@@ -369,26 +394,17 @@ struct ItemRowView: View {
 
     private func saveImage() {
         guard let imageURL else { return }
+        ImageSavePanel.present(imageURL: imageURL)
+    }
 
-        let panel = NSSavePanel()
-        panel.title = "保存图片"
-        panel.prompt = "保存"
-        panel.allowedContentTypes = [.png]
-        panel.canCreateDirectories = true
-        panel.nameFieldStringValue = "HaoPaste-图片.png"
-
-        guard panel.runModal() == .OK, let destination = panel.url else { return }
-
-        do {
-            try? FileManager.default.removeItem(at: destination)
-            try FileManager.default.copyItem(at: imageURL, to: destination)
-        } catch {
-            let alert = NSAlert()
-            alert.messageText = "无法保存图片"
-            alert.informativeText = error.localizedDescription
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "好")
-            alert.runModal()
+    private var canDragOut: Bool {
+        switch item.type {
+        case .image:
+            return imageURL != nil
+        case .file:
+            return item.availableFileURLs.count == 1
+        case .text, .code, .url, .colorHex:
+            return true
         }
     }
 

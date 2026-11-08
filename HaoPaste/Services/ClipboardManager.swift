@@ -330,6 +330,10 @@ final class ClipboardManager {
         store.thumbnailURL(for: item)
     }
 
+    func richText(for item: ClipboardItem) -> RichTextPayload? {
+        store.loadRichText(for: item)
+    }
+
     // MARK: - Capture pipeline
 
     private func handleCapture(_ capture: CapturedClipboard) {

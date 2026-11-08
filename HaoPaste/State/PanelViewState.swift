@@ -16,6 +16,13 @@ final class PanelViewState {
     var selectedID: UUID?
     var selectedSnippetID: UUID?
 
+    /// History item shown in the quick preview overlay, if any.
+    var previewingItemID: UUID?
+
+    var isPreviewing: Bool {
+        previewingItemID != nil
+    }
+
     /// Incremented whenever the search field should take focus.
     var focusToken = 0
 
@@ -31,8 +38,29 @@ final class PanelViewState {
         filter = .all
         selectedID = firstItemID
         selectedSnippetID = nil
+        previewingItemID = nil
         focusToken &+= 1
         presentationToken &+= 1
+    }
+
+    // MARK: - Preview
+
+    func beginPreview(_ item: ClipboardItem) {
+        selectedID = item.id
+        previewingItemID = item.id
+    }
+
+    func togglePreview(_ item: ClipboardItem) {
+        if previewingItemID == item.id {
+            previewingItemID = nil
+        } else {
+            selectedID = item.id
+            previewingItemID = item.id
+        }
+    }
+
+    func endPreview() {
+        previewingItemID = nil
     }
 
     func requestSearchFocus() {

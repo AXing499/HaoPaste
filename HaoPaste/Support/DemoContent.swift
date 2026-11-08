@@ -65,33 +65,58 @@ enum DemoContent {
         )
 
         let richTextID = UUID()
-        let richTextPayload = RichTextPayload(
-            rtfData: Data(#"{\rtf1\ansi\b HaoPaste\b0  保留富文本格式。}"#.utf8),
-            htmlData: Data("<p><strong>HaoPaste</strong> 保留富文本格式。</p>".utf8)
+        let richTextContent = """
+        HaoPaste 保留富文本格式。
+
+        在浏览器或备忘录中复制的粗体、斜体与链接，会在预览中按原样显示；复制回剪贴板时同样保留 RTF / HTML。
+        """
+        let richTextAttributed = NSMutableAttributedString(string: richTextContent)
+        richTextAttributed.addAttribute(
+            .font,
+            value: NSFont.systemFont(ofSize: 13, weight: .semibold),
+            range: NSRange(location: 0, length: ("HaoPaste" as NSString).length)
         )
-        if let richTextFileName = try? store.saveRichText(richTextPayload, id: richTextID) {
-            let richTextContent = "HaoPaste 保留富文本格式。"
-            items.append(
-                ClipboardItem(
-                    id: richTextID,
-                    type: .text,
-                    content: richTextContent,
-                    plainText: richTextContent,
-                    isPinned: false,
-                    createdAt: now.addingTimeInterval(-180),
-                    sourceApp: SourceApplication(
-                        bundleIdentifier: "com.apple.Safari",
-                        name: "Safari"
-                    ),
-                    contentHash: ContentHasher.richText(
-                        richTextContent,
-                        type: .text,
-                        rtf: richTextPayload.rtfData,
-                        html: richTextPayload.htmlData
-                    ),
-                    richTextFileName: richTextFileName
-                )
+        let richTextRange = NSRange(location: 0, length: richTextAttributed.length)
+
+        if let rtfData = try? richTextAttributed.data(
+            from: richTextRange,
+            documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+        ) {
+            let html = """
+            <p><strong>HaoPaste</strong> 保留富文本格式。</p>
+            <p>在浏览器或备忘录中复制的粗体、斜体与链接，会在预览中按原样显示；复制回剪贴板时同样保留 RTF / HTML。</p>
+            """
+            let richTextPayload = RichTextPayload(
+                rtfData: rtfData,
+                htmlData: Data(html.utf8)
             )
+
+            if let richTextFileName = try? store.saveRichText(
+                richTextPayload,
+                id: richTextID
+            ) {
+                items.append(
+                    ClipboardItem(
+                        id: richTextID,
+                        type: .text,
+                        content: richTextContent,
+                        plainText: richTextContent,
+                        isPinned: false,
+                        createdAt: now.addingTimeInterval(-180),
+                        sourceApp: SourceApplication(
+                            bundleIdentifier: "com.apple.Safari",
+                            name: "Safari"
+                        ),
+                        contentHash: ContentHasher.richText(
+                            richTextContent,
+                            type: .text,
+                            rtf: richTextPayload.rtfData,
+                            html: richTextPayload.htmlData
+                        ),
+                        richTextFileName: richTextFileName
+                    )
+                )
+            }
         }
 
         let url = "https://developer.apple.com/design/human-interface-guidelines"

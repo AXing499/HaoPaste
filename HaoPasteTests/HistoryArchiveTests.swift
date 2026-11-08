@@ -192,7 +192,7 @@ final class HistoryArchiveTests: XCTestCase {
         let archiveURL = root.appendingPathComponent("empty.zip")
         let emptyPayload = root.appendingPathComponent("Empty", isDirectory: true)
         try FileManager.default.createDirectory(at: emptyPayload, withIntermediateDirectories: true)
-        try FileManager.default.createFile(
+        FileManager.default.createFile(
             atPath: emptyPayload.appendingPathComponent("not-history.txt").path,
             contents: Data("nope".utf8)
         )
