@@ -52,6 +52,10 @@ NSApplication (accessory / LSUIElement)
 │   ├── QuickTranslationPanelController
 │   │   └── TranslationService (quick instance, shared settings/consent)
 │   │
+│   ├── ClipboardShelfController
+│   │   ├── ClipboardShelfPanel (NSPanel, nonactivating, transparent)
+│   │   └── NSHostingView<ClipboardShelfView>
+│   │
 │   ├── TranslationService
 │   │   ├── TranslationSettingsStore (UserDefaults)
 │   │   ├── KeychainTranslationCredentialStore
@@ -93,6 +97,8 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `AppDelegate.swift` | 依赖装配、主菜单、首次启动展示、应用代理生命周期 |
 | `PanelController.swift` | 无边框悬浮面板的创建 / 定位 / 显隐动画、键盘事件、焦点恢复、自动翻译最新记录 |
 | `QuickTranslationPanelController.swift` | `⌥⌘T` 快捷翻译卡片：读取剪贴板、定位、键盘与焦点恢复 |
+| `ClipboardShelfController.swift` | 顶部挂架：30Hz 鼠标轮询、展开 / 收起、菜单栏与全屏抑制、卡片命中与点击穿透 |
+| `ClipboardShelfPanel.swift` | 透明、非激活的挂架 `NSPanel`，跨 Space 显示且不抢焦点 |
 | `StatusBarController.swift` | 菜单栏图标、左键呼出面板、右键菜单、暂停、清空、退出 |
 | `GlobalHotKey.swift` | Carbon 系统级快捷键注册和事件分发，失败时抛出冲突错误 |
 | `SettingsWindowController.swift` | 设置窗口托管与激活 |
@@ -103,7 +109,7 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | --- | --- |
 | `ClipboardMonitor.swift` | 350ms 轮询 `changeCount`，过滤隐藏类型，生成 `CapturedClipboard` |
 | `ClipboardManager.swift` | 核心业务：去重、置顶、删除、清空、复制回剪贴板、FIFO 裁剪、历史容量 |
-| `AppSettings.swift` | 用户偏好、快捷键、历史上限、登录项状态、排除应用、图片记录开关 |
+| `AppSettings.swift` | 用户偏好、快捷键、历史上限、登录项状态、排除应用、图片记录开关、挂架开关与显示数量 |
 | `ClipboardStore.swift` | JSON 历史记录、图片资产、防抖写入、目录管理、导入图片资产 |
 | `SnippetStore.swift` | `snippets.json` 持久化 |
 | `SnippetManager.swift` | 片段 CRUD、过滤、备份合并与可观察状态 |
@@ -133,6 +139,8 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `PreviewOverlayView.swift` | 预览卡片：图片棋盘格、全文 / 富文本、颜色色块、文件列表、拖拽与动作 |
 | `MultiSelectionBar.swift` | 多选浮动操作条：已选数量、合并复制、取消与不支持提示 |
 | `TranslationPaneView.swift` | 翻译面板：语言 / 引擎切换、授权、结果、复制与保存片段 |
+| `ClipboardShelfView.swift` | 顶部挂架：晾衣绳、卡片布局、全部 / 文本 / 图片筛选与命中区域上报 |
+| `ShelfCardView.swift` | 挂架卡片：文本 / 图片 / 文件 / 颜色、悬停抬升、点击复制与「已复制」反馈 |
 | `OCRPaneView.swift` | 单张识图面板：原图缩略、可编辑文字、复制 / 翻译 / 保存片段 |
 | `BatchOCRPaneView.swift` | 批量识图面板：逐张结果、编辑 / 复制 / 翻译、复制全部 |
 | `TranslationSettingsPage.swift` | 设置「智能」页：引擎优先级、凭证配置与测试 |
@@ -141,6 +149,8 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `PanelFooterView.swift` | 监听状态与键盘提示 |
 | `PanelViewState.swift` | 搜索、分类、单选 / 多选、锚点、预览状态、焦点触发器 |
 | `HotKeyConfiguration.swift` | Carbon 键码 / 修饰符、显示文案与校验 |
+| `ClipboardShelfLayout.swift` | 挂架几何：卡片宽度 / 容量、绳线弧度、菜单栏展开区域、全屏检测与命中判定 |
+| `ClipboardShelfFilter.swift` | 挂架筛选：全部 / 文本（含代码、链接、颜色）/ 图片 |
 | `Snippet.swift` | 可复用文本片段模型 |
 | `SnippetRowView.swift` | 面板片段列表行 |
 | `RichTextPayload.swift` | RTF / HTML 富文本缓存模型 |
@@ -281,7 +291,17 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 点击「翻译」调用 `TranslationService.present(text:title:)`，复用当前目标语言、引擎顺序、授权与翻译缓存。
 - OCR 全程本地执行，图片不会离开设备。
 
-### 6.11 键盘事件
+### 6.11 顶部剪贴板挂架
+
+- `ClipboardShelfController` 以 30Hz 轮询 `NSEvent.mouseLocation`，鼠标在菜单栏中间三分之一区域停留 0.25 秒后展开，离开挂架 0.5 秒后收起。
+- 挂架是覆盖屏幕宽度、高度 232pt 的透明 `NSPanel`，使用 `.nonactivatingPanel`，不激活应用、不抢当前应用的键盘焦点；`ShelfHostingView` 重写 `acceptsFirstMouse`，首次点击即落到卡片上。
+- 面板默认 `ignoresMouseEvents = true`；SwiftUI 通过 `PreferenceKey` 上报卡片与筛选栏的命中矩形，控制器按 30Hz 把鼠标位置换算到面板顶部坐标并切换点击穿透。面板空白区域不拦截下方应用。
+- 卡片显示 `ClipboardShelfLayout.capacity` 计算出的数量：由屏幕宽度、6–12 条设置上限和最小卡片宽度共同决定；卡片横向居中，绳线带轻微弧度。
+- 卡片点击调用 `ClipboardManager.copyToPasteboard`，同步 `changeCount`，不会生成新历史；复制成功后挂架保持展开并显示短暂「已复制」反馈。
+- 展开前会检查：HaoPaste 是否位于前台、是否有全屏窗口覆盖当前屏幕、用户是否刚点过菜单栏。点击菜单栏会隐藏挂架并把本次悬停标记为抑制，直到鼠标离开菜单栏。
+- 活动空间 / 屏幕参数变化时自动收起；支持「减弱动态效果」，此时使用无动画的展开 / 收起。
+
+### 6.12 键盘事件
 
 `PanelController` 使用 `NSEvent.addLocalMonitorForEvents(matching: .keyDown)` 在面板为 key window 时处理：
 
@@ -351,7 +371,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-91 个 XCTest 由 app target 作为测试宿主运行：
+97 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。
@@ -359,6 +379,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - `AppSettings`：默认值、持久化、排除规则匹配、非法上限回退。
 - `ClipboardStore`：文本 / 图片资产读写、缺失资产过滤。
 - `ClipboardManager`：FIFO 裁剪、置顶保护、清空。
+- 顶部挂架：筛选规则、容量与卡片宽度、绳线几何、菜单栏展开区域、点击命中、显示数量持久化。
 - `HistoryArchiveService`：导出、导入、重复导入去重、无效归档报错。
 - `SearchMatcher`：中文、拼音全拼 / 首字母、模糊匹配、相关性排序。
 - `SnippetManager`：片段 CRUD、持久化、搜索、合并。

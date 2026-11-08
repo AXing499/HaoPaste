@@ -15,6 +15,11 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
     private let snippetManager: SnippetManager
 
     private let panel: QuickTranslationPanel
+
+    var isVisible: Bool {
+        panel.isVisible
+    }
+
     private var keyMonitor: Any?
     private var mouseMonitor: Any?
     private var globalMouseMonitor: Any?

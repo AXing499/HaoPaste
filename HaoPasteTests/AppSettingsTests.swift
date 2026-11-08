@@ -19,6 +19,8 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.hotKey, .default)
         XCTAssertEqual(settings.translationHotKey, .translationDefault)
         XCTAssertTrue(settings.autoTranslateLatestOnOpen)
+        XCTAssertTrue(settings.shelfEnabled)
+        XCTAssertEqual(settings.shelfItemLimit, 8)
         XCTAssertTrue(settings.capturesImages)
         XCTAssertTrue(settings.excludedApplications.isEmpty)
         XCTAssertNil(settings.hotKeyRegistrationError)
@@ -42,6 +44,8 @@ final class AppSettingsTests: XCTestCase {
             carbonModifiers: UInt32(controlKey | optionKey)
         )
         settings.autoTranslateLatestOnOpen = false
+        settings.shelfEnabled = false
+        settings.shelfItemLimit = 10
 
         let reloaded = AppSettings(defaults: defaults)
         XCTAssertEqual(reloaded.maxUnpinnedItems, 500)
@@ -49,6 +53,8 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(reloaded.hotKey.displayString, "⌥⌘K")
         XCTAssertEqual(reloaded.translationHotKey.displayString, "⌃⌥L")
         XCTAssertFalse(reloaded.autoTranslateLatestOnOpen)
+        XCTAssertFalse(reloaded.shelfEnabled)
+        XCTAssertEqual(reloaded.shelfItemLimit, 10)
     }
 
     func testExcludedApplicationsPersistAndDeduplicate() throws {

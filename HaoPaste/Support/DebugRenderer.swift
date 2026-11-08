@@ -165,6 +165,45 @@ enum DebugRenderer {
         )
     }
 
+    static func renderShelf(
+        manager: ClipboardManager,
+        settings: AppSettings,
+        to url: URL,
+        completion: @escaping @MainActor () -> Void
+    ) {
+        let isDark = ProcessInfo.processInfo.environment[
+            "HAOPASTE_RENDER_APPEARANCE"
+        ] == "dark"
+
+        let background = isDark
+            ? Color(nsColor: NSColor(calibratedRed: 0.09, green: 0.11, blue: 0.17, alpha: 1))
+            : Color(nsColor: NSColor(calibratedRed: 0.90, green: 0.93, blue: 0.97, alpha: 1))
+
+        let content = ZStack {
+            background
+
+            ClipboardShelfView(
+                manager: manager,
+                settings: settings,
+                onHitRectsChanged: { _ in }
+            )
+        }
+        .frame(
+            width: 1_440,
+            height: ClipboardShelfLayout.panelHeight
+        )
+
+        render(
+            content: content,
+            size: CGSize(
+                width: 1_440,
+                height: ClipboardShelfLayout.panelHeight
+            ),
+            to: url,
+            completion: completion
+        )
+    }
+
     static func renderQuickTranslation(
         service: TranslationService,
         to url: URL,

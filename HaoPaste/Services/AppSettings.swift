@@ -14,6 +14,8 @@ import ServiceManagement
 final class AppSettings {
     static let historyLimitOptions = [100, 200, 500, 1_000]
     static let defaultHistoryLimit = 200
+    static let shelfItemLimitOptions = [6, 8, 10, 12]
+    static let defaultShelfItemLimit = 8
 
     private enum Keys {
         static let maxUnpinnedItems = "settings.maxUnpinnedItems"
@@ -24,6 +26,8 @@ final class AppSettings {
         static let translationHotKeyCode = "settings.translationHotKeyCode"
         static let translationHotKeyModifiers = "settings.translationHotKeyModifiers"
         static let autoTranslateLatestOnOpen = "settings.autoTranslateLatestOnOpen"
+        static let shelfEnabled = "settings.shelfEnabled"
+        static let shelfItemLimit = "settings.shelfItemLimit"
     }
 
     var maxUnpinnedItems: Int {
@@ -85,6 +89,30 @@ final class AppSettings {
         }
     }
 
+    var shelfEnabled: Bool {
+        didSet {
+            guard oldValue != shelfEnabled else { return }
+            defaults.set(shelfEnabled, forKey: Keys.shelfEnabled)
+            onShelfEnabledChange?(shelfEnabled)
+        }
+    }
+
+    var shelfItemLimit: Int {
+        didSet {
+            let validated = Self.shelfItemLimitOptions.contains(shelfItemLimit)
+                ? shelfItemLimit
+                : Self.defaultShelfItemLimit
+
+            if validated != shelfItemLimit {
+                shelfItemLimit = validated
+                return
+            }
+
+            guard oldValue != shelfItemLimit else { return }
+            defaults.set(shelfItemLimit, forKey: Keys.shelfItemLimit)
+        }
+    }
+
     var capturesImages: Bool {
         didSet {
             guard oldValue != capturesImages else { return }
@@ -104,6 +132,7 @@ final class AppSettings {
     @ObservationIgnored var onHistoryLimitChange: ((Int) -> Void)?
     @ObservationIgnored var onHotKeyChange: ((HotKeyConfiguration) -> Void)?
     @ObservationIgnored var onTranslationHotKeyChange: ((HotKeyConfiguration) -> Void)?
+    @ObservationIgnored var onShelfEnabledChange: ((Bool) -> Void)?
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var isRevertingHotKey = false
@@ -146,6 +175,17 @@ final class AppSettings {
                 forKey: Keys.autoTranslateLatestOnOpen
             )
         }
+
+        if defaults.object(forKey: Keys.shelfEnabled) == nil {
+            self.shelfEnabled = true
+        } else {
+            self.shelfEnabled = defaults.bool(forKey: Keys.shelfEnabled)
+        }
+
+        let storedShelfLimit = defaults.integer(forKey: Keys.shelfItemLimit)
+        self.shelfItemLimit = Self.shelfItemLimitOptions.contains(storedShelfLimit)
+            ? storedShelfLimit
+            : Self.defaultShelfItemLimit
 
         if defaults.object(forKey: Keys.capturesImages) == nil {
             self.capturesImages = true

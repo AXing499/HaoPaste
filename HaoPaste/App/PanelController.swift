@@ -38,6 +38,15 @@ final class PanelController: NSObject, NSWindowDelegate {
     private var keyMonitor: Any?
     private var mouseMonitor: Any?
     private var globalMouseMonitor: Any?
+
+    /// Called before the panel is presented, so lightweight overlays can
+    /// dismiss themselves first.
+    var onWillPresent: (() -> Void)?
+
+    var isVisible: Bool {
+        panel.isVisible
+    }
+
     private var deactivationObserver: NSObjectProtocol?
     private var previousApplication: NSRunningApplication?
     private var presentationGeneration = 0
@@ -101,6 +110,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     }
 
     func show() {
+        onWillPresent?()
         presentationGeneration &+= 1
         isHiding = false
 

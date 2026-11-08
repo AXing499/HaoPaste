@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var translationService: TranslationService!
     private var quickTranslationService: TranslationService!
     private var quickTranslationController: QuickTranslationPanelController!
+    private var shelfController: ClipboardShelfController!
     private var ocrService: OCRService!
     private var settingsWindowController: SettingsWindowController?
 
@@ -90,17 +91,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         quickTranslationController.onWillPresent = { [weak self] in
             self?.panelController?.hide(restoreFocus: false)
+            self?.shelfController?.hideIfVisible()
         }
+
+        shelfController = ClipboardShelfController(
+            manager: manager,
+            settings: settings
+        )
 
         statusBarController = StatusBarController(
             manager: manager,
             panelController: panelController,
             quickTranslationController: quickTranslationController,
+            shelfController: shelfController,
             settings: settings,
             onOpenSettings: { [weak self] in
                 self?.showSettings()
             }
         )
+        shelfController.onVisibilityChanged = { [weak self] in
+            self?.statusBarController?.refreshShortcutDisplay()
+        }
+        panelController.onWillPresent = { [weak self] in
+            self?.shelfController?.hideIfVisible()
+        }
+        shelfController.isRevealBlocked = { [weak self] in
+            guard let self else { return true }
+            return self.panelController.isVisible
+                || self.quickTranslationController.isVisible
+        }
+        settings.onShelfEnabledChange = { [weak self] enabled in
+            self?.shelfController.setEnabled(enabled)
+        }
 
         settings.onHotKeyChange = { [weak self] configuration in
             self?.applyHotKey(configuration)
@@ -124,6 +146,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         #if DEBUG
+        if CommandLine.arguments.contains("--show-shelf") {
+            manager.seedDemoDataIfNeeded()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+                self?.shelfController?.toggle()
+            }
+            return
+        }
+
         if CommandLine.arguments.contains("--show-quick") {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(
@@ -375,6 +405,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return nil
             }
             return arguments[index + 1]
+        }
+
+        if let path = value(after: "--render-shelf") {
+            manager.seedDemoDataIfNeeded()
+            DebugRenderer.renderShelf(
+                manager: manager,
+                settings: settings,
+                to: URL(fileURLWithPath: path)
+            ) {
+                NSApp.terminate(nil)
+            }
+            return true
         }
 
         if let path = value(after: "--render-quick") {

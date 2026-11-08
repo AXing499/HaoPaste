@@ -13,6 +13,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let settings: AppSettings
     private weak var panelController: PanelController?
     private weak var quickTranslationController: QuickTranslationPanelController?
+    private weak var shelfController: ClipboardShelfController?
     private let onOpenSettings: () -> Void
 
     private let statusItem: NSStatusItem
@@ -20,6 +21,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     private let showItem = NSMenuItem()
     private let translateItem = NSMenuItem()
+    private let shelfItem = NSMenuItem()
     private let historyInfoItem = NSMenuItem()
     private let pauseItem = NSMenuItem()
     private let clearItem = NSMenuItem()
@@ -28,6 +30,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         manager: ClipboardManager,
         panelController: PanelController,
         quickTranslationController: QuickTranslationPanelController,
+        shelfController: ClipboardShelfController,
         settings: AppSettings,
         onOpenSettings: @escaping () -> Void
     ) {
@@ -35,6 +38,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         self.settings = settings
         self.panelController = panelController
         self.quickTranslationController = quickTranslationController
+        self.shelfController = shelfController
         self.onOpenSettings = onOpenSettings
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
@@ -102,6 +106,17 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         )
         menu.addItem(translateItem)
 
+        shelfItem.title = "显示剪贴板挂架"
+        shelfItem.action = #selector(toggleShelf)
+        shelfItem.keyEquivalent = ""
+        shelfItem.target = self
+        shelfItem.image = symbolImage(
+            named: "menubar.rectangle",
+            pointSize: 13,
+            weight: .regular
+        )
+        menu.addItem(shelfItem)
+
         historyInfoItem.title = "暂无记录"
         historyInfoItem.isEnabled = false
         historyInfoItem.image = symbolImage(named: "clock.arrow.circlepath", pointSize: 13, weight: .regular)
@@ -160,6 +175,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private func updatePresentation() {
         showItem.title = "打开 HaoPaste（\(settings.hotKey.displayString)）"
         translateItem.title = "翻译剪贴板（\(settings.translationHotKey.displayString)）"
+        shelfItem.title = shelfController?.isShowing == true
+            ? "收起剪贴板挂架"
+            : "显示剪贴板挂架"
+        shelfItem.isEnabled = settings.shelfEnabled
 
         historyInfoItem.title = manager.items.isEmpty
             ? "暂无记录"
@@ -190,6 +209,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     @objc
     private func translateClipboard() {
         quickTranslationController?.translateClipboard()
+    }
+
+    @objc
+    private func toggleShelf() {
+        shelfController?.toggle()
+        updatePresentation()
     }
 
     @objc
