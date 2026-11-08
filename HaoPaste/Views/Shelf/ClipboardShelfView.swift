@@ -170,6 +170,12 @@ struct ClipboardShelfView: View {
             let filterY = height
                 - ClipboardShelfLayout.filterBarBottom
                 - ClipboardShelfLayout.filterBarHeight / 2
+            let revealProgress = min(
+                max(interaction.revealProgress, 0),
+                1
+            )
+            let maskWidth = isSide ? width * revealProgress : width
+            let maskHeight = isSide ? height : height * revealProgress
             let railX = edge == .left
                 ? ClipboardShelfLayout.sideRailInset
                 : width - ClipboardShelfLayout.sideRailInset
@@ -212,8 +218,7 @@ struct ClipboardShelfView: View {
                         )
                 }
 
-                ForEach(0..<visibleItems.count, id: \.self) { slot in
-                    let entry = visibleItems[slot]
+                ForEach(visibleItems, id: \.item.id) { entry in
                     let item = entry.item
                     let index = entry.index
                     let isHovering = interaction.hoveredItemID == item.id
@@ -253,6 +258,7 @@ struct ClipboardShelfView: View {
                         onPreview: { onPreviewItem(item) },
                         onTranslate: { onTranslateItem(item) }
                     )
+                    .id(item.id)
                     .frame(
                         width: cardWidth,
                         height: cardHeight
@@ -304,6 +310,10 @@ struct ClipboardShelfView: View {
                 .position(x: width / 2, y: filterY)
                 .zIndex(300)
             }
+            .mask(alignment: maskAlignment(for: edge)) {
+                Rectangle()
+                    .frame(width: maskWidth, height: maskHeight)
+            }
             .coordinateSpace(name: "ClipboardShelf")
             .onPreferenceChange(ShelfHitTargetsKey.self) { targets in
                 onHitTargetsChanged(targets)
@@ -324,6 +334,16 @@ struct ClipboardShelfView: View {
             .animation(Theme.gentleSpring, value: count)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func maskAlignment(
+        for edge: ClipboardShelfEdge
+    ) -> Alignment {
+        switch edge {
+        case .top: return .top
+        case .left: return .leading
+        case .right: return .trailing
+        }
     }
 
     private func flashScrollHint() {

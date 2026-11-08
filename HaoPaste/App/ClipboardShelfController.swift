@@ -30,6 +30,7 @@ final class ClipboardShelfController: NSObject {
 
     private var isRevealed = false
     private var isHiding = false
+    private var isRevealing = false
     private var manualOpen = false
     private var manualVisited = false
     private var hotZoneSince: Date?
@@ -338,7 +339,7 @@ final class ClipboardShelfController: NSObject {
     /// The panel spans the whole screen; only the cards and filter bar should
     /// accept mouse events. Everywhere else clicks pass through.
     private func updateMousePassThrough(mouse: NSPoint) {
-        guard isRevealed, !isHiding else {
+        guard isRevealed, !isHiding, !isRevealing else {
             panel.ignoresMouseEvents = true
             interaction.hoveredItemID = nil
             return
@@ -376,22 +377,10 @@ final class ClipboardShelfController: NSObject {
         guard !isHiding else { return }
 
         placePanel(on: screen)
-
         let target = ClipboardShelfLayout.panelFrame(on: screen, edge: edge)
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        let slideDistance = edge == .top
-            ? ClipboardShelfLayout.panelHeight + 24
-            : ClipboardShelfLayout.sidePanelWidth + 24
-        let slide = ClipboardShelfLayout.slideOffset(
-            for: edge,
-            distance: slideDistance
-        )
-        let start = reduceMotion
-            ? target
-            : target.offsetBy(dx: slide.width, dy: slide.height)
-
         panel.alphaValue = 1
-        panel.setFrame(start, display: false)
+        panel.setFrame(target, display: false)
         panel.ignoresMouseEvents = true
         panel.orderFrontRegardless()
 
@@ -401,13 +390,20 @@ final class ClipboardShelfController: NSObject {
         interaction.scrollOffset = 0
         startMouseTracking(interval: Timing.visiblePollInterval)
 
-        if !reduceMotion {
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.44
-                context.timingFunction = CAMediaTimingFunction(
-                    controlPoints: 0.18, 1.04, 0.3, 1.0
-                )
-                panel.animator().setFrame(target, display: true)
+        if reduceMotion {
+            interaction.revealProgress = 1
+            isRevealing = false
+        } else {
+            isRevealing = true
+            interaction.revealProgress = 0
+            withAnimation(
+                .timingCurve(0.22, 0.8, 0.3, 1.0, duration: 0.7)
+            ) {
+                interaction.revealProgress = 1
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                [weak self] in
+                self?.isRevealing = false
             }
         }
 
@@ -420,6 +416,7 @@ final class ClipboardShelfController: NSObject {
         onWillHide?()
         isRevealed = false
         isHiding = true
+        isRevealing = false
         interaction.hoveredItemID = nil
         interaction.scrollOffset = 0
         startMouseTracking(interval: Timing.hiddenPollInterval)
@@ -430,42 +427,27 @@ final class ClipboardShelfController: NSObject {
         panel.ignoresMouseEvents = true
 
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        let screen = panel.screen ?? NSScreen.main ?? NSScreen.screens.first
-        let target = screen.map {
-            ClipboardShelfLayout.panelFrame(on: $0, edge: edge)
-        } ?? panel.frame
-        let slideDistance = edge == .top
-            ? ClipboardShelfLayout.panelHeight + 24
-            : ClipboardShelfLayout.sidePanelWidth + 24
-        let slide = ClipboardShelfLayout.slideOffset(
-            for: edge,
-            distance: slideDistance
-        )
-        let end = reduceMotion
-            ? target
-            : target.offsetBy(dx: slide.width, dy: slide.height)
-
         let finish = { [weak self] in
             guard let self else { return }
             self.panel.orderOut(nil)
             self.panel.alphaValue = 1
-            self.panel.setFrame(target, display: false)
+            self.interaction.revealProgress = 1
             self.isHiding = false
             self.onVisibilityChanged?()
         }
 
         guard !reduceMotion else {
+            interaction.revealProgress = 0
             finish()
             return
         }
 
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.34
-            context.timingFunction = CAMediaTimingFunction(
-                controlPoints: 0.45, 0.0, 0.7, 0.95
-            )
-            panel.animator().setFrame(end, display: true)
-        } completionHandler: {
+        withAnimation(
+            .timingCurve(0.45, 0.0, 0.7, 0.95, duration: 0.55)
+        ) {
+            interaction.revealProgress = 0
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
             DispatchQueue.main.async(execute: finish)
         }
     }

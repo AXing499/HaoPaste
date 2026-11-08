@@ -62,6 +62,7 @@ struct ShelfCardView: View {
                 .onTapGesture(perform: onCopy)
 
             ShelfClipView(
+                itemID: item.id,
                 isPinned: item.isPinned,
                 isHovering: isHovering,
                 onDelete: onDelete
@@ -551,6 +552,7 @@ private struct ShelfActionButton: View {
 // MARK: - Clip
 
 private struct ShelfClipView: View {
+    let itemID: UUID
     let isPinned: Bool
     let isHovering: Bool
     let onDelete: () -> Void
@@ -634,6 +636,9 @@ private struct ShelfClipView: View {
                 : .spring(response: 0.18, dampingFraction: 0.62),
             value: isOpen
         )
+        .onChange(of: itemID) { _, _ in
+            isOpen = false
+        }
     }
 
     private func unclip() {
@@ -683,14 +688,15 @@ private struct BinderClipBody: Shape {
 private struct BinderClipWire: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        path.move(to: CGPoint(x: 4.5, y: 15.0))
-        path.addLine(to: CGPoint(x: 4.5, y: 7.0))
+        // The wire fans outward at the top, then converges into the clip feet.
+        path.move(to: CGPoint(x: 4.7, y: 15.0))
+        path.addLine(to: CGPoint(x: 2.7, y: 7.1))
         path.addCurve(
-            to: CGPoint(x: 9.5, y: 7.0),
-            control1: CGPoint(x: 4.5, y: -1.0),
-            control2: CGPoint(x: 9.5, y: -1.0)
+            to: CGPoint(x: 11.3, y: 7.1),
+            control1: CGPoint(x: 1.3, y: -3.6),
+            control2: CGPoint(x: 12.7, y: -3.6)
         )
-        path.addLine(to: CGPoint(x: 9.5, y: 15.0))
+        path.addLine(to: CGPoint(x: 9.3, y: 15.0))
         return path
     }
 }
