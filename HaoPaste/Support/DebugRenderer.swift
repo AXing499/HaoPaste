@@ -130,15 +130,11 @@ enum DebugRenderer {
 
         let isDark = ProcessInfo.processInfo.environment["HAOPASTE_RENDER_APPEARANCE"] == "dark"
 
-        let backgroundColors: [Color] = isDark
-            ? [
-                Color(nsColor: NSColor(calibratedRed: 0.20, green: 0.24, blue: 0.34, alpha: 1)),
-                Color(nsColor: NSColor(calibratedRed: 0.08, green: 0.10, blue: 0.16, alpha: 1))
-            ]
-            : [
-                Color(nsColor: NSColor(calibratedRed: 0.90, green: 0.93, blue: 0.97, alpha: 1)),
-                Color(nsColor: NSColor(calibratedRed: 0.70, green: 0.76, blue: 0.86, alpha: 1))
-            ]
+        let backgroundColor = isDark
+            ? Color(nsColor: NSColor(calibratedRed: 0.10, green: 0.12, blue: 0.18, alpha: 1))
+            : Color(nsColor: NSColor(calibratedRed: 0.92, green: 0.94, blue: 0.97, alpha: 1))
+
+        let backgroundColors = [backgroundColor, backgroundColor]
 
         let content = ZStack {
             LinearGradient(
@@ -146,12 +142,6 @@ enum DebugRenderer {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-
-            Circle()
-                .fill(Color.accentColor.opacity(isDark ? 0.35 : 0.16))
-                .frame(width: 560, height: 560)
-                .blur(radius: 120)
-                .offset(x: 250, y: -240)
 
             ContentView(
                 state: state,

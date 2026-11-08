@@ -236,8 +236,6 @@ struct ContentView: View {
         }
         .clipShape(Theme.panelShape)
         .hairlineStroke(Theme.panelShape)
-        .shadow(color: Color.black.opacity(0.20), radius: 14, x: 0, y: 5)
-        .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
         .padding(Theme.windowPadding)
         .onAppear {
             ensureSelectionForCurrentMode()

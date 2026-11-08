@@ -348,30 +348,20 @@ struct ItemRowView: View {
 
     private var actionCluster: some View {
         ZStack(alignment: .trailing) {
-            HStack(spacing: 2) {
-                if let translateAction = rowTranslateAction {
-                    RoundIconButton(
-                        symbolName: translateAction.symbolName,
-                        help: translateAction.help,
-                        action: translateAction.action
+            if index < 9 {
+                Button(action: onCopy) {
+                    KeyboardShortcutBadge(
+                        text: "⌘\(index + 1)",
+                        emphasized: isSelected
                     )
                 }
-
-                if index < 9 {
-                    Button(action: onCopy) {
-                        KeyboardShortcutBadge(
-                            text: "⌘\(index + 1)",
-                            emphasized: isSelected
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .focusable(false)
-                    .help("快速复制")
-                }
+                .buttonStyle(.plain)
+                .focusable(false)
+                .help("快速复制")
+                .opacity(isHovering ? 0 : 1)
+                .scaleEffect(isHovering ? 0.92 : 1)
+                .allowsHitTesting(!isHovering)
             }
-            .opacity(isHovering ? 0 : 1)
-            .scaleEffect(isHovering ? 0.92 : 1)
-            .allowsHitTesting(!isHovering)
 
             HStack(spacing: 2) {
                 if let translateAction = rowTranslateAction {
@@ -404,20 +394,12 @@ struct ItemRowView: View {
             .scaleEffect(isHovering ? 1 : 0.9)
             .allowsHitTesting(isHovering)
         }
-        .frame(width: clusterWidth, height: 26, alignment: .trailing)
+        .frame(
+            width: rowTranslateAction == nil ? 76 : 100,
+            height: 26,
+            alignment: .trailing
+        )
         .animation(reduceMotion ? nil : Theme.spring, value: isHovering)
-    }
-
-    private var clusterWidth: CGFloat {
-        let hasTranslate = rowTranslateAction != nil
-
-        if isHovering {
-            return hasTranslate ? 100 : 76
-        }
-        if index < 9 {
-            return hasTranslate ? 62 : 38
-        }
-        return hasTranslate ? 22 : 0
     }
 
     private var rowTranslateAction: (
