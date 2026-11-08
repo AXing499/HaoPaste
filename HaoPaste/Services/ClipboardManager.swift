@@ -164,6 +164,30 @@ final class ClipboardManager {
         return didWrite
     }
 
+    /// Writes multiple entries as one payload without adding a history record.
+    @discardableResult
+    func copyMergedToPasteboard(_ items: [ClipboardItem]) -> Bool {
+        switch MergedContentBuilder.make(from: items) {
+        case let .text(text):
+            return copyTextToPasteboard(text)
+
+        case let .fileURLs(urls):
+            let pasteboard = monitor.pasteboard
+            pasteboard.clearContents()
+            let didWrite = pasteboard.writeObjects(urls as [NSURL])
+            monitor.synchronizeChangeCount()
+
+            if !didWrite {
+                NSSound.beep()
+            }
+            return didWrite
+
+        case .unsupported:
+            NSSound.beep()
+            return false
+        }
+    }
+
     func togglePin(_ item: ClipboardItem) {
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
         items[index].isPinned.toggle()

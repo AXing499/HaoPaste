@@ -11,6 +11,7 @@ import SwiftUI
 @MainActor
 final class PanelController: NSObject, NSWindowDelegate {
     private enum KeyCode {
+        static let a: UInt16 = 0
         static let escape: UInt16 = 53
         static let returnKey: UInt16 = 36
         static let keypadEnter: UInt16 = 76
@@ -176,6 +177,11 @@ final class PanelController: NSObject, NSWindowDelegate {
         hide()
     }
 
+    func copyMergedAndHide(_ items: [ClipboardItem]) {
+        guard manager.copyMergedToPasteboard(items) else { return }
+        hide()
+    }
+
     func copySnippetAndHide(_ snippet: Snippet) {
         guard manager.copyTextToPasteboard(snippet.content) else { return }
         hide()
@@ -300,6 +306,10 @@ final class PanelController: NSObject, NSWindowDelegate {
         }
 
         if event.keyCode == KeyCode.escape {
+            if !isSnippetMode, state.clearMultiSelection() {
+                return true
+            }
+
             if !state.searchText.isEmpty {
                 state.searchText = ""
                 if isSnippetMode {
@@ -314,11 +324,22 @@ final class PanelController: NSObject, NSWindowDelegate {
             return true
         }
 
+        if flags == [.command, .shift], event.keyCode == KeyCode.a {
+            if !isSnippetMode {
+                state.selectAll(in: currentVisibleItems)
+            }
+            return true
+        }
+
         if event.keyCode == KeyCode.upArrow, !isCommandOnly {
             if isSnippetMode {
                 state.moveSnippetSelection(in: currentVisibleSnippets, by: -1)
             } else {
-                state.moveSelection(in: currentVisibleItems, by: -1)
+                state.moveSelection(
+                    in: currentVisibleItems,
+                    by: -1,
+                    extending: flags.contains(.shift)
+                )
             }
             return true
         }
@@ -327,7 +348,11 @@ final class PanelController: NSObject, NSWindowDelegate {
             if isSnippetMode {
                 state.moveSnippetSelection(in: currentVisibleSnippets, by: 1)
             } else {
-                state.moveSelection(in: currentVisibleItems, by: 1)
+                state.moveSelection(
+                    in: currentVisibleItems,
+                    by: 1,
+                    extending: flags.contains(.shift)
+                )
             }
             return true
         }
@@ -447,6 +472,13 @@ final class PanelController: NSObject, NSWindowDelegate {
                 return
             }
             copySnippetAndHide(snippet)
+        } else if state.isMultiSelecting {
+            let selectedItems = state.selectedItems(in: currentVisibleItems)
+            guard selectedItems.count > 1 else {
+                copySelectedItem()
+                return
+            }
+            copyMergedAndHide(selectedItems)
         } else {
             copySelectedItem()
         }
@@ -561,6 +593,9 @@ final class PanelController: NSObject, NSWindowDelegate {
             state: state,
             onCopy: { [weak self] item in
                 self?.copyAndHide(item)
+            },
+            onCopyMerged: { [weak self] items in
+                self?.copyMergedAndHide(items)
             },
             onCopyText: { [weak self] text in
                 self?.copyTextAndHide(text)

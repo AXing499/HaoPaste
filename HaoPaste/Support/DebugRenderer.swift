@@ -31,6 +31,17 @@ enum DebugRenderer {
                 .id
         }
 
+        if let rawCount = ProcessInfo.processInfo.environment["HAOPASTE_RENDER_MULTI"],
+           let count = Int(rawCount),
+           count > 1 {
+            let selected = Array(
+                manager.filteredItems(query: "", filter: .all).prefix(count)
+            )
+            state.selectedIDs = Set(selected.map(\.id))
+            state.selectedID = selected.last?.id
+            state.selectionAnchorID = selected.first?.id
+        }
+
         switch ProcessInfo.processInfo.environment["HAOPASTE_RENDER_PREVIEW"] {
         case "image":
             state.previewingItemID = manager
@@ -72,6 +83,7 @@ enum DebugRenderer {
             ContentView(
                 state: state,
                 onCopy: { _ in },
+                onCopyMerged: { _ in },
                 onCopyText: { _ in },
                 onCopySnippet: { _ in }
             )

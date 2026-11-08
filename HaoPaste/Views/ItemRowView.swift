@@ -15,6 +15,8 @@ struct ItemRowView: View {
     let imageURL: URL?
     let dragProvider: () -> NSItemProvider
     let isSelected: Bool
+    let isMultiSelected: Bool
+    let onRowClick: () -> Void
     let onCopy: () -> Void
     let onCopyText: (String) -> Void
     let onPreview: () -> Void
@@ -166,7 +168,7 @@ struct ItemRowView: View {
     // MARK: - Main content
 
     private var copyButton: some View {
-        Button(action: onCopy) {
+        Button(action: onRowClick) {
             HStack(spacing: 11) {
                 typeIcon
 
@@ -184,9 +186,9 @@ struct ItemRowView: View {
         }
         .buttonStyle(.plain)
         .focusable(false)
-        .help("点击复制")
+        .help("点击复制；按住 ⌘ 或 ⇧ 可多选")
         .accessibilityLabel(accessibilityDescription)
-        .accessibilityHint("复制到剪切板")
+        .accessibilityHint("复制到剪切板；按住 Command 或 Shift 可多选")
     }
 
     @ViewBuilder
@@ -216,6 +218,14 @@ struct ItemRowView: View {
 
     private var titleLine: some View {
         HStack(spacing: 5) {
+            if isMultiSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(Color.accentColor)
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
+            }
+
             if item.type == .colorHex, let color = HexColor(hex: item.content) {
                 Circle()
                     .fill(color.color)
@@ -415,6 +425,9 @@ struct ItemRowView: View {
         }
         if item.hasRichText {
             parts.append("富文本")
+        }
+        if isMultiSelected {
+            parts.append("已多选")
         }
         if let sourceApp = item.sourceApp {
             parts.append("来自 \(sourceApp.name)")

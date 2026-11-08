@@ -15,6 +15,7 @@ struct ContentView: View {
 
     @Bindable var state: PanelViewState
     let onCopy: (ClipboardItem) -> Void
+    let onCopyMerged: ([ClipboardItem]) -> Void
     let onCopyText: (String) -> Void
     let onCopySnippet: (Snippet) -> Void
 
@@ -47,6 +48,34 @@ struct ContentView: View {
     private var previewItem: ClipboardItem? {
         guard let id = state.previewingItemID else { return nil }
         return visibleItems.first { $0.id == id }
+    }
+
+    private var selectedHistoryItems: [ClipboardItem] {
+        visibleItems.filter { state.isItemSelected($0.id) }
+    }
+
+    private var mergedSelection: MergedClipboardContent {
+        MergedContentBuilder.make(from: selectedHistoryItems)
+    }
+
+    private var canMergeSelection: Bool {
+        if case .unsupported = mergedSelection {
+            return false
+        }
+        return true
+    }
+
+    private var mergeHint: String? {
+        guard state.isMultiSelecting else { return nil }
+
+        if case .unsupported = mergedSelection {
+            if selectedHistoryItems.contains(where: { $0.type == .image }) {
+                return "图片暂不支持合并"
+            }
+            return "没有可复制的内容"
+        }
+
+        return nil
     }
 
     var body: some View {
@@ -116,10 +145,12 @@ struct ContentView: View {
         }
         .onChange(of: state.searchText) { _, _ in
             state.endPreview()
+            state.clearMultiSelection()
             ensureSelectionForCurrentMode()
         }
         .onChange(of: state.filter) { _, _ in
             state.endPreview()
+            state.clearMultiSelection()
             ensureSelectionForCurrentMode()
         }
         .onChange(of: visibleIDs) { _, ids in
@@ -259,7 +290,22 @@ struct ContentView: View {
                                     richText: manager.richText(for: item)
                                 )
                             },
-                            isSelected: state.selectedID == item.id,
+                            isSelected: state.isItemSelected(item.id),
+                            isMultiSelected: state.isMultiSelecting
+                                && state.selectedIDs.contains(item.id),
+                            onRowClick: {
+                                if NSEvent.modifierFlags.contains(.command) {
+                                    withAnimation(reduceMotion ? nil : Theme.spring) {
+                                        state.toggleMultiSelection(item, in: visibleItems)
+                                    }
+                                } else if NSEvent.modifierFlags.contains(.shift) {
+                                    withAnimation(reduceMotion ? nil : Theme.spring) {
+                                        state.extendSelection(to: item, in: visibleItems)
+                                    }
+                                } else {
+                                    onCopy(item)
+                                }
+                            },
                             onCopy: {
                                 onCopy(item)
                             },
@@ -289,7 +335,7 @@ struct ContentView: View {
                 }
                 .padding(.horizontal, Theme.contentPadding)
                 .padding(.top, 2)
-                .padding(.bottom, 6)
+                .padding(.bottom, state.isMultiSelecting ? 56 : 6)
                 .animation(reduceMotion ? nil : Theme.gentleSpring, value: visibleIDs)
             }
             .scrollIndicators(.never)
@@ -298,6 +344,30 @@ struct ContentView: View {
                     EmptyStateView(query: state.searchText, filter: state.filter)
                 }
             }
+            .overlay(alignment: .bottom) {
+                if state.isMultiSelecting {
+                    MultiSelectionBar(
+                        count: selectedHistoryItems.count,
+                        hint: mergeHint,
+                        canMerge: canMergeSelection,
+                        onMerge: {
+                            onCopyMerged(selectedHistoryItems)
+                        },
+                        onClear: {
+                            withAnimation(reduceMotion ? nil : Theme.spring) {
+                                _ = state.clearMultiSelection()
+                            }
+                        }
+                    )
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 10)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .animation(
+                reduceMotion ? nil : Theme.spring,
+                value: state.isMultiSelecting
+            )
             .onChange(of: state.selectedID) { _, selectedID in
                 guard let selectedID else { return }
                 withAnimation(reduceMotion ? nil : Theme.spring) {
@@ -420,6 +490,7 @@ struct ContentView: View {
     ContentView(
         state: PanelViewState(),
         onCopy: { _ in },
+        onCopyMerged: { _ in },
         onCopyText: { _ in },
         onCopySnippet: { _ in }
     )
