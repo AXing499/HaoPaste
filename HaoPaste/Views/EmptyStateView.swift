@@ -23,7 +23,7 @@ struct EmptyStateView: View {
         if isFiltering {
             return "换个关键词，或试试其他分类。"
         }
-        return "复制任意文本、代码、链接或图片，\n它们会安全地出现在这里。"
+        return "复制任意文本、代码、链接、图片或文件，\n它们会安全地出现在这里。"
     }
 
     private var symbolName: String {

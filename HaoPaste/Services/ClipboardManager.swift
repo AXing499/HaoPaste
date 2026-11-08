@@ -106,7 +106,7 @@ final class ClipboardManager {
 
     @discardableResult
     func copyToPasteboard(_ item: ClipboardItem) -> Bool {
-        let pasteboard = NSPasteboard.general
+        let pasteboard = monitor.pasteboard
         pasteboard.clearContents()
 
         let didWrite: Bool
@@ -120,6 +120,14 @@ final class ClipboardManager {
                 return false
             }
             didWrite = pasteboard.setData(data, forType: .png)
+
+        case .file:
+            let urls = item.availableFileURLs
+            guard !urls.isEmpty else {
+                NSSound.beep()
+                return false
+            }
+            didWrite = pasteboard.writeObjects(urls as [NSURL])
 
         case .text, .code, .url, .colorHex:
             didWrite = pasteboard.setString(item.content, forType: .string)
@@ -256,7 +264,8 @@ final class ClipboardManager {
                         isPinned: imported.isPinned,
                         createdAt: imported.createdAt,
                         sourceApp: imported.sourceApp,
-                        contentHash: imported.contentHash
+                        contentHash: imported.contentHash,
+                        filePaths: imported.filePaths
                     )
                 )
             }
@@ -328,6 +337,16 @@ final class ClipboardManager {
                 plainText: capture.plainText,
                 sourceApp: capture.sourceApp,
                 contentHash: capture.contentHash
+            )
+
+        case let .files(paths):
+            item = ClipboardItem(
+                type: .file,
+                content: paths.joined(separator: "\n"),
+                plainText: capture.plainText,
+                sourceApp: capture.sourceApp,
+                contentHash: capture.contentHash,
+                filePaths: paths
             )
 
         case let .image(data, _):

@@ -102,6 +102,30 @@ enum DemoContent {
             textItem(github, type: .url, source: "Safari", ago: 3_600)
         )
 
+        let demoFilePaths = [
+            "/System/Applications/Calculator.app",
+            "/System/Applications/Notes.app"
+        ].filter { FileManager.default.fileExists(atPath: $0) }
+
+        if !demoFilePaths.isEmpty {
+            let names = demoFilePaths.map { URL(fileURLWithPath: $0).lastPathComponent }
+            items.append(
+                ClipboardItem(
+                    type: .file,
+                    content: demoFilePaths.joined(separator: "\n"),
+                    plainText: (names + demoFilePaths).joined(separator: "\n"),
+                    isPinned: false,
+                    createdAt: now.addingTimeInterval(-360),
+                    sourceApp: SourceApplication(
+                        bundleIdentifier: "com.apple.finder",
+                        name: "访达"
+                    ),
+                    contentHash: ContentHasher.files(demoFilePaths),
+                    filePaths: demoFilePaths
+                )
+            )
+        }
+
         items.append(
             textItem(
                 "npm run build && open .build/Build/Products/Debug/HaoPaste.app",

@@ -284,7 +284,7 @@ struct SettingsView: View {
 
             SettingsRow(
                 "当前历史",
-                subtitle: "包含文本、代码、链接、颜色与图片"
+                subtitle: "包含文本、代码、链接、颜色、图片与文件"
             ) {
                 Text("\(manager.items.count) 条 · \(manager.pinnedCount) 条置顶")
                     .font(.system(size: 11, weight: .medium, design: .rounded))

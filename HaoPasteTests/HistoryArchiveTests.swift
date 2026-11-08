@@ -21,7 +21,17 @@ final class HistoryArchiveTests: XCTestCase {
         let imageID = UUID()
         let imageData = TestFixtures.makePNGData()
         let storedImage = try sourceStore.saveImage(data: imageData, id: imageID)
+        let sampleFile = root.appendingPathComponent("sample.txt")
+        try Data("sample".utf8).write(to: sampleFile)
         let now = Date()
+        let fileItem = ClipboardItem(
+            type: .file,
+            content: sampleFile.path,
+            plainText: "sample.txt\n\(sampleFile.path)",
+            createdAt: now.addingTimeInterval(-40),
+            contentHash: ContentHasher.files([sampleFile.path]),
+            filePaths: [sampleFile.path]
+        )
         let sourceItems = [
             TestFixtures.makeTextItem(
                 "pinned note",
@@ -43,7 +53,8 @@ final class HistoryArchiveTests: XCTestCase {
                 imageFileName: storedImage.fileName,
                 thumbnailFileName: storedImage.thumbnailFileName,
                 imageDimensions: storedImage.dimensions
-            )
+            ),
+            fileItem
         ]
         sourceStore.saveNow(sourceItems)
 
@@ -56,7 +67,7 @@ final class HistoryArchiveTests: XCTestCase {
 
         let archiveURL = root.appendingPathComponent("backup.zip")
         let exportSummary = try sourceManager.exportHistory(to: archiveURL)
-        XCTAssertEqual(exportSummary.itemCount, 3)
+        XCTAssertEqual(exportSummary.itemCount, 4)
         XCTAssertEqual(exportSummary.imageCount, 1)
         XCTAssertTrue(FileManager.default.fileExists(atPath: archiveURL.path))
 
@@ -69,10 +80,10 @@ final class HistoryArchiveTests: XCTestCase {
         defer { destinationManager.shutdown() }
 
         let firstImport = try destinationManager.importHistory(from: archiveURL)
-        XCTAssertEqual(firstImport.importedCount, 3)
+        XCTAssertEqual(firstImport.importedCount, 4)
         XCTAssertEqual(firstImport.mergedPinnedCount, 0)
         XCTAssertEqual(firstImport.skippedCount, 0)
-        XCTAssertEqual(destinationManager.items.count, 3)
+        XCTAssertEqual(destinationManager.items.count, 4)
         XCTAssertEqual(destinationManager.pinnedCount, 1)
 
         let importedImage = try XCTUnwrap(
@@ -92,8 +103,14 @@ final class HistoryArchiveTests: XCTestCase {
 
         let secondImport = try destinationManager.importHistory(from: archiveURL)
         XCTAssertEqual(secondImport.importedCount, 0)
-        XCTAssertEqual(secondImport.skippedCount, 3)
-        XCTAssertEqual(destinationManager.items.count, 3)
+        XCTAssertEqual(secondImport.skippedCount, 4)
+        XCTAssertEqual(destinationManager.items.count, 4)
+
+        let importedFile = try XCTUnwrap(
+            destinationManager.items.first { $0.type == .file }
+        )
+        XCTAssertEqual(importedFile.filePaths, [sampleFile.path])
+        XCTAssertTrue(importedFile.hasAvailableFiles)
     }
 
     func testImportRejectsMissingHistoryFile() throws {

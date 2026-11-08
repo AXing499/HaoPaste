@@ -5,6 +5,7 @@
 //  One clipboard history card with hover actions and quick-copy affordance.
 //
 
+import AppKit
 import SwiftUI
 
 struct ItemRowView: View {
@@ -53,6 +54,17 @@ struct ItemRowView: View {
         .animation(reduceMotion ? nil : Theme.spring, value: isSelected)
         .animation(reduceMotion ? nil : Theme.quickSpring, value: item.isPinned)
         .contextMenu {
+            if item.type == .file {
+                Button("在 Finder 中显示") {
+                    let urls = item.availableFileURLs
+                    guard !urls.isEmpty else { return }
+                    NSWorkspace.shared.activateFileViewerSelecting(urls)
+                }
+                .disabled(item.availableFileURLs.isEmpty)
+
+                Divider()
+            }
+
             Button("复制", action: onCopy)
 
             Button(item.isPinned ? "取消置顶" : "置顶", action: onTogglePin)
@@ -129,6 +141,18 @@ struct ItemRowView: View {
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(Color.accentColor)
                     .transition(.scale(scale: 0.6).combined(with: .opacity))
+            }
+
+            if item.type == .file, item.hasMissingFiles {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 9, weight: .semibold, design: .rounded))
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.orange)
+                    .help(
+                        item.hasAvailableFiles
+                            ? "部分文件已丢失，将复制可用文件"
+                            : "文件已丢失，无法复制"
+                    )
             }
         }
     }

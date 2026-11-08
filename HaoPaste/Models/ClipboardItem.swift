@@ -12,6 +12,7 @@ import Foundation
 enum ClipboardItemType: String, Codable, CaseIterable, Hashable, Sendable {
     case text
     case image
+    case file
     case colorHex
     case url
     case code
@@ -21,6 +22,7 @@ enum ClipboardItemType: String, Codable, CaseIterable, Hashable, Sendable {
         switch self {
         case .text: return "文本"
         case .image: return "图片"
+        case .file: return "文件"
         case .colorHex: return "颜色"
         case .url: return "链接"
         case .code: return "代码"
@@ -32,6 +34,7 @@ enum ClipboardItemType: String, Codable, CaseIterable, Hashable, Sendable {
         switch self {
         case .text: return "text.alignleft"
         case .image: return "photo"
+        case .file: return "doc"
         case .colorHex: return "paintpalette"
         case .url: return "link"
         case .code: return "chevron.left.forwardslash.chevron.right"
@@ -77,6 +80,10 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
     var thumbnailFileName: String?
     var imageDimensions: ImageDimensions?
 
+    /// File URL paths for `.file` items. A single clipboard entry can reference
+    /// multiple files selected together in Finder.
+    var filePaths: [String]?
+
     init(
         id: UUID = UUID(),
         type: ClipboardItemType,
@@ -88,7 +95,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         contentHash: String,
         imageFileName: String? = nil,
         thumbnailFileName: String? = nil,
-        imageDimensions: ImageDimensions? = nil
+        imageDimensions: ImageDimensions? = nil,
+        filePaths: [String]? = nil
     ) {
         self.id = id
         self.type = type
@@ -101,6 +109,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         self.imageFileName = imageFileName
         self.thumbnailFileName = thumbnailFileName
         self.imageDimensions = imageDimensions
+        self.filePaths = filePaths
     }
 
     // MARK: Presentation helpers
@@ -110,6 +119,15 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         switch type {
         case .image:
             return "图片"
+
+        case .file:
+            let names = (filePaths ?? [])
+                .map { URL(fileURLWithPath: $0).lastPathComponent }
+                .filter { !$0.isEmpty }
+            guard !names.isEmpty else { return "文件" }
+            if names.count == 1 { return names[0] }
+            if names.count == 2 { return "\(names[0])、\(names[1])" }
+            return "\(names[0]) 等 \(names.count) 个文件"
 
         case .colorHex:
             return content.uppercased()
@@ -144,6 +162,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         switch type {
         case .text: return "文本"
         case .image: return "图片"
+        case .file: return "文件"
         case .colorHex: return "颜色"
         case .url: return "链接"
         case .code:
@@ -158,11 +177,35 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         switch type {
         case .image:
             return imageDimensions?.displayText ?? "图片"
+        case .file:
+            let count = filePaths?.count ?? 0
+            guard count > 0 else { return "文件" }
+            if !hasAvailableFiles { return "文件已丢失" }
+            return count == 1 ? "1 个文件" : "\(count) 个文件"
         case .colorHex:
             return "HEX"
         case .text, .code, .url:
             return "\(plainText.count) 字符"
         }
+    }
+
+    var fileCount: Int {
+        filePaths?.count ?? 0
+    }
+
+    var availableFileURLs: [URL] {
+        (filePaths ?? [])
+            .map { URL(fileURLWithPath: $0) }
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
+    }
+
+    var hasAvailableFiles: Bool {
+        !availableFileURLs.isEmpty
+    }
+
+    var hasMissingFiles: Bool {
+        guard type == .file, let filePaths, !filePaths.isEmpty else { return false }
+        return filePaths.contains { !FileManager.default.fileExists(atPath: $0) }
     }
 
     func matches(_ query: String) -> Bool {
@@ -197,6 +240,7 @@ enum ClipboardFilter: String, CaseIterable, Identifiable, Sendable {
     case text
     case code
     case image
+    case file
     case url
 
     var id: String { rawValue }
@@ -207,6 +251,7 @@ enum ClipboardFilter: String, CaseIterable, Identifiable, Sendable {
         case .text: return "文本"
         case .code: return "代码"
         case .image: return "图片"
+        case .file: return "文件"
         case .url: return "链接"
         }
     }
@@ -222,6 +267,8 @@ enum ClipboardFilter: String, CaseIterable, Identifiable, Sendable {
             return item.type == .code
         case .image:
             return item.type == .image
+        case .file:
+            return item.type == .file
         case .url:
             return item.type == .url
         }
@@ -235,6 +282,7 @@ struct CapturedClipboard {
     enum Payload {
         case text(String, type: ClipboardItemType)
         case image(Data, dimensions: ImageDimensions)
+        case files([String])
     }
 
     let payload: Payload

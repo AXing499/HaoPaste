@@ -24,7 +24,7 @@ final class ClipboardMonitor {
         "com.dashlane"
     ]
 
-    private let pasteboard: NSPasteboard
+    let pasteboard: NSPasteboard
     private var lastChangeCount: Int
     private var pollingTask: Task<Void, Never>?
     private var activityToken: NSObjectProtocol?
@@ -114,6 +114,18 @@ final class ClipboardMonitor {
     }
 
     private func makeCapture(sourceApp: SourceApplication?) -> CapturedClipboard? {
+        let fileURLs = readFileURLs()
+        if !fileURLs.isEmpty {
+            let paths = fileURLs.map(\.path)
+            let names = fileURLs.map(\.lastPathComponent)
+            return CapturedClipboard(
+                payload: .files(paths),
+                plainText: (names + paths).joined(separator: "\n"),
+                contentHash: ContentHasher.files(paths),
+                sourceApp: sourceApp
+            )
+        }
+
         let imagesEnabled = isImageCaptureEnabled?() ?? true
         let imageData = imagesEnabled
             ? (pasteboard.data(forType: .png) ?? pasteboard.data(forType: .tiff))
@@ -142,6 +154,33 @@ final class ClipboardMonitor {
             contentHash: ContentHasher.text(string, type: type),
             sourceApp: sourceApp
         )
+    }
+
+    private func readFileURLs() -> [URL] {
+        guard
+            let objects = pasteboard.readObjects(
+                forClasses: [NSURL.self],
+                options: [.urlReadingFileURLsOnly: true]
+            ) as? [NSURL]
+        else {
+            return []
+        }
+
+        var seenPaths = Set<String>()
+
+        return objects.compactMap { object in
+            let url = object as URL
+            guard url.isFileURL else { return nil }
+
+            let standardized = url.standardizedFileURL
+            guard FileManager.default.fileExists(atPath: standardized.path) else {
+                return nil
+            }
+            guard seenPaths.insert(standardized.path).inserted else {
+                return nil
+            }
+            return standardized
+        }
     }
 
     private func currentSourceApplication() -> SourceApplication? {
