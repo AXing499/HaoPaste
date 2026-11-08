@@ -153,28 +153,6 @@ final class PanelController: NSObject, NSWindowDelegate {
         }
     }
 
-    func showPreview(for item: ClipboardItem) {
-        show()
-        state.beginPreview(item)
-    }
-
-    func showTranslation(for item: ClipboardItem) {
-        show()
-        state.selectedID = item.id
-        translationService.present(item: item)
-    }
-
-    func showOCRTranslation(for item: ClipboardItem) {
-        show()
-        state.selectedID = item.id
-        guard let imageURL = manager.imageURL(for: item) else { return }
-        ocrService.present(
-            item: item,
-            imageURL: imageURL,
-            translateAfterRecognition: true
-        )
-    }
-
     func hide(restoreFocus: Bool = true) {
         guard panel.isVisible, !isHiding else { return }
 

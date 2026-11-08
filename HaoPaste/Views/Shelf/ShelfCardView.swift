@@ -15,6 +15,7 @@ struct ShelfCardView: View {
     let imageURL: URL?
     let isHovering: Bool
     let isCopied: Bool
+    let cardHeight: CGFloat
     let baseAngle: Double
     let edge: ClipboardShelfEdge
     let canDragOut: Bool
@@ -28,8 +29,11 @@ struct ShelfCardView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private static let bodyHeight = ClipboardShelfLayout.cardBodyHeight
     private static let bodyOffset = ClipboardShelfLayout.bodyOffset
+
+    private var bodyHeight: CGFloat {
+        cardHeight - Self.bodyOffset
+    }
 
     private var bodyShape: RoundedRectangle {
         RoundedRectangle(cornerRadius: 11, style: .continuous)
@@ -53,9 +57,16 @@ struct ShelfCardView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            copySurface
+            bodySurface
                 .contentShape(Rectangle())
                 .onTapGesture(perform: onCopy)
+
+            ShelfClipView(
+                isPinned: item.isPinned,
+                isHovering: isHovering,
+                onDelete: onDelete
+            )
+            .frame(maxWidth: .infinity, alignment: clipAlignment)
 
             if isHovering {
                 actionBar
@@ -215,18 +226,10 @@ struct ShelfCardView: View {
     }
 
     @ViewBuilder
-    private var copySurface: some View {
-        let surface = ZStack(alignment: .top) {
-            bodyContent
-                .frame(width: cardWidth, height: Self.bodyHeight)
-                .offset(y: Self.bodyOffset)
-
-            ShelfClipView(
-                isPinned: item.isPinned,
-                isHovering: isHovering
-            )
-            .frame(maxWidth: .infinity, alignment: clipAlignment)
-        }
+    private var bodySurface: some View {
+        let surface = bodyContent
+            .frame(width: cardWidth, height: bodyHeight)
+            .offset(y: Self.bodyOffset)
 
         if canDragOut {
             surface.onDrag(dragProvider)
@@ -267,12 +270,6 @@ struct ShelfCardView: View {
                 action: onTogglePin
             )
 
-            ShelfActionButton(
-                symbol: "trash",
-                tint: Color.red.opacity(0.9),
-                label: "删除",
-                action: onDelete
-            )
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 3.5)
@@ -376,7 +373,7 @@ struct ShelfCardView: View {
             ShelfThumbnailView(
                 url: thumbnailURL,
                 width: cardWidth,
-                height: Self.bodyHeight
+                height: bodyHeight
             )
 
             LinearGradient(
@@ -458,7 +455,7 @@ struct ShelfCardView: View {
                     .lineLimit(1)
             }
 
-            Text(item.displayTitle)
+            Text(item.shelfSnippet)
                 .font(
                     .system(
                         size: isFile ? 10.5 : 12,
@@ -467,7 +464,12 @@ struct ShelfCardView: View {
                     )
                 )
                 .foregroundStyle(.primary)
-                .lineLimit(isFile ? 3 : 4)
+                .lineLimit(
+                    ClipboardShelfLayout.textLineLimit(
+                        forCardHeight: cardHeight,
+                        isFile: isFile
+                    )
+                )
                 .lineSpacing(1.2)
                 .multilineTextAlignment(.leading)
 
@@ -551,63 +553,104 @@ private struct ShelfActionButton: View {
 private struct ShelfClipView: View {
     let isPinned: Bool
     let isHovering: Bool
+    let onDelete: () -> Void
 
-    private var metal: LinearGradient {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isOpen = false
+
+    private var wood: LinearGradient {
         LinearGradient(
             colors: [
-                Color.primary.opacity(0.34),
-                Color.primary.opacity(0.14)
+                Color(red: 0.84, green: 0.69, blue: 0.49),
+                Color(red: 0.60, green: 0.44, blue: 0.27)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
     }
 
+    private var spring: Color {
+        Color(red: 0.36, green: 0.31, blue: 0.25)
+    }
+
     var body: some View {
         ZStack {
             Capsule()
-                .fill(metal)
-                .frame(width: 3.2, height: 10)
-                .rotationEffect(.degrees(8))
-                .offset(x: 2.1, y: 3)
-
-            Capsule()
-                .fill(metal)
-                .frame(width: 3.2, height: 10)
-                .rotationEffect(.degrees(-8))
-                .offset(x: -2.1, y: 3)
-
-            RoundedRectangle(cornerRadius: 2.2, style: .continuous)
-                .fill(metal)
-                .frame(width: 9.5, height: 7.5)
-                .offset(y: -2.9)
-
-            Capsule()
-                .fill(
-                    isPinned
-                        ? Color.secondary.opacity(0.82)
-                        : Color.accentColor.opacity(isHovering ? 1 : 0.86)
+                .fill(wood)
+                .frame(width: 3.6, height: 12)
+                .rotationEffect(
+                    .degrees(isOpen ? 22 : -6),
+                    anchor: .top
                 )
-                .frame(width: 10, height: 2)
+                .offset(x: 2.2, y: 4)
+
+            Capsule()
+                .fill(wood)
+                .frame(width: 3.6, height: 12)
+                .rotationEffect(
+                    .degrees(isOpen ? -22 : 6),
+                    anchor: .top
+                )
+                .offset(x: -2.2, y: 4)
+
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(wood)
+                .frame(width: 11, height: 8)
+                .offset(y: -4)
+
+            Circle()
+                .fill(Color.black.opacity(0.22))
+                .frame(width: 2.2, height: 2.2)
+                .offset(y: -4)
+
+            Capsule()
+                .fill(spring)
+                .frame(width: 10.5, height: 2)
                 .offset(y: 0.5)
 
+            Circle()
+                .stroke(spring, lineWidth: 1.2)
+                .frame(width: 4, height: 4)
+                .offset(x: 5.2, y: 0.5)
+
             Capsule()
-                .fill(Color.white.opacity(0.45))
+                .fill(Color.white.opacity(0.34))
                 .frame(width: 1.2, height: 5)
-                .offset(x: -2.2, y: -2.9)
+                .offset(x: -2.6, y: -4)
 
             if isPinned {
                 Circle()
-                    .fill(Color.white.opacity(0.86))
-                    .frame(width: 1.6, height: 1.6)
-                    .offset(y: -2.9)
+                    .fill(Color.accentColor)
+                    .frame(width: 2.2, height: 2.2)
+                    .offset(y: -4)
             }
         }
-        .frame(
-            width: 13,
-            height: ClipboardShelfLayout.clipHeight
-        )
+        .frame(width: 14, height: ClipboardShelfLayout.clipHeight)
+        .scaleEffect(isHovering ? 1.06 : 1)
         .shadow(color: Color.black.opacity(0.18), radius: 1.5, y: 1)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: unclip)
+        .help("点击松开夹子并删除")
+        .accessibilityElement()
+        .accessibilityLabel("松开夹子并删除")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction {
+            unclip()
+        }
+    }
+
+    private func unclip() {
+        guard !isOpen else { return }
+        withAnimation(
+            reduceMotion
+                ? nil
+                : .spring(response: 0.18, dampingFraction: 0.62)
+        ) {
+            isOpen = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
+            onDelete()
+        }
     }
 }
 

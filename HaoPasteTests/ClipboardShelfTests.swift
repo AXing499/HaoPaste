@@ -187,12 +187,16 @@ final class ClipboardShelfTests: XCTestCase {
             ClipboardShelfLayout.sideCardWidth(panelWidth: 232),
             156
         )
-        XCTAssertEqual(
-            ClipboardShelfLayout.sideCardTop(index: 0),
-            ClipboardShelfLayout.sideTopPadding
+        let heights = Array(
+            repeating: ClipboardShelfLayout.cardHeight,
+            count: 3
         )
+        let tops = ClipboardShelfLayout.sideCardTops(
+            cardHeights: heights
+        )
+        XCTAssertEqual(tops[0], ClipboardShelfLayout.sideTopPadding)
         XCTAssertEqual(
-            ClipboardShelfLayout.sideCardTop(index: 2),
+            tops[2],
             ClipboardShelfLayout.sideTopPadding
                 + 2 * (ClipboardShelfLayout.cardHeight
                     + ClipboardShelfLayout.sideSpacing)
@@ -200,18 +204,116 @@ final class ClipboardShelfTests: XCTestCase {
 
         let rack = ClipboardShelfLayout.sideRackRange(
             height: 1_050,
-            count: 6
+            contentBottom: tops[2] + heights[2],
+            scrollable: false
         )
         XCTAssertGreaterThan(rack.lowerBound, 0)
         XCTAssertLessThan(rack.upperBound, 1_050)
         XCTAssertLessThan(rack.upperBound, 1_050 - ClipboardShelfLayout.filterBarHeight)
     }
 
+    func testDynamicCardHeights() {
+        let shortText = TestFixtures.makeTextItem(
+            "短文本",
+            type: .text
+        )
+        let longText = TestFixtures.makeTextItem(
+            String(repeating: "长文本内容", count: 80),
+            type: .text
+        )
+        let landscape = ClipboardItem(
+            type: .image,
+            content: "landscape.png",
+            plainText: "图片",
+            contentHash: "landscape",
+            imageDimensions: ImageDimensions(width: 1_600, height: 900)
+        )
+        let portrait = ClipboardItem(
+            type: .image,
+            content: "portrait.png",
+            plainText: "图片",
+            contentHash: "portrait",
+            imageDimensions: ImageDimensions(width: 900, height: 1_600)
+        )
+
+        let shortHeight = ClipboardShelfLayout.cardHeight(
+            for: shortText,
+            cardWidth: 156,
+            edge: .top
+        )
+        let longTopHeight = ClipboardShelfLayout.cardHeight(
+            for: longText,
+            cardWidth: 156,
+            edge: .top
+        )
+        let longSideHeight = ClipboardShelfLayout.cardHeight(
+            for: longText,
+            cardWidth: 156,
+            edge: .left
+        )
+        let landscapeHeight = ClipboardShelfLayout.cardHeight(
+            for: landscape,
+            cardWidth: 156,
+            edge: .top
+        )
+        let portraitTopHeight = ClipboardShelfLayout.cardHeight(
+            for: portrait,
+            cardWidth: 156,
+            edge: .top
+        )
+        let portraitSideHeight = ClipboardShelfLayout.cardHeight(
+            for: portrait,
+            cardWidth: 156,
+            edge: .left
+        )
+
+        XCTAssertEqual(
+            shortHeight,
+            ClipboardShelfLayout.minCardHeight,
+            accuracy: 0.5
+        )
+        XCTAssertGreaterThan(longTopHeight, shortHeight)
+        XCTAssertLessThanOrEqual(
+            longTopHeight,
+            ClipboardShelfLayout.maxTopCardHeight
+        )
+        XCTAssertGreaterThan(longSideHeight, longTopHeight)
+        XCTAssertGreaterThan(portraitTopHeight, landscapeHeight)
+        XCTAssertEqual(
+            portraitTopHeight,
+            ClipboardShelfLayout.maxTopCardHeight,
+            accuracy: 0.5
+        )
+        XCTAssertEqual(
+            portraitSideHeight,
+            ClipboardShelfLayout.maxSideCardHeight,
+            accuracy: 0.5
+        )
+        XCTAssertEqual(
+            ClipboardShelfLayout.textLineLimit(
+                forCardHeight: ClipboardShelfLayout.maxTopCardHeight,
+                isFile: false
+            ),
+            4
+        )
+        XCTAssertEqual(
+            ClipboardShelfLayout.textLineLimit(
+                forCardHeight: ClipboardShelfLayout.maxSideCardHeight,
+                isFile: false
+            ),
+            6
+        )
+    }
+
     func testShelfScrollMetrics() {
+        let heights = Array(
+            repeating: ClipboardShelfLayout.cardHeight,
+            count: 8
+        )
         XCTAssertEqual(
             ClipboardShelfLayout.sideMaxScrollOffset(
                 height: 1_050,
-                count: 8
+                cardHeights: heights
             ),
             276,
             accuracy: 0.5
@@ -219,7 +321,10 @@ final class ClipboardShelfTests: XCTestCase {
         XCTAssertEqual(
             ClipboardShelfLayout.sideMaxScrollOffset(
                 height: 1_050,
-                count: 6
+                cardHeights: Array(
+                    repeating: ClipboardShelfLayout.cardHeight,
+                    count: 6
+                )
             ),
             0,
             accuracy: 0.5
@@ -245,7 +350,7 @@ final class ClipboardShelfTests: XCTestCase {
 
         let sideRack = ClipboardShelfLayout.sideRackRange(
             height: 1_050,
-            count: 8,
+            contentBottom: 0,
             scrollable: true
         )
         XCTAssertEqual(
@@ -274,7 +379,10 @@ final class ClipboardShelfTests: XCTestCase {
         XCTAssertEqual(topRack.upperBound, 1_424, accuracy: 0.5)
 
         let sideRange = ClipboardShelfLayout.sideVisibleRange(
-            count: 8,
+            cardTops: ClipboardShelfLayout.sideCardTops(
+                cardHeights: heights
+            ),
+            cardHeights: heights,
             offset: 276,
             height: 1_050,
             buffer: 0

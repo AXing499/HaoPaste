@@ -41,13 +41,19 @@ final class ClipboardShelfController: NSObject {
     private var maxScrollOffset: CGFloat = 0
 
     var onVisibilityChanged: (() -> Void)?
-    var onPreviewItem: ((ClipboardItem) -> Void)?
-    var onTranslateItem: ((ClipboardItem) -> Void)?
+    var onPreviewItem: ((ClipboardItem, NSRect?) -> Void)?
+    var onTranslateItem: ((ClipboardItem, NSRect?) -> Void)?
+    var onWillHide: (() -> Void)?
+    var isRetractBlocked: (() -> Bool)?
     /// Return true while another HaoPaste window owns the screen.
     var isRevealBlocked: (() -> Bool)?
 
     var isShowing: Bool {
         isRevealed
+    }
+
+    var currentEdge: ClipboardShelfEdge {
+        settings.shelfEdge
     }
 
     private var edge: ClipboardShelfEdge {
@@ -95,10 +101,12 @@ final class ClipboardShelfController: NSObject {
         super.init()
 
         actionRelay.onPreview = { [weak self] item in
-            self?.onPreviewItem?(item)
+            guard let self else { return }
+            self.onPreviewItem?(item, self.anchorRect(for: item.id))
         }
         actionRelay.onTranslate = { [weak self] item in
-            self?.onTranslateItem?(item)
+            guard let self else { return }
+            self.onTranslateItem?(item, self.anchorRect(for: item.id))
         }
         actionRelay.onMaxScrollOffset = { [weak self] maxOffset in
             guard let self else { return }
@@ -304,7 +312,9 @@ final class ClipboardShelfController: NSObject {
 
         let inside = NSMouseInRect(mouse, zone, false)
 
-        if inside {
+        if isRetractBlocked?() == true {
+            awaySince = nil
+        } else if inside {
             awaySince = nil
             if manualOpen {
                 manualVisited = true
@@ -369,15 +379,26 @@ final class ClipboardShelfController: NSObject {
 
         let target = ClipboardShelfLayout.panelFrame(on: screen, edge: edge)
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let slideDistance = edge == .top
+            ? ClipboardShelfLayout.panelHeight + 24
+            : ClipboardShelfLayout.sidePanelWidth + 24
         let slide = ClipboardShelfLayout.slideOffset(
             for: edge,
-            distance: 12
+            distance: slideDistance
+        )
+        let overshootSlide = ClipboardShelfLayout.slideOffset(
+            for: edge,
+            distance: -10
         )
         let start = reduceMotion
             ? target
             : target.offsetBy(dx: slide.width, dy: slide.height)
+        let overshoot = target.offsetBy(
+            dx: overshootSlide.width,
+            dy: overshootSlide.height
+        )
 
-        panel.alphaValue = reduceMotion ? 1 : 0
+        panel.alphaValue = 1
         panel.setFrame(start, display: false)
         panel.ignoresMouseEvents = true
         panel.orderFrontRegardless()
@@ -390,12 +411,22 @@ final class ClipboardShelfController: NSObject {
 
         if !reduceMotion {
             NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.20
+                context.duration = 0.36
                 context.timingFunction = CAMediaTimingFunction(
-                    controlPoints: 0.16, 1, 0.3, 1
+                    controlPoints: 0.16, 0.92, 0.28, 1
                 )
-                panel.animator().alphaValue = 1
-                panel.animator().setFrame(target, display: true)
+                panel.animator().setFrame(overshoot, display: true)
+            } completionHandler: { [weak self] in
+                guard let self, self.isRevealed, !self.isHiding else {
+                    return
+                }
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = 0.16
+                    context.timingFunction = CAMediaTimingFunction(
+                        name: .easeInEaseOut
+                    )
+                    self.panel.animator().setFrame(target, display: true)
+                }
             }
         }
 
@@ -405,6 +436,7 @@ final class ClipboardShelfController: NSObject {
     private func hide() {
         guard isRevealed, !isHiding else { return }
 
+        onWillHide?()
         isRevealed = false
         isHiding = true
         interaction.hoveredItemID = nil
@@ -421,7 +453,13 @@ final class ClipboardShelfController: NSObject {
         let target = screen.map {
             ClipboardShelfLayout.panelFrame(on: $0, edge: edge)
         } ?? panel.frame
-        let slide = ClipboardShelfLayout.slideOffset(for: edge, distance: 10)
+        let slideDistance = edge == .top
+            ? ClipboardShelfLayout.panelHeight + 24
+            : ClipboardShelfLayout.sidePanelWidth + 24
+        let slide = ClipboardShelfLayout.slideOffset(
+            for: edge,
+            distance: slideDistance
+        )
         let end = reduceMotion
             ? target
             : target.offsetBy(dx: slide.width, dy: slide.height)
@@ -441,13 +479,28 @@ final class ClipboardShelfController: NSObject {
         }
 
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.14
-            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            panel.animator().alphaValue = 0
+            context.duration = 0.26
+            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             panel.animator().setFrame(end, display: true)
         } completionHandler: {
             DispatchQueue.main.async(execute: finish)
         }
+    }
+
+    private func anchorRect(for itemID: UUID) -> NSRect? {
+        guard let target = hitTargetStore.targets.first(
+            where: { $0.kind == .card(itemID) }
+        ) else {
+            return nil
+        }
+
+        let rect = target.rect
+        return NSRect(
+            x: panel.frame.minX + rect.minX,
+            y: panel.frame.maxY - rect.maxY,
+            width: rect.width,
+            height: rect.height
+        )
     }
 
     private func placePanel(on screen: NSScreen) {

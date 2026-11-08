@@ -22,17 +22,20 @@ struct PreviewOverlayView: View {
     let onTranslate: () -> Void
     let onExtractText: () -> Void
     let onExtractAndTranslate: () -> Void
+    var showsScrim = true
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isPresented = false
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.30)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    onClose()
-                }
+            if showsScrim {
+                Color.black.opacity(0.30)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        onClose()
+                    }
+            }
 
             card
                 .scaleEffect(isPresented ? 1 : 0.96)

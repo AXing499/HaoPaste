@@ -206,6 +206,22 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         type == .text
     }
 
+    /// Compact multi-line content used by shelf cards. The main panel keeps
+    /// the single-line `displayTitle`, while the shelf can afford a snippet.
+    var shelfSnippet: String {
+        switch type {
+        case .text, .code, .url:
+            let trimmed = plainText.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
+            return trimmed.isEmpty ? displayTitle : trimmed
+        case .file, .colorHex:
+            return displayTitle
+        case .image:
+            return ""
+        }
+    }
+
     var isTextLike: Bool {
         switch type {
         case .text, .code, .url, .colorHex:

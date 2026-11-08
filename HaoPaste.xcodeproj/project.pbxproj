@@ -43,6 +43,7 @@
 		557AB6F1BD4A93C9C2D1983C /* MultiSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88F66034EFEC5CBFD9311D9E /* MultiSelectionTests.swift */; };
 		56CD818F7A3067AB512E41AC /* ClipboardItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6826491E9C149BF2D7539A70 /* ClipboardItemTests.swift */; };
 		5979E5C4387BD1091263EEFC /* ShelfCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDD5249A5CE2BEB153FA25FC /* ShelfCardView.swift */; };
+		5B51F9AEB058E21DB166085A /* ShelfOCRPanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA771B119A707127242BC5E /* ShelfOCRPanelController.swift */; };
 		5B6CF44EF0F3CB9C663745C7 /* TranslationPaneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5289EA112A4CAEB7A571453A /* TranslationPaneView.swift */; };
 		5D68F1BB83C5F59CEBA30FC9 /* ShortcutRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2123477D4ABDE27D2B9922A /* ShortcutRecorderView.swift */; };
 		6227B0A160A92FF1EC882FD6 /* QuickTranslationPanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6164DE97D3F25CA3CC70344C /* QuickTranslationPanelController.swift */; };
@@ -77,12 +78,14 @@
 		A05D34B5B300F93616DC347B /* SnippetRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0997B879EF496FD280C35DDB /* SnippetRowView.swift */; };
 		A83080187C83706632FDD104 /* ContentHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09E490744CB5AA1715664C4 /* ContentHasher.swift */; };
 		A8BB673F02D08F159BF4A91E /* ClipboardShelfLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 909472C9D65CE134370C26E8 /* ClipboardShelfLayout.swift */; };
+		AB814BCD5FD3C9CEFF7548B7 /* ShelfPreviewPanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40D2B6B3DE0BE9CD02F5259E /* ShelfPreviewPanelController.swift */; };
 		ABC02D825E79953F55D07698 /* HotKeyConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128E202BA2AB00C21E42E928 /* HotKeyConfiguration.swift */; };
 		ABFCE9BF1EF754681757820E /* PanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D491DB214D827C4033A5EF45 /* PanelController.swift */; };
 		ACD543E816AC60F849ECC675 /* ImageThumbnailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2085406B6173EA78481F454E /* ImageThumbnailView.swift */; };
 		AF48BE111A4A82A4DF3F86E4 /* PreviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0F49BF7102278805ED97D37 /* PreviewTests.swift */; };
 		B2AD8E6BD8845F73AC573A4E /* MergedContentBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70F0CDC55174F8147EA935A0 /* MergedContentBuilder.swift */; };
 		B388575DBAE41A2F142BB3AB /* ContentClassifierTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA53E87DFDE4317CCE6FB667 /* ContentClassifierTests.swift */; };
+		B716AA5CB82B9AFFB0498691 /* ShelfDetailPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1D205AA128A2AA85CE593E2 /* ShelfDetailPanel.swift */; };
 		B80FF85D63EED90AF0387130 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF8B383B867198BD3D5BB6E /* EmptyStateView.swift */; };
 		BA027A4881F1B9FB8CC7106D /* ClipboardShelfFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A22CEA918F5A9DE8E7E366F6 /* ClipboardShelfFilter.swift */; };
 		C142C3D4EFC5C1486AE773FD /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D679CEC15FCA55365C23A9A /* Theme.swift */; };
@@ -148,6 +151,7 @@
 		385C9DA349FC7C115E2D030E /* ItemDragProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemDragProvider.swift; sourceTree = "<group>"; };
 		3BFCD56E9A5172988D610366 /* TranslationSettingsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationSettingsPage.swift; sourceTree = "<group>"; };
 		3F28F9EC66E1206EC1165BBE /* FileClipboardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileClipboardTests.swift; sourceTree = "<group>"; };
+		40D2B6B3DE0BE9CD02F5259E /* ShelfPreviewPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShelfPreviewPanelController.swift; sourceTree = "<group>"; };
 		4455851FB9D99F35FE3C2B61 /* TextChunker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextChunker.swift; sourceTree = "<group>"; };
 		47FF81E780F4F56976F9F892 /* RichTextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichTextTests.swift; sourceTree = "<group>"; };
 		4819B8C26F565D618F1AA113 /* OCRPaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRPaneView.swift; sourceTree = "<group>"; };
@@ -201,6 +205,7 @@
 		BDD5249A5CE2BEB153FA25FC /* ShelfCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShelfCardView.swift; sourceTree = "<group>"; };
 		BFA2F1875382F3291DA009F6 /* GlobalHotKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKey.swift; sourceTree = "<group>"; };
 		CC0F8074AAF9C700AE18D1DA /* SnippetManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetManager.swift; sourceTree = "<group>"; };
+		CFA771B119A707127242BC5E /* ShelfOCRPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShelfOCRPanelController.swift; sourceTree = "<group>"; };
 		D09E490744CB5AA1715664C4 /* ContentHasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentHasher.swift; sourceTree = "<group>"; };
 		D0F49BF7102278805ED97D37 /* PreviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewTests.swift; sourceTree = "<group>"; };
 		D42D5E4FC242D8EFCD31F56F /* SnippetStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetStore.swift; sourceTree = "<group>"; };
@@ -209,6 +214,7 @@
 		D977C7A3EB126CD5580E61D6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		DA17178F8A782AFA81FACC48 /* AzureTranslatorProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AzureTranslatorProvider.swift; sourceTree = "<group>"; };
 		DC099AA783155225954A4690 /* ClipboardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManager.swift; sourceTree = "<group>"; };
+		E1D205AA128A2AA85CE593E2 /* ShelfDetailPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShelfDetailPanel.swift; sourceTree = "<group>"; };
 		E38F1F6E9F6B62B54836F6FE /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
 		E740CF4FFC3943C8703F89F6 /* TranslationSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationSettingsStore.swift; sourceTree = "<group>"; };
 		EBBC6708CC2C6BFF865352B7 /* FilterTabsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterTabsView.swift; sourceTree = "<group>"; };
@@ -364,6 +370,9 @@
 				D491DB214D827C4033A5EF45 /* PanelController.swift */,
 				6164DE97D3F25CA3CC70344C /* QuickTranslationPanelController.swift */,
 				4EC4A46C5A030041816F5CD1 /* SettingsWindowController.swift */,
+				E1D205AA128A2AA85CE593E2 /* ShelfDetailPanel.swift */,
+				CFA771B119A707127242BC5E /* ShelfOCRPanelController.swift */,
+				40D2B6B3DE0BE9CD02F5259E /* ShelfPreviewPanelController.swift */,
 				88D60DF7743A6A83A831D5D1 /* StatusBarController.swift */,
 			);
 			path = App;
@@ -607,7 +616,10 @@
 				727CAB1FD63A945CA7721E19 /* SettingsView.swift in Sources */,
 				3A3D96E4E6D9E6F892A0C81F /* SettingsWindowController.swift in Sources */,
 				5979E5C4387BD1091263EEFC /* ShelfCardView.swift in Sources */,
+				B716AA5CB82B9AFFB0498691 /* ShelfDetailPanel.swift in Sources */,
 				DC38B8AC40E87514017E1C7A /* ShelfInteractionState.swift in Sources */,
+				5B51F9AEB058E21DB166085A /* ShelfOCRPanelController.swift in Sources */,
+				AB814BCD5FD3C9CEFF7548B7 /* ShelfPreviewPanelController.swift in Sources */,
 				5D68F1BB83C5F59CEBA30FC9 /* ShortcutRecorderView.swift in Sources */,
 				DD6D1C46EAF1500A33BF6BCC /* Snippet.swift in Sources */,
 				197E1CDAAE544C1E90B43FF5 /* SnippetManager.swift in Sources */,
@@ -765,7 +777,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 23;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -785,7 +797,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.12.0;
+				MARKETING_VERSION = 0.13.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -832,7 +844,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 23;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -846,7 +858,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.12.0;
+				MARKETING_VERSION = 0.13.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

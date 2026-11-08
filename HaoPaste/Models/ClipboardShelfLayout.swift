@@ -22,12 +22,16 @@ enum ClipboardShelfLayout {
     static let panelHeight: CGFloat = 232
     static let railTop: CGFloat = 8
     static let lineTop: CGFloat = 16
-    static let clipHeight: CGFloat = 14
-    static let clipOverlap: CGFloat = 3
+    static let clipHeight: CGFloat = 16
+    static let clipOverlap: CGFloat = 4
     static let bodyOffset = clipHeight - clipOverlap
-    static let cardBodyHeight: CGFloat = 129
+    static let cardBodyHeight: CGFloat = 128
     static let cardHeight = clipHeight + cardBodyHeight - clipOverlap
     static let cardTopOffset: CGFloat = -clipHeight / 2
+    static let minCardHeight: CGFloat = 110
+    static let maxTopCardHeight: CGFloat = 150
+    static let maxSideCardHeight: CGFloat = 240
+    static let textLineHeight: CGFloat = 15
     static let minCardWidth: CGFloat = 118
     static let maxCardWidth: CGFloat = 156
     static let spacing: CGFloat = 14
@@ -58,14 +62,78 @@ enum ClipboardShelfLayout {
         )
     }
 
-    static func sideCardTop(index: Int) -> CGFloat {
-        sideTopPadding + CGFloat(index) * (cardHeight + sideSpacing)
+    static func cardHeight(
+        for item: ClipboardItem,
+        cardWidth: CGFloat,
+        edge: ClipboardShelfEdge
+    ) -> CGFloat {
+        let maximum = edge == .top
+            ? maxTopCardHeight
+            : maxSideCardHeight
+        let raw: CGFloat
+
+        switch item.type {
+        case .image:
+            let ratio = item.imageDimensions.map {
+                CGFloat($0.height) / CGFloat(max($0.width, 1))
+            } ?? 0.65
+            raw = bodyOffset + cardWidth * ratio
+
+        case .colorHex:
+            raw = 138
+
+        case .text, .code, .url, .file:
+            let snippet = String(item.shelfSnippet.prefix(600))
+            let charactersPerLine = max(8, Int(cardWidth / 10.0))
+            let wrappedLines = snippet
+                .components(separatedBy: .newlines)
+                .reduce(0.0) { partial, line in
+                    partial + Double(
+                        max(
+                            1,
+                            Int(
+                                ceil(
+                                    Double(line.count)
+                                        / Double(charactersPerLine)
+                                )
+                            )
+                        )
+                    )
+                }
+            let maximumLines = edge.isSide ? 6 : 4
+            let lines = min(maximumLines, max(1, Int(wrappedLines)))
+            raw = bodyOffset
+                + 68
+                + CGFloat(lines) * textLineHeight
+        }
+
+        return min(maximum, max(minCardHeight, raw))
+    }
+
+    static func textLineLimit(
+        forCardHeight cardHeight: CGFloat,
+        isFile: Bool
+    ) -> Int {
+        let body = cardHeight - bodyOffset
+        let lines = Int(max(0, body - 68) / textLineHeight)
+        return min(isFile ? 3 : 6, max(1, lines))
+    }
+
+    static func sideCardTops(cardHeights: [CGFloat]) -> [CGFloat] {
+        var tops: [CGFloat] = []
+        tops.reserveCapacity(cardHeights.count)
+        var y = sideTopPadding
+        for height in cardHeights {
+            tops.append(y)
+            y += height + sideSpacing
+        }
+        return tops
     }
 
     static func sideRackRange(
         height: CGFloat,
-        count: Int,
-        scrollable: Bool = false
+        contentBottom: CGFloat,
+        scrollable: Bool
     ) -> ClosedRange<CGFloat> {
         guard height > 0 else { return 0...0 }
 
@@ -75,7 +143,7 @@ enum ClipboardShelfLayout {
             return sideRackInset...max(sideRackInset + 8, minEnd)
         }
 
-        if count == 0 {
+        if contentBottom <= 0 {
             let middle = height * 0.46
             let half: CGFloat = 90
             let start = max(sideRackInset, middle - half)
@@ -84,10 +152,7 @@ enum ClipboardShelfLayout {
         }
 
         let start = max(sideRackInset, sideTopPadding - 16)
-        let end = min(
-            minEnd,
-            sideCardTop(index: count - 1) + cardHeight + 16
-        )
+        let end = min(minEnd, contentBottom + 16)
         return start...max(start + 8, end)
     }
 
@@ -98,19 +163,19 @@ enum ClipboardShelfLayout {
         )
     }
 
-    static func sideContentHeight(count: Int) -> CGFloat {
-        guard count > 0 else { return 0 }
-        return CGFloat(count) * cardHeight
-            + CGFloat(count - 1) * sideSpacing
+    static func sideContentHeight(cardHeights: [CGFloat]) -> CGFloat {
+        guard !cardHeights.isEmpty else { return 0 }
+        return cardHeights.reduce(0, +)
+            + CGFloat(cardHeights.count - 1) * sideSpacing
     }
 
     static func sideMaxScrollOffset(
         height: CGFloat,
-        count: Int
+        cardHeights: [CGFloat]
     ) -> CGFloat {
         max(
             0,
-            sideContentHeight(count: count)
+            sideContentHeight(cardHeights: cardHeights)
                 + sideTopPadding * 2
                 - sideVisibleBottom(height: height)
         )
@@ -148,20 +213,33 @@ enum ClipboardShelfLayout {
     }
 
     static func sideVisibleRange(
-        count: Int,
+        cardTops: [CGFloat],
+        cardHeights: [CGFloat],
         offset: CGFloat,
         height: CGFloat,
         buffer: CGFloat
     ) -> Range<Int> {
+        let count = min(cardTops.count, cardHeights.count)
         guard count > 0 else { return 0..<0 }
 
-        let step = cardHeight + sideSpacing
         let visibleBottom = sideVisibleBottom(height: height)
-        let lower = offset - sideTopPadding - buffer - cardHeight
-        let upper = offset - sideTopPadding + visibleBottom + buffer
-        let first = max(0, Int(floor(lower / step)))
-        let last = min(count, Int(ceil(upper / step)) + 1)
-        return first..<max(first, last)
+
+        var first = 0
+        while first < count {
+            let bottom = cardTops[first] + cardHeights[first] - offset
+            if bottom > -buffer { break }
+            first += 1
+        }
+
+        var last = count - 1
+        while last >= first {
+            let top = cardTops[last] - offset
+            if top < visibleBottom + buffer { break }
+            last -= 1
+        }
+
+        guard first <= last else { return first..<first }
+        return first..<(last + 1)
     }
 
     static func topVisibleRange(
@@ -335,6 +413,49 @@ enum ClipboardShelfLayout {
                 height: visible.height
             )
         }
+    }
+
+    /// Place a preview / translation card next to the shelf card without
+    /// covering the shelf itself.
+    static func detailFrame(
+        size: NSSize,
+        anchor: NSRect,
+        edge: ClipboardShelfEdge
+    ) -> NSRect {
+        let screen = NSScreen.screens.first {
+            $0.frame.intersects(anchor)
+        } ?? NSScreen.main ?? NSScreen.screens.first
+        guard let visible = screen?.visibleFrame else {
+            return NSRect(origin: anchor.origin, size: size)
+        }
+
+        let gap: CGFloat = 14
+        let margin: CGFloat = 12
+        var x: CGFloat
+        var y: CGFloat
+
+        switch edge {
+        case .top:
+            let shelfBottom = visible.maxY - panelHeight
+            x = anchor.midX - size.width / 2
+            y = shelfBottom - gap - size.height
+        case .left:
+            x = visible.minX + sidePanelWidth + gap
+            y = anchor.midY - size.height / 2
+        case .right:
+            x = visible.maxX - sidePanelWidth - gap - size.width
+            y = anchor.midY - size.height / 2
+        }
+
+        x = min(max(x, visible.minX + margin), visible.maxX - size.width - margin)
+        y = min(max(y, visible.minY + margin), visible.maxY - size.height - margin)
+
+        return NSRect(
+            x: x.rounded(.down),
+            y: y.rounded(.down),
+            width: size.width,
+            height: size.height
+        )
     }
 
     static func hoverOffset(for edge: ClipboardShelfEdge) -> CGSize {

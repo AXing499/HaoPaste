@@ -89,6 +89,22 @@ struct ClipboardShelfView: View {
                     width: width,
                     count: max(count, 1)
                 )
+            let cardHeights = loadedItems.map {
+                ClipboardShelfLayout.cardHeight(
+                    for: $0,
+                    cardWidth: cardWidth,
+                    edge: edge
+                )
+            }
+            let sideTops = ClipboardShelfLayout.sideCardTops(
+                cardHeights: cardHeights
+            )
+            let sideContentBottom = sideTops.last.map {
+                $0 + (cardHeights.last ?? ClipboardShelfLayout.cardHeight)
+            } ?? 0
+            let sideContentHeight = ClipboardShelfLayout.sideContentHeight(
+                cardHeights: cardHeights
+            )
             let topMaxOffset = isSide
                 ? 0
                 : ClipboardShelfLayout.topMaxScrollOffset(
@@ -99,7 +115,7 @@ struct ClipboardShelfView: View {
             let sideMaxOffset = isSide
                 ? ClipboardShelfLayout.sideMaxScrollOffset(
                     height: height,
-                    count: count
+                    cardHeights: cardHeights
                 )
                 : 0
             let maxOffset = isSide ? sideMaxOffset : topMaxOffset
@@ -116,7 +132,7 @@ struct ClipboardShelfView: View {
             )
             let sideRack = ClipboardShelfLayout.sideRackRange(
                 height: height,
-                count: count,
+                contentBottom: sideContentBottom,
                 scrollable: scrollable
             )
             let totalCardWidth = ClipboardShelfLayout.totalWidth(
@@ -127,14 +143,13 @@ struct ClipboardShelfView: View {
                 ? ClipboardShelfLayout.sidePadding
                 : (width - totalCardWidth) / 2
             let topStep = cardWidth + ClipboardShelfLayout.spacing
-            let sideStep = ClipboardShelfLayout.cardHeight
-                + ClipboardShelfLayout.sideSpacing
             let visibleBottom = ClipboardShelfLayout.sideVisibleBottom(
                 height: height
             )
             let visibleRange = isSide
                 ? ClipboardShelfLayout.sideVisibleRange(
-                    count: count,
+                    cardTops: sideTops,
+                    cardHeights: cardHeights,
                     offset: scrollOffset,
                     height: height,
                     buffer: 220
@@ -166,6 +181,7 @@ struct ClipboardShelfView: View {
                         start: sideRack.lowerBound,
                         end: sideRack.upperBound,
                         scrollOffset: scrollOffset,
+                        cardTops: sideTops,
                         visibleRange: visibleRange
                     )
                     .animation(Theme.gentleSpring, value: sideRack.lowerBound)
@@ -194,10 +210,12 @@ struct ClipboardShelfView: View {
                         )
                 }
 
-                ForEach(visibleItems) { entry in
+                ForEach(0..<visibleItems.count, id: \.self) { slot in
+                    let entry = visibleItems[slot]
                     let item = entry.item
                     let index = entry.index
                     let isHovering = interaction.hoveredItemID == item.id
+                    let cardHeight = cardHeights[index]
                     let centerX = isSide
                         ? width / 2
                         : topStartX
@@ -205,9 +223,7 @@ struct ClipboardShelfView: View {
                             + cardWidth / 2
                             - scrollOffset
                     let cardTop = isSide
-                        ? ClipboardShelfLayout.sideTopPadding
-                            + CGFloat(index) * sideStep
-                            - scrollOffset
+                        ? sideTops[index] - scrollOffset
                         : ClipboardShelfLayout.ropeY(
                             x: centerX,
                             rackStart: topRack.lowerBound,
@@ -223,6 +239,7 @@ struct ClipboardShelfView: View {
                         imageURL: manager.imageURL(for: item),
                         isHovering: isHovering,
                         isCopied: copiedID == item.id,
+                        cardHeight: cardHeight,
                         baseAngle: angle,
                         edge: edge,
                         canDragOut: canDragOut(item),
@@ -236,19 +253,20 @@ struct ClipboardShelfView: View {
                     )
                     .frame(
                         width: cardWidth,
-                        height: ClipboardShelfLayout.cardHeight
+                        height: cardHeight
                     )
                     .shelfHitArea(.card(item.id))
                     .position(
                         x: centerX,
-                        y: cardTop + ClipboardShelfLayout.cardHeight / 2
+                        y: cardTop + cardHeight / 2
                     )
                     .transition(
                         .asymmetric(
                             insertion: .scale(scale: 0.86, anchor: .top)
                                 .combined(with: .opacity)
                                 .combined(with: .offset(y: -14)),
-                            removal: .scale(scale: 0.92, anchor: .top)
+                            removal: .offset(y: 34)
+                                .combined(with: .scale(scale: 0.94, anchor: .top))
                                 .combined(with: .opacity)
                         )
                     )
@@ -261,7 +279,7 @@ struct ClipboardShelfView: View {
                         offset: scrollOffset,
                         maxOffset: maxOffset,
                         contentLength: isSide
-                            ? ClipboardShelfLayout.sideContentHeight(count: count)
+                            ? sideContentHeight
                             : totalCardWidth,
                         viewportLength: isSide ? visibleBottom : width,
                         panelWidth: width,
@@ -501,6 +519,7 @@ private struct ShelfSideRackView: View, Animatable {
     var start: CGFloat
     var end: CGFloat
     var scrollOffset: CGFloat
+    var cardTops: [CGFloat]
     var visibleRange: Range<Int>
 
     var animatableData: AnimatablePair<
@@ -587,8 +606,8 @@ private struct ShelfSideRackView: View, Animatable {
                 lineWidth: 0.6
             )
 
-            for index in visibleRange {
-                let y = ClipboardShelfLayout.sideCardTop(index: index)
+            for index in visibleRange where index < cardTops.count {
+                let y = cardTops[index]
                     - scrollOffset
                     + ClipboardShelfLayout.clipHeight / 2
                 var arm = Path()

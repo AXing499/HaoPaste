@@ -27,7 +27,18 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
     private var previousApplication: NSRunningApplication?
     private var isHiding = false
 
-    var onWillPresent: (() -> Void)?
+    enum PresentationSource {
+        case hotKey
+        case shelf
+    }
+
+    var onWillPresent: ((PresentationSource) -> Void)?
+
+    private(set) var presentationSource: PresentationSource = .hotKey
+
+    var isVisibleFromShelf: Bool {
+        panel.isVisible && presentationSource == .shelf
+    }
 
     private let cardSize = NSSize(width: 640, height: 480)
     private let windowSize = NSSize(width: 640, height: 480)
@@ -79,10 +90,40 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         }
 
         if panel.isVisible {
-            show(text: text, animated: false)
+            show(
+                text: text,
+                title: "剪贴板翻译",
+                anchor: nil,
+                edge: nil,
+                source: .hotKey,
+                animated: false
+            )
         } else {
-            show(text: text, animated: true)
+            show(
+                text: text,
+                title: "剪贴板翻译",
+                anchor: nil,
+                edge: nil,
+                source: .hotKey,
+                animated: true
+            )
         }
+    }
+
+    func translate(
+        text: String,
+        title: String,
+        anchor: NSRect,
+        edge: ClipboardShelfEdge
+    ) {
+        show(
+            text: text,
+            title: title,
+            anchor: anchor,
+            edge: edge,
+            source: .shelf,
+            animated: true
+        )
     }
 
     func toggle() {
@@ -93,8 +134,16 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         }
     }
 
-    private func show(text: String, animated: Bool) {
-        onWillPresent?()
+    private func show(
+        text: String,
+        title: String,
+        anchor: NSRect?,
+        edge: ClipboardShelfEdge?,
+        source: PresentationSource,
+        animated: Bool
+    ) {
+        onWillPresent?(source)
+        presentationSource = source
 
         if previousApplication == nil || !panel.isVisible {
             previousApplication = NSWorkspace.shared.frontmostApplication
@@ -103,7 +152,16 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
             }
         }
 
-        let target = targetFrame()
+        let target: NSRect
+        if let anchor, let edge {
+            target = ClipboardShelfLayout.detailFrame(
+                size: windowSize,
+                anchor: anchor,
+                edge: edge
+            )
+        } else {
+            target = targetFrame()
+        }
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
 
         panel.alphaValue = animated && !reduceMotion ? 0 : 1
@@ -114,7 +172,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
             display: false
         )
 
-        service.present(text: text, title: "剪贴板翻译")
+        service.present(text: text, title: title)
         NSApp.activate()
         panel.makeKeyAndOrderFront(nil)
         panel.orderFrontRegardless()
@@ -149,6 +207,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
             self.isHiding = false
             self.panel.orderOut(nil)
             self.panel.alphaValue = 1
+            self.presentationSource = .hotKey
 
             if let application = self.previousApplication,
                !application.isTerminated,

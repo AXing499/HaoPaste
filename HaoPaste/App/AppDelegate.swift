@@ -20,6 +20,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var quickTranslationService: TranslationService!
     private var quickTranslationController: QuickTranslationPanelController!
     private var shelfController: ClipboardShelfController!
+    private var shelfPreviewController: ShelfPreviewPanelController!
+    private var shelfOCRService: OCRService!
+    private var shelfOCRController: ShelfOCRPanelController!
     private var ocrService: OCRService!
     private var settingsWindowController: SettingsWindowController?
 
@@ -89,10 +92,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             service: quickTranslationService,
             snippetManager: snippetManager
         )
-        quickTranslationController.onWillPresent = { [weak self] in
+        quickTranslationController.onWillPresent = { [weak self] source in
             self?.panelController?.hide(restoreFocus: false)
-            self?.shelfController?.hideIfVisible()
+            if source == .hotKey {
+                self?.shelfController?.hideIfVisible()
+            }
         }
+
+        shelfPreviewController = ShelfPreviewPanelController(manager: manager)
+        shelfOCRService = OCRService()
+        shelfOCRController = ShelfOCRPanelController(
+            manager: manager,
+            service: shelfOCRService
+        )
+        wireShelfDetailControllers()
 
         shelfController = ClipboardShelfController(
             manager: manager,
@@ -112,17 +125,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         shelfController.onVisibilityChanged = { [weak self] in
             self?.statusBarController?.refreshShortcutDisplay()
         }
-        shelfController.onPreviewItem = { [weak self] item in
-            self?.shelfController?.hideIfVisible()
-            self?.panelController?.showPreview(for: item)
+        shelfController.onPreviewItem = { [weak self] item, anchor in
+            guard let self, let anchor else { return }
+            self.shelfPreviewController.present(
+                item: item,
+                anchor: anchor,
+                edge: self.shelfController.currentEdge
+            )
         }
-        shelfController.onTranslateItem = { [weak self] item in
-            self?.shelfController?.hideIfVisible()
+        shelfController.onTranslateItem = { [weak self] item, anchor in
+            guard let self, let anchor else { return }
+            let edge = self.shelfController.currentEdge
             if item.type == .image {
-                self?.panelController?.showOCRTranslation(for: item)
+                guard let imageURL = self.manager.imageURL(for: item) else {
+                    return
+                }
+                self.shelfOCRController.present(
+                    item: item,
+                    imageURL: imageURL,
+                    translateAfterRecognition: true,
+                    anchor: anchor,
+                    edge: edge
+                )
             } else {
-                self?.panelController?.showTranslation(for: item)
+                self.quickTranslationController.translate(
+                    text: item.content,
+                    title: item.displayTitle,
+                    anchor: anchor,
+                    edge: edge
+                )
             }
+        }
+        shelfController.onWillHide = { [weak self] in
+            guard let self else { return }
+            self.shelfPreviewController.close()
+            self.shelfOCRController.close()
+            if self.quickTranslationController.isVisibleFromShelf {
+                self.quickTranslationController.hide()
+            }
+        }
+        shelfController.isRetractBlocked = { [weak self] in
+            guard let self else { return false }
+            return self.shelfPreviewController.isVisible
+                || self.shelfOCRController.isVisible
+                || self.quickTranslationController.isVisibleFromShelf
         }
         panelController.onWillPresent = { [weak self] in
             self?.shelfController?.hideIfVisible()
@@ -195,6 +241,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         #endif
 
         showPanelOnLaunchIfNeeded()
+    }
+
+    private func wireShelfDetailControllers() {
+        let translate: (
+            String,
+            String,
+            NSRect,
+            ClipboardShelfEdge
+        ) -> Void = { [weak self] text, title, anchor, edge in
+            self?.quickTranslationController.translate(
+                text: text,
+                title: title,
+                anchor: anchor,
+                edge: edge
+            )
+        }
+
+        shelfPreviewController.onTranslateText = translate
+        shelfOCRController.onTranslateText = translate
+
+        shelfPreviewController.onExtractText = {
+            [weak self] item, imageURL, anchor, edge in
+            self?.shelfOCRController.present(
+                item: item,
+                imageURL: imageURL,
+                translateAfterRecognition: false,
+                anchor: anchor,
+                edge: edge
+            )
+        }
+        shelfPreviewController.onExtractAndTranslate = {
+            [weak self] item, imageURL, anchor, edge in
+            self?.shelfOCRController.present(
+                item: item,
+                imageURL: imageURL,
+                translateAfterRecognition: true,
+                anchor: anchor,
+                edge: edge
+            )
+        }
+        shelfOCRController.onSaveSnippet = { [weak self] text in
+            guard let self, !text.isEmpty else { return }
+            let source = self.shelfOCRService.sourceTitle
+            let rawTitle = source.isEmpty ? "图片文字" : source
+            let title = rawTitle.count > 20
+                ? String(rawTitle.prefix(20)) + "…"
+                : rawTitle
+            _ = self.snippetManager.create(
+                title: "识图 · \(title)",
+                content: text
+            )
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
