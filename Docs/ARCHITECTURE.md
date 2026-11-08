@@ -107,6 +107,7 @@ ContentView / ItemRowView (SwiftUI)
 | `ExcludedApplication.swift` | 按应用的隐私排除规则 |
 | `Theme.swift` | 圆角、间距、弹簧动效、描边颜色、字体辅助 |
 | `HexColor.swift` | HEX 解析、色块、RGB / HSL 表示 |
+| `SearchMatcher.swift` | 中文 / 拼音 / 模糊搜索与相关性评分 |
 | `SettingsView.swift` | 设置窗口：通用、历史、隐私、关于 |
 | `ShortcutRecorderView.swift` | 快捷键捕获与冲突错误展示 |
 
@@ -233,6 +234,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 列表使用 `LazyVStack`，仅渲染视口附近卡片。
 - 图片列表只加载 560px 缩略图，原图只在复制时读取。
 - 去重哈希在采集线程（主线程）执行；对常规文本 / 图片足够快，超大内容可后续迁移到后台任务。
+- 搜索在当前 200 条规模内同步执行；只对含 CJK 的内容按需做拼音转换，结果按相关性排序，无持久化索引。
 - 当前默认上限为 200 条未置顶 + 任意置顶项，可在设置中调整为 100 / 200 / 500 / 1000；排序与搜索为 O(n log n) 级别，规模可控。
 
 ## 9. 隐私与安全
@@ -252,7 +254,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-38 个 XCTest 由 app target 作为测试宿主运行：
+44 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。
@@ -261,7 +263,10 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - `ClipboardStore`：文本 / 图片资产读写、缺失资产过滤。
 - `ClipboardManager`：FIFO 裁剪、置顶保护、清空。
 - `HistoryArchiveService`：导出、导入、重复导入去重、无效归档报错。
+- `SearchMatcher`：中文、拼音全拼 / 首字母、模糊匹配、相关性排序。
 - 文件条目：展示、分类过滤、多文件哈希、文件 URL 复制。
+- `HexColor` 解析与 RGB / HSL 输出；动作文本复制。
+- 拼音 / 模糊搜索命中与相关性排序。
 - `HexColor` 解析与 RGB / HSL 输出；动作文本复制。
 
 运行：`make test`。CI：`.github/workflows/ci.yml`，执行测试并构建 Release。
