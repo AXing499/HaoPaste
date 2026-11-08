@@ -47,7 +47,7 @@ enum DebugRenderer {
                 .blur(radius: 120)
                 .offset(x: 250, y: -240)
 
-            ContentView(state: state, onCopy: { _ in })
+            ContentView(state: state, onCopy: { _ in }, onCopyText: { _ in })
                 .environment(manager)
         }
         .frame(width: Theme.windowSize.width, height: Theme.windowSize.height)

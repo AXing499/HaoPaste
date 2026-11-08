@@ -109,4 +109,21 @@ final class ClipboardManagerTests: XCTestCase {
         manager.updateMaxUnpinnedItems(1_000)
         XCTAssertEqual(manager.items.count, 2)
     }
+
+    func testCopyArbitraryTextWritesPasteboard() throws {
+        let directory = try TestFixtures.temporaryDirectory()
+        defer { TestFixtures.remove(directory) }
+
+        let pasteboard = TestFixtures.makeCustomPasteboard()
+        let manager = ClipboardManager(
+            store: ClipboardStore(baseURL: directory),
+            monitor: ClipboardMonitor(pasteboard: pasteboard)
+        )
+
+        XCTAssertTrue(manager.copyTextToPasteboard("rgb(255, 138, 91)"))
+        XCTAssertEqual(
+            pasteboard.string(forType: .string),
+            "rgb(255, 138, 91)"
+        )
+    }
 }

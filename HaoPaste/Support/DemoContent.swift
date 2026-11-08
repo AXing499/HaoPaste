@@ -84,7 +84,7 @@ enum DemoContent {
                 "#FF8A5B",
                 type: .colorHex,
                 source: "Figma",
-                ago: 600
+                ago: 300
             )
         )
 

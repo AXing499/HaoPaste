@@ -166,6 +166,11 @@ final class PanelController: NSObject, NSWindowDelegate {
         hide()
     }
 
+    func copyTextAndHide(_ text: String) {
+        guard manager.copyTextToPasteboard(text) else { return }
+        hide()
+    }
+
     // MARK: - Keyboard
 
     private var currentVisibleItems: [ClipboardItem] {
@@ -421,6 +426,9 @@ final class PanelController: NSObject, NSWindowDelegate {
             state: state,
             onCopy: { [weak self] item in
                 self?.copyAndHide(item)
+            },
+            onCopyText: { [weak self] text in
+                self?.copyTextAndHide(text)
             }
         )
         .environment(manager)

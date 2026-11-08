@@ -13,6 +13,7 @@ struct ContentView: View {
 
     @Bindable var state: PanelViewState
     let onCopy: (ClipboardItem) -> Void
+    let onCopyText: (String) -> Void
 
     @FocusState private var isSearchFocused: Bool
 
@@ -157,10 +158,12 @@ struct ContentView: View {
                             item: item,
                             index: index,
                             thumbnailURL: manager.thumbnailURL(for: item),
+                            imageURL: manager.imageURL(for: item),
                             isSelected: state.selectedID == item.id,
                             onCopy: {
                                 onCopy(item)
                             },
+                            onCopyText: onCopyText,
                             onTogglePin: {
                                 withAnimation(reduceMotion ? nil : Theme.spring) {
                                     manager.togglePin(item)
@@ -237,8 +240,12 @@ struct ContentView: View {
 #if DEBUG
 #Preview("HaoPaste Panel") {
     let manager = ClipboardManager()
-    ContentView(state: PanelViewState(), onCopy: { _ in })
-        .environment(manager)
+    ContentView(
+        state: PanelViewState(),
+        onCopy: { _ in },
+        onCopyText: { _ in }
+    )
+    .environment(manager)
         .padding(30)
         .background(Color(nsColor: .windowBackgroundColor))
 }

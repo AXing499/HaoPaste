@@ -7,13 +7,16 @@
 
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ItemRowView: View {
     let item: ClipboardItem
     let index: Int
     let thumbnailURL: URL?
+    let imageURL: URL?
     let isSelected: Bool
     let onCopy: () -> Void
+    let onCopyText: (String) -> Void
     let onTogglePin: () -> Void
     let onDelete: () -> Void
 
@@ -54,13 +57,68 @@ struct ItemRowView: View {
         .animation(reduceMotion ? nil : Theme.spring, value: isSelected)
         .animation(reduceMotion ? nil : Theme.quickSpring, value: item.isPinned)
         .contextMenu {
+            if item.type == .url, let url = URL(string: item.content) {
+                Button {
+                    NSWorkspace.shared.open(url)
+                } label: {
+                    Label("打开链接", systemImage: "safari")
+                }
+
+                Button {
+                    copyMarkdownLink(for: url)
+                } label: {
+                    Label("复制为 Markdown 链接", systemImage: "doc.on.doc")
+                }
+
+                Divider()
+            }
+
             if item.type == .file {
-                Button("在 Finder 中显示") {
-                    let urls = item.availableFileURLs
-                    guard !urls.isEmpty else { return }
-                    NSWorkspace.shared.activateFileViewerSelecting(urls)
+                Button {
+                    openFiles()
+                } label: {
+                    Label("打开", systemImage: "arrow.up.forward.app")
                 }
                 .disabled(item.availableFileURLs.isEmpty)
+
+                Button {
+                    revealFiles()
+                } label: {
+                    Label("在 Finder 中显示", systemImage: "folder")
+                }
+                .disabled(item.availableFileURLs.isEmpty)
+
+                Divider()
+            }
+
+            if item.type == .image, imageURL != nil {
+                Button {
+                    saveImage()
+                } label: {
+                    Label("保存图片…", systemImage: "square.and.arrow.down")
+                }
+
+                Divider()
+            }
+
+            if item.type == .colorHex, let color = HexColor(hex: item.content) {
+                Button {
+                    onCopyText(color.normalizedHex)
+                } label: {
+                    Label("复制 HEX（\(color.normalizedHex)）", systemImage: "paintpalette")
+                }
+
+                Button {
+                    onCopyText(color.rgbString)
+                } label: {
+                    Label("复制 RGB（\(color.rgbString)）", systemImage: "paintpalette")
+                }
+
+                Button {
+                    onCopyText(color.hslString)
+                } label: {
+                    Label("复制 HSL（\(color.hslString)）", systemImage: "paintpalette")
+                }
 
                 Divider()
             }
@@ -129,6 +187,17 @@ struct ItemRowView: View {
 
     private var titleLine: some View {
         HStack(spacing: 5) {
+            if item.type == .colorHex, let color = HexColor(hex: item.content) {
+                Circle()
+                    .fill(color.color)
+                    .frame(width: 13, height: 13)
+                    .overlay {
+                        Circle()
+                            .strokeBorder(Color.primary.opacity(0.14), lineWidth: 0.5)
+                    }
+                    .help(color.normalizedHex)
+            }
+
             Text(item.displayTitle)
                 .font(.system(.body, design: .rounded).weight(.medium))
                 .foregroundStyle(.primary)
@@ -267,6 +336,50 @@ struct ItemRowView: View {
 
     private var borderColor: Color {
         isSelected ? Color.accentColor.opacity(0.28) : Theme.hairlineColor
+    }
+
+    // MARK: - Row Actions
+
+    private func copyMarkdownLink(for url: URL) {
+        let title = url.host ?? item.displayTitle
+        onCopyText("[\(title)](\(item.content))")
+    }
+
+    private func openFiles() {
+        for url in item.availableFileURLs {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    private func revealFiles() {
+        let urls = item.availableFileURLs
+        guard !urls.isEmpty else { return }
+        NSWorkspace.shared.activateFileViewerSelecting(urls)
+    }
+
+    private func saveImage() {
+        guard let imageURL else { return }
+
+        let panel = NSSavePanel()
+        panel.title = "保存图片"
+        panel.prompt = "保存"
+        panel.allowedContentTypes = [.png]
+        panel.canCreateDirectories = true
+        panel.nameFieldStringValue = "HaoPaste-图片.png"
+
+        guard panel.runModal() == .OK, let destination = panel.url else { return }
+
+        do {
+            try? FileManager.default.removeItem(at: destination)
+            try FileManager.default.copyItem(at: imageURL, to: destination)
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "无法保存图片"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "好")
+            alert.runModal()
+        }
     }
 
     private var accessibilityDescription: String {

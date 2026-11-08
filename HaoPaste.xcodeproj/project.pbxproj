@@ -16,6 +16,7 @@
 		3BCC5122B9CF3C52C64FE075 /* AppSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 828C80C85C28B72F4ED72FF1 /* AppSettingsTests.swift */; };
 		404862BF1F81680DED350508 /* ClipboardManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0234BE991D3252CCB271F1C /* ClipboardManagerTests.swift */; };
 		41226F0BE81D1B179FD1144D /* ItemRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91F8358485862E4BDB4C5AA8 /* ItemRowView.swift */; };
+		443F95EB1DCF22DABD6CD08D /* HexColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDA6828147BE447E6006E21D /* HexColor.swift */; };
 		468218F3E5C50E4FD618A02A /* DemoContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F17B5E3FE65AB668E67B55 /* DemoContent.swift */; };
 		4FEAFBFA409A33038F614AAB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D977C7A3EB126CD5580E61D6 /* AppDelegate.swift */; };
 		5354701E952BC1FD1E1C2BC2 /* HotKeyConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F2274F96FF92374E518A3F /* HotKeyConfigurationTests.swift */; };
@@ -48,6 +49,7 @@
 		DC1D2459DDBB4CC60868BE0E /* DebugRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E7C5BB5480E79F7ED49AB9F /* DebugRenderer.swift */; };
 		E183EFFD05831405EB74DFEB /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E38F1F6E9F6B62B54836F6FE /* ClipboardStore.swift */; };
 		EBA73F14980E36C18373EABB /* PanelFooterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31E3D83E025D4E5596130E5 /* PanelFooterView.swift */; };
+		EFAAB6EB24DE9EEFDA0D0540 /* HexColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F605FCEA14CB6C5977C2054D /* HexColorTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -101,8 +103,10 @@
 		DC099AA783155225954A4690 /* ClipboardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManager.swift; sourceTree = "<group>"; };
 		E38F1F6E9F6B62B54836F6FE /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
 		EBBC6708CC2C6BFF865352B7 /* FilterTabsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterTabsView.swift; sourceTree = "<group>"; };
+		EDA6828147BE447E6006E21D /* HexColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexColor.swift; sourceTree = "<group>"; };
 		F3F17B5E3FE65AB668E67B55 /* DemoContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoContent.swift; sourceTree = "<group>"; };
 		F441AB428F62F097CD0D7E84 /* TestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSupport.swift; sourceTree = "<group>"; };
+		F605FCEA14CB6C5977C2054D /* HexColorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexColorTests.swift; sourceTree = "<group>"; };
 		FA53E87DFDE4317CCE6FB667 /* ContentClassifierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentClassifierTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -207,6 +211,7 @@
 				2711DDABED9C202FEC4DDBBF /* ClipboardStoreTests.swift */,
 				FA53E87DFDE4317CCE6FB667 /* ContentClassifierTests.swift */,
 				3F28F9EC66E1206EC1165BBE /* FileClipboardTests.swift */,
+				F605FCEA14CB6C5977C2054D /* HexColorTests.swift */,
 				97F5185F6103912DF6F1054E /* HistoryArchiveTests.swift */,
 				97F2274F96FF92374E518A3F /* HotKeyConfigurationTests.swift */,
 				F441AB428F62F097CD0D7E84 /* TestSupport.swift */,
@@ -263,6 +268,7 @@
 		EBCBA70D679E8066C242276E /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				EDA6828147BE447E6006E21D /* HexColor.swift */,
 				AD246A7507A63DEBF69E51B4 /* RelativeTime.swift */,
 			);
 			path = Utilities;
@@ -370,6 +376,7 @@
 				2637D860009E2B12C336A04F /* FilterTabsView.swift in Sources */,
 				7727440BF3038A4A696E44F8 /* GlobalHotKey.swift in Sources */,
 				8BBEE8CB0D2BC01B572BCB2F /* HaoPasteApplication.swift in Sources */,
+				443F95EB1DCF22DABD6CD08D /* HexColor.swift in Sources */,
 				DBCBC043E12719C5AB928A84 /* HistoryArchiveService.swift in Sources */,
 				ABC02D825E79953F55D07698 /* HotKeyConfiguration.swift in Sources */,
 				6DE5D37068824C412AA6963B /* ImageProcessor.swift in Sources */,
@@ -398,6 +405,7 @@
 				8DA2D3E2C02ACC33D72239D7 /* ClipboardStoreTests.swift in Sources */,
 				B388575DBAE41A2F142BB3AB /* ContentClassifierTests.swift in Sources */,
 				907DB0B3F04A4A054DA2B1FC /* FileClipboardTests.swift in Sources */,
+				EFAAB6EB24DE9EEFDA0D0540 /* HexColorTests.swift in Sources */,
 				7C67CF3046F91A5743186241 /* HistoryArchiveTests.swift in Sources */,
 				5354701E952BC1FD1E1C2BC2 /* HotKeyConfigurationTests.swift in Sources */,
 				737EFA716D0CF5A25E552646 /* TestSupport.swift in Sources */,
@@ -513,7 +521,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -533,7 +541,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.3.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -580,7 +588,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -594,7 +602,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.3.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

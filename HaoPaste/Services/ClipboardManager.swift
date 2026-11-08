@@ -150,6 +150,21 @@ final class ClipboardManager {
         return true
     }
 
+    /// Writes arbitrary text (actions such as Markdown links or color formats)
+    /// without adding a synthetic history entry.
+    @discardableResult
+    func copyTextToPasteboard(_ text: String) -> Bool {
+        let pasteboard = monitor.pasteboard
+        pasteboard.clearContents()
+        let didWrite = pasteboard.setString(text, forType: .string)
+        monitor.synchronizeChangeCount()
+
+        if !didWrite {
+            NSSound.beep()
+        }
+        return didWrite
+    }
+
     func togglePin(_ item: ClipboardItem) {
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
         items[index].isPinned.toggle()
