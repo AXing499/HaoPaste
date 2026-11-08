@@ -1,6 +1,6 @@
 # HaoPaste
 
-当前版本：**v0.3.2**
+当前版本：**v0.3.3**
 
 一款原生、轻快、键盘优先的 macOS 剪切板管理器。用 `⌥⌘V` 从任何应用呼出无标题栏悬浮面板，搜索、选择、复制，一气呵成。
 
@@ -21,11 +21,11 @@
    ```bash
    make dmg
    # 输出：
-   # dist/HaoPaste-0.3.2.dmg
-   # dist/HaoPaste-0.3.2.dmg.sha256
+   # dist/HaoPaste-0.3.3.dmg
+   # dist/HaoPaste-0.3.3.dmg.sha256
    ```
 
-2. 双击打开 `dist/HaoPaste-0.3.2.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
+2. 双击打开 `dist/HaoPaste-0.3.3.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
 3. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
 4. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
 
@@ -41,12 +41,25 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 
 详细的安装、退出、卸载和 FAQ 见 [用户指南](Docs/USER_GUIDE.md)。
 
+### Snippets 片段
+
+![HaoPaste 片段](Docs/screenshot-snippets.png)
+
+在 **设置 → 片段** 中创建名称和内容，然后在面板切换到「片段」标签：
+
+- 搜索片段标题或内容
+- `↑` `↓` 选择，`↵` 或 `⌘1–9` 一键复制
+- 点击行也可以复制
+- 片段不会写入剪贴板历史，也不会占用历史上限
+- 备份包会自动包含片段
+
+
 ## 功能
 
 - **系统级唤起**：默认 `⌥⌘V` 全局快捷键，或点击菜单栏剪贴板图标；快捷键可在设置中录入修改。
 - **无标题栏悬浮面板**：`.regularMaterial` 磨砂背景、16pt 连续圆角、0.5pt 细描边、柔和阴影。
 - **即时搜索**：按内容、来源应用、类型或格式搜索；支持中文、拼音全拼 / 首字母缩写与模糊匹配，并按相关性排序。
-- **分类药丸**：全部 / 文本 / 代码 / 图片 / 文件 / 链接，胶囊选中态平滑滑动。
+- **分类药丸**：全部 / 文本 / 代码 / 图片 / 文件 / 链接 / 片段，胶囊选中态平滑滑动。
 - **键盘优先**：
 
   | 快捷键 | 行为 |
@@ -62,10 +75,11 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 - **点击外部关闭**：点击面板外侧、透明阴影留白区域或切换到其他应用时自动收起。
 - **设置窗口**：自定义全局快捷键、登录时自动启动、暂停监听、历史容量、清空记录、打开数据目录。
 - **隐私控制**：按应用排除剪贴板记录、关闭图片记录；隐藏类型过滤始终开启。
-- **备份与迁移**：将历史与图片导出为 `.zip`，导入时自动合并、去重并保留置顶状态。
+- **备份与迁移**：将历史、图片与片段导出为 `.zip`，导入时自动合并、去重并保留置顶状态。
 - **智能识别**：自动区分纯文本、链接、代码 / JSON、颜色值（HEX）、图片与文件。
 - **文件支持**：从 Finder 复制单个或多个文件/文件夹；文件条目可复制回其他应用，右键可在 Finder 中显示；文件丢失时会明确提示。
 - **快捷动作**：右键打开链接 / 文件、保存图片、复制 Markdown 链接、复制颜色的 RGB / HSL 表示。
+- **Snippets 片段**：在设置中管理常用文本与模板，面板「片段」标签中搜索、键盘选择并一键复制；不会写入历史。
 - **颜色可视化**：HEX 条目显示真实颜色色块，支持复制 HEX / RGB / HSL。
 - **来源应用**：记录复制内容时最前方的应用名称。
 - **图片缩略图**：原图与缩略图分文件缓存，列表只加载缩略图。
@@ -85,7 +99,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 打开方式：右键菜单栏图标 → **设置…**，或按 `⌘,`。
 
 - **通用**：登录时自动启动、录制新的全局快捷键、暂停 / 恢复监听。
-- **历史**：100 / 200 / 500 / 1000 条未置顶记录上限、清空未置顶或全部记录、在 Finder 中打开数据目录；导出 / 导入完整历史备份。
+- **历史**：100 / 200 / 500 / 1000 条未置顶记录上限、清空未置顶或全部记录、在 Finder 中打开数据目录；导出 / 导入完整历史与片段备份。
 - **隐私**：关闭图片记录、排除指定应用（从“应用程序”选择），被排除应用的新复制内容不会入库。
 - **关于**：版本、快捷键、隐私与权限信息。
 
@@ -97,7 +111,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 # 开发调试
 make run       # Debug 构建并打开
 make demo      # 用可复现的示例数据启动，便于查看界面
-make test      # 运行 44 个 XCTest（自动化测试）
+make test      # 运行 47 个 XCTest（自动化测试）
 
 # 日常使用 / 发布
 make release   # Release 构建
@@ -111,7 +125,7 @@ make install   # 安装到 /Applications 并启动
 
 ## 质量与测试
 
-- **44 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件复制、颜色解析、拼音 / 模糊搜索、去重/裁剪、存储读写、备份导入导出。
+- **47 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件复制、颜色解析、拼音 / 模糊搜索、Snippets、去重/裁剪、存储读写、备份导入导出。
 - 测试宿主会自动跳过菜单栏、剪贴板轮询和全局快捷键注册，不影响正常使用。
 - GitHub Actions 工作流：`.github/workflows/ci.yml`，在 macOS 上执行测试并构建 Release。
 - 运行：`make test`。
@@ -131,6 +145,7 @@ make install   # 安装到 /Applications 并启动
 ```text
 ~/Library/Application Support/HaoPaste/
 ├── history.json          # [ClipboardItem]
+├── snippets.json         # [Snippet]
 └── Images/
     ├── <UUID>.png        # 原图
     └── <UUID>-thumb.png  # 列表缩略图
@@ -142,6 +157,7 @@ make install   # 安装到 /Applications 并启动
 HaoPasteBackup/
 ├── manifest.json        # schema、版本、导出时间、数量
 ├── history.json         # 全部记录（含置顶与来源应用）
+├── snippets.json        # 全部片段
 └── Images/              # 原图与缩略图
 ```
 
@@ -189,11 +205,15 @@ HaoPaste/
 │   ├── ClipboardStore.swift         # JSON 持久化与图片资产
 │   ├── HistoryArchiveService.swift  # zip 备份导出 / 合并导入
 │   ├── AppSettings.swift            # 快捷键 / 历史上限 / 登录项偏好
+│   ├── SnippetStore.swift           # snippets.json 持久化
+│   ├── SnippetManager.swift         # 片段 CRUD / 过滤 / 合并
+│   ├── SearchMatcher.swift          # 中文 / 拼音 / 模糊搜索
 │   ├── ContentClassifier.swift      # 文本 / URL / JSON / 代码 / HEX 识别
 │   ├── ContentHasher.swift          # SHA-256 指纹
 │   └── ImageProcessor.swift         # PNG 归一化与缩略图生成
 ├── Models/
 │   ├── ClipboardItem.swift
+│   ├── Snippet.swift                # 可复用文本片段
 │   └── HotKeyConfiguration.swift    # 快捷键键码与显示
 ├── State/PanelViewState.swift       # 搜索、筛选、选中项与焦点
 ├── Views/                           # ContentView、ItemRowView、Settings
@@ -205,7 +225,7 @@ HaoPaste/
 
 1. 每 350ms 比较一次 `NSPasteboard.general.changeCount`。
 2. 检测到变化后，先过滤隐藏 / 临时 / 密码管理器类型。
-3. 依次尝试图片、纯文本；对文本做类型识别与 SHA-256 指纹。
+3. 依次尝试文件 URL、图片、纯文本；对文本做类型识别与 SHA-256 指纹。
 4. 与历史指纹比较：命中则更新时间并移到顶部，否则创建新记录。
 5. 图片写入磁盘并生成缩略图；记录写入 JSON（400ms 防抖）。
 6. 按设置上限裁剪未置顶历史；置顶记录始终保留。

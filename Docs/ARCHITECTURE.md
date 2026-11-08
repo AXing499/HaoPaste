@@ -59,10 +59,11 @@ NSApplication (accessory / LSUIElement)
 │   │   └── Carbon RegisterEventHotKey (default ⌥⌘V, configurable)
 │   │
 │   └── SettingsWindowController
-│       └── SettingsView (general / history / privacy / about)
-│           └── AppSettings (UserDefaults + SMAppService)
+│       └── SettingsView (general / history / snippets / privacy / about)
+│           ├── AppSettings (UserDefaults + SMAppService)
+│           └── SnippetManager ── SnippetStore (snippets.json)
 │
-ContentView / ItemRowView (SwiftUI)
+ContentView / ItemRowView / SnippetRowView (SwiftUI)
 ```
 
 应用没有主窗口，采用 `.accessory` 激活策略（并设置 `LSUIElement`），启动后驻留菜单栏。
@@ -88,7 +89,9 @@ ContentView / ItemRowView (SwiftUI)
 | `ClipboardManager.swift` | 核心业务：去重、置顶、删除、清空、复制回剪贴板、FIFO 裁剪、历史容量 |
 | `AppSettings.swift` | 用户偏好、快捷键、历史上限、登录项状态、排除应用、图片记录开关 |
 | `ClipboardStore.swift` | JSON 历史记录、图片资产、防抖写入、目录管理、导入图片资产 |
-| `HistoryArchiveService.swift` | zip 备份导出、解包、manifest 与合并导入 |
+| `SnippetStore.swift` | `snippets.json` 持久化 |
+| `SnippetManager.swift` | 片段 CRUD、过滤、备份合并与可观察状态 |
+| `HistoryArchiveService.swift` | zip 备份导出、解包、manifest 与合并导入（含片段） |
 | `ContentClassifier.swift` | 文本、URL、HEX、JSON、代码的启发式分类 |
 | `ContentHasher.swift` | 加类型盐的 SHA-256 去重指纹 |
 | `ImageProcessor.swift` | 解码、PNG 归一化、获取像素尺寸、生成最大 560px 缩略图 |
@@ -104,11 +107,14 @@ ContentView / ItemRowView (SwiftUI)
 | `PanelFooterView.swift` | 监听状态与键盘提示 |
 | `PanelViewState.swift` | 搜索、分类、选中项、焦点触发器 |
 | `HotKeyConfiguration.swift` | Carbon 键码 / 修饰符、显示文案与校验 |
+| `Snippet.swift` | 可复用文本片段模型 |
+| `SnippetRowView.swift` | 面板片段列表行 |
 | `ExcludedApplication.swift` | 按应用的隐私排除规则 |
 | `Theme.swift` | 圆角、间距、弹簧动效、描边颜色、字体辅助 |
 | `HexColor.swift` | HEX 解析、色块、RGB / HSL 表示 |
 | `SearchMatcher.swift` | 中文 / 拼音 / 模糊搜索与相关性评分 |
-| `SettingsView.swift` | 设置窗口：通用、历史、隐私、关于 |
+| `SettingsView.swift` | 设置窗口：通用、历史、片段、隐私、关于 |
+| `SnippetEditorSheet.swift` | 片段新建 / 编辑表单（位于 SettingsView.swift） |
 | `ShortcutRecorderView.swift` | 快捷键捕获与冲突错误展示 |
 
 ## 5. 数据模型
@@ -171,9 +177,9 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 ### 6.4 设置与登录项
 
 - 通用页：登录时自动启动（`SMAppService.mainApp`）、全局快捷键录制、暂停监听。
-- 历史页：未置顶记录上限（100 / 200 / 500 / 1000）、清空未置顶 / 全部、在 Finder 中显示数据目录。
+- 历史页：未置顶记录上限（100 / 200 / 500 / 1000）、清空未置顶 / 全部、在 Finder 中显示数据目录，以及导出 / 导入 `.zip` 备份。
+- 片段页：创建 / 编辑 / 删除片段；面板提供独立「片段」标签，支持搜索、键盘选择和快速复制。
 - 隐私页：图片记录开关、按应用排除列表（通过 `NSOpenPanel` 选择 `.app`，记录 Bundle ID / 名称）。
-- 历史页：除容量和清理外，支持导出 / 导入 `.zip` 备份。
 - 设置保存在 `UserDefaults`；应用启动时读取并将历史上限同步给 `ClipboardManager`。
 - 历史上限调低后立即执行一次 FIFO 裁剪，置顶记录始终保留。
 - 排除规则在 `ClipboardMonitor` 读取剪贴板内容之前判断，从源头避免被排除应用的复制内容进入处理流程；`ClipboardManager` 再做一次防御性过滤。
@@ -181,12 +187,13 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 6.5 备份与迁移
 
-- 导出包结构：`HaoPasteBackup/manifest.json`、`history.json`、`Images/`。
-- manifest 记录 schema 版本、应用版本、导出时间、记录数和图片数；`history.json` 使用与本地存储相同的毫秒时间戳编码。
+- 导出包结构：`HaoPasteBackup/manifest.json`、`history.json`、`snippets.json`、`Images/`。
+- manifest（schema v2）记录应用版本、导出时间、记录数、图片数和片段数；`history.json` / `snippets.json` 使用毫秒时间戳编码。
+- 旧版 schema 没有 `snippets.json` 时按空片段导入；新版片段导入按 id / 内容去重合并。
 - 使用 `/usr/bin/ditto` 打包 / 解包，无第三方依赖。
 - 导入为**合并**语义：按 `contentHash` 去重；导入项若为置顶而本地项未置顶，会合并置顶状态。
 - 图片导入会生成新的本地文件 ID 与缩略图，避免覆盖现有资产；重复导入不会重复入库。
-- 导入后按当前历史上限裁剪，置顶记录保留；备份包未加密，包含完整剪贴板内容。
+- 导入后按当前历史上限裁剪，置顶记录保留；备份包未加密，包含完整剪贴板内容与片段。
 
 ### 6.6 快捷动作
 
@@ -254,7 +261,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-44 个 XCTest 由 app target 作为测试宿主运行：
+47 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。
@@ -264,9 +271,11 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - `ClipboardManager`：FIFO 裁剪、置顶保护、清空。
 - `HistoryArchiveService`：导出、导入、重复导入去重、无效归档报错。
 - `SearchMatcher`：中文、拼音全拼 / 首字母、模糊匹配、相关性排序。
+- `SnippetManager`：片段 CRUD、持久化、搜索、合并。
 - 文件条目：展示、分类过滤、多文件哈希、文件 URL 复制。
 - `HexColor` 解析与 RGB / HSL 输出；动作文本复制。
 - 拼音 / 模糊搜索命中与相关性排序。
+- Snippets CRUD、持久化、过滤、面板选中与备份合并。
 - `HexColor` 解析与 RGB / HSL 输出；动作文本复制。
 
 运行：`make test`。CI：`.github/workflows/ci.yml`，执行测试并构建 Release。
@@ -293,6 +302,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 长期运行的内存与能耗。
 
 ## 11. 可扩展点
+
+- **片段增强**：变量（日期 / 剪贴板内容）、分组、快捷键绑定。
 
 - **设置层**：继续扩展外观、隐私、按应用排除等设置页。
 - **快捷键抽象**：已迁移为可配置组合；后续可加入按键布局感知的显示名称。

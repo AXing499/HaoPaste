@@ -57,7 +57,7 @@ Release 构建输出：
 | `--render <path>` | Debug：离屏渲染面板 PNG 后退出 |
 | `--render-settings <path>` | Debug：离屏渲染设置窗口 PNG 后退出 |
 | `HAOPASTE_RENDER_APPEARANCE=dark` | Debug 离屏渲染时使用深色外观 |
-| `HAOPASTE_RENDER_SETTINGS_TAB=general\|history\|privacy\|about` | Debug 设置渲染的标签页 |
+| `HAOPASTE_RENDER_SETTINGS_TAB=general\|history\|snippets\|privacy\|about` | Debug 设置渲染的标签页 |
 | `--show-settings` | Debug：启动后直接打开设置窗口 |
 | `--export-history <path>` | Debug：将指定 storage 的历史导出为 zip 后退出 |
 | `--import-history <path>` | Debug：将 zip 合并导入指定 storage 后退出 |
@@ -92,7 +92,7 @@ Scripts/
 ├── package-dmg.sh
 └── install-app.sh
 
-HaoPasteTests/        # XCTest：分类、设置、存储、管理器、备份
+HaoPasteTests/        # XCTest：分类、设置、存储、片段、管理器、备份
 .github/workflows/    # CI：测试 + Release 构建
 
 Docs/
@@ -126,8 +126,8 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste-0.3.2.dmg                 # 安装包（app + Applications 快捷方式）
-dist/HaoPaste-0.3.2.dmg.sha256          # SHA-256 校验
+dist/HaoPaste-0.3.3.dmg                 # 安装包（app + Applications 快捷方式）
+dist/HaoPaste-0.3.3.dmg.sha256          # SHA-256 校验
 ```
 
 > `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
@@ -174,11 +174,11 @@ codesign --force --deep --options runtime --timestamp \
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash
-xcrun notarytool submit "dist/HaoPaste-0.3.2.dmg" \
+xcrun notarytool submit "dist/HaoPaste-0.3.3.dmg" \
   --keychain-profile "haopaste-notary" --wait
 
-xcrun stapler staple "dist/HaoPaste-0.3.2.dmg"
-xcrun stapler validate "dist/HaoPaste-0.3.2.dmg"
+xcrun stapler staple "dist/HaoPaste-0.3.3.dmg"
+xcrun stapler validate "dist/HaoPaste-0.3.3.dmg"
 ```
 
 也可以对 `.app` 先公证再打包（Apple 推荐流程根据分发方式调整）。需要 Apple Developer Program 账号。
@@ -188,8 +188,8 @@ xcrun stapler validate "dist/HaoPaste-0.3.2.dmg"
 版本号位于 `project.yml`：
 
 ```yaml
-MARKETING_VERSION: "0.3.2"
-CURRENT_PROJECT_VERSION: "7"
+MARKETING_VERSION: "0.3.3"
+CURRENT_PROJECT_VERSION: "8"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：
@@ -209,6 +209,7 @@ CURRENT_PROJECT_VERSION: "7"
 - [ ] 文件 / 多选文件复制后出现在「文件」分类；文件删除后显示不可用
 - [ ] 链接打开、图片保存、颜色 RGB / HSL 复制正常
 - [ ] 拼音全拼 / 首字母和模糊搜索能命中中文与英文内容
+- [ ] 片段可创建 / 编辑 / 删除，面板中可复制，备份导入后可恢复
 - [ ] 关闭 / 开启图片记录后，相应类型按预期入库或忽略
 - [ ] 设置窗口的通用 / 历史 / 隐私 / 关于四个页面正常，窗口可关闭重开
 - [ ] 历史导出后可以在空库中完整导入；重复导入不会产生重复项
@@ -239,7 +240,7 @@ xcodebuild \
   test
 ```
 
-当前 44 个测试覆盖：
+当前 47 个测试覆盖：
 
 - 内容分类器：URL / HEX / JSON / 代码 / SQL / 普通文本边界。
 - `HotKeyConfiguration`：默认值、修饰符、显示顺序、校验。
