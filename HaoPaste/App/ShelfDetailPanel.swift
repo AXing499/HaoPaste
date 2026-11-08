@@ -18,7 +18,7 @@ final class ShelfDetailPanel: NSPanel {
 
         isOpaque = false
         backgroundColor = .clear
-        hasShadow = false
+        hasShadow = true
         level = .floating
         collectionBehavior = [
             .canJoinAllSpaces,

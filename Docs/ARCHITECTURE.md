@@ -97,8 +97,8 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `AppDelegate.swift` | 依赖装配、主菜单、首次启动展示、应用代理生命周期 |
 | `PanelController.swift` | 无边框悬浮面板的创建 / 定位 / 显隐动画、键盘事件、焦点恢复、自动翻译最新记录 |
 | `QuickTranslationPanelController.swift` | `⌥⌘T` 快捷翻译卡片：读取剪贴板、定位、键盘与焦点恢复；也支持从挂架传入文本与锚点 |
-| `ShelfPreviewPanelController.swift` | 挂架旁的预览卡片：复用预览内容，保持在挂架外层 |
-| `ShelfOCRPanelController.swift` | 挂架旁的识图卡片：独立 OCR 服务、翻译回调与片段保存 |
+| `ShelfPreviewPanelController.swift` | 屏幕中央的预览卡片：复用预览内容，使用原生窗口阴影 |
+| `ShelfOCRPanelController.swift` | 屏幕中央的识图卡片：独立 OCR 服务、翻译回调与片段保存 |
 | `ShelfDetailPanel.swift` | 预览 / 识图卡片使用的透明非激活浮动面板 |
 | `ClipboardShelfController.swift` | 顶部挂架：30Hz 鼠标轮询、展开 / 收起、菜单栏与全屏抑制、卡片命中与点击穿透 |
 | `ClipboardShelfPanel.swift` | 透明、非激活的挂架 `NSPanel`，跨 Space 显示且不抢焦点 |
@@ -300,7 +300,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 挂架位置由 `ClipboardShelfEdge` 决定：顶部 / 左侧 / 右侧三选一，可在设置中切换。
 - `ClipboardShelfController` 在收起时以 10Hz、展开时以 30Hz 轮询 `NSEvent.mouseLocation`；顶部模式取菜单栏中间三分之一，侧边模式取屏幕可见区域左 / 右边缘中间三分之一。悬停 0.25 秒后展开，离开挂架 0.5 秒后收起。
 - 挂架是透明 `NSPanel`：顶部模式覆盖屏幕宽度、高度 260pt；侧边模式宽 232pt、高度等于可见屏幕高度。使用 `.nonactivatingPanel`，不激活应用、不抢当前应用的键盘焦点；`ShelfHostingView` 重写 `acceptsFirstMouse`，首次点击即落到卡片上。
-- 展开 / 收起：顶部把窗口高度从 1pt 向下增长到完整高度，卡片和绳子从菜单栏下沿先出现，筛选栏保持最终位置最后露出；左侧 / 右侧仍从对应屏幕边缘水平滑入。展开 0.8 秒、收起 0.6 秒，使用缓入缓出曲线，不使用遮罩或透明度淡入。
+- 展开 / 收起：整个挂架窗口从对应屏幕边缘外滑入，顶部从菜单栏上方整体下滑，左侧 / 右侧从屏幕左 / 右边缘水平滑入；展开 0.8 秒、收起 0.6 秒，使用缓入缓出曲线。`ClipboardShelfPanel` 重写 `constrainFrameRect`，否则 AppKit 会把屏幕外的起始位置夹回屏幕内，顶部就会直接跳到终点。
 - 顶部模式使用水平绳线；侧边模式使用贴近屏幕边缘的竖向导轨和短臂，卡片通过外侧顶角的夹子挂在短臂上；超出屏幕的卡片通过滚动查看。
 - 面板默认 `ignoresMouseEvents = true`；SwiftUI 通过 `PreferenceKey` 上报卡片与筛选栏的命中矩形，控制器按 30Hz 把鼠标位置换算到面板顶部坐标并切换点击穿透。面板空白区域不拦截下方应用。
 - 加载数量来自设置（6 / 8 / 10 / 12 / 不限），是加载上限而不是屏幕可见上限；顶部卡片横向排列，侧边卡片纵向排列。加载内容超出视口时，只渲染可见范围附近的卡片，并在顶部横向 / 侧边纵向滚动。
@@ -317,7 +317,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 顶部绳线的下垂弧度加大，卡片不设置基础旋转，夹子线环中心直接落在绳线上；侧边短臂的高度取卡片顶部加夹子线环中心，因此夹子始终对准短臂。卡片内容严格按动态卡片高度布局，长卡片不会溢出到下一张；筛选栏上方再叠加渐隐遮罩，避免遮挡筛选栏。
 - 夹子本身是删除入口：金色回形夹的线环穿过绳线 / 短臂，卡片上沿进入夹口，点击后夹子抬起打开，卡片随后下落淡出并删除；夹子位于复制手势之外，避免误触复制。
 - 卡片命中区域在悬停抬升时向四周扩大，尤其覆盖夹子线环，保证夹子可点击。
-- 预览 / 识图 / 翻译都在挂架旁以独立浮动卡片出现；`ShelfPreviewPanelController` 复用 `PreviewOverlayView`，`ShelfOCRPanelController` 复用 `OCRPaneView`，翻译复用快捷翻译卡片。挂架在这些卡片打开期间暂停自动收起，关闭后恢复。
+- 预览 / 识图 / 翻译都以独立浮动卡片出现在当前屏幕中央；`ShelfPreviewPanelController` 复用 `PreviewOverlayView`，`ShelfOCRPanelController` 复用 `OCRPaneView`，翻译复用快捷翻译卡片。弹框窗口尺寸与卡片一致并启用 `hasShadow = true`，使用 macOS 原生窗口阴影；SwiftUI 阴影只在主面板内嵌遮罩场景保留。挂架在这些卡片打开期间暂停自动收起，关闭后恢复。
 - 控制器在挂架收起时使用 10Hz 轮询，展开时切到 30Hz；定时器带 20% tolerance，降低空闲唤醒与能耗。
 - 筛选切换时，卡片使用插入 / 移除过渡，横杆的起点、终点与下垂幅度通过 `Animatable` 平滑伸缩；侧边导轨同样支持端点动画。
 - 展开前会检查：HaoPaste 是否位于前台、是否有全屏窗口覆盖当前屏幕、用户是否刚点过菜单栏。点击菜单栏会隐藏挂架并把本次悬停标记为抑制，直到鼠标离开菜单栏。

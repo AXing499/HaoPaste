@@ -486,25 +486,17 @@ final class ClipboardShelfController: NSObject {
     }
 
     /// Where the shelf starts before revealing and ends when hiding.
-    /// The top shelf grows downward from the menu bar edge so the cards
-    /// appear immediately; the side shelves slide in from their screen edge.
+    /// Every edge slides the whole shelf in as one piece: the top moves down
+    /// from above the menu bar, the sides move in from their screen edge.
     private func collapsedFrame(from target: NSRect) -> NSRect {
-        switch edge {
-        case .top:
-            return NSRect(
-                x: target.minX,
-                y: target.maxY - 1,
-                width: target.width,
-                height: 1
-            )
-
-        case .left, .right:
-            let slide = ClipboardShelfLayout.slideOffset(
-                for: edge,
-                distance: ClipboardShelfLayout.sidePanelWidth + 24
-            )
-            return target.offsetBy(dx: slide.width, dy: slide.height)
-        }
+        let distance = edge == .top
+            ? target.height + 24
+            : ClipboardShelfLayout.sidePanelWidth + 24
+        let slide = ClipboardShelfLayout.slideOffset(
+            for: edge,
+            distance: distance
+        )
+        return target.offsetBy(dx: slide.width, dy: slide.height)
     }
 
     // MARK: - Menu bar clicks

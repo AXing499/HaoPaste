@@ -420,10 +420,11 @@ enum ClipboardShelfLayout {
 
     /// Place a preview / translation card next to the shelf card without
     /// covering the shelf itself.
-    static func detailFrame(
+    /// Shelf preview, OCR and translation cards are centered on the screen
+    /// that owns the shelf rather than tucked under the card that opened them.
+    static func centeredDetailFrame(
         size: NSSize,
-        anchor: NSRect,
-        edge: ClipboardShelfEdge
+        anchor: NSRect
     ) -> NSRect {
         let screen = NSScreen.screens.first {
             $0.frame.intersects(anchor)
@@ -432,30 +433,19 @@ enum ClipboardShelfLayout {
             return NSRect(origin: anchor.origin, size: size)
         }
 
-        let gap: CGFloat = 14
         let margin: CGFloat = 12
-        var x: CGFloat
-        var y: CGFloat
-
-        switch edge {
-        case .top:
-            let shelfBottom = visible.maxY - panelHeight
-            x = anchor.midX - size.width / 2
-            y = shelfBottom - gap - size.height
-        case .left:
-            x = visible.minX + sidePanelWidth + gap
-            y = anchor.midY - size.height / 2
-        case .right:
-            x = visible.maxX - sidePanelWidth - gap - size.width
-            y = anchor.midY - size.height / 2
-        }
-
-        x = min(max(x, visible.minX + margin), visible.maxX - size.width - margin)
-        y = min(max(y, visible.minY + margin), visible.maxY - size.height - margin)
+        let x = visible.midX - size.width / 2
+        let y = visible.midY - size.height / 2
 
         return NSRect(
-            x: x.rounded(.down),
-            y: y.rounded(.down),
+            x: min(
+                max(x.rounded(.down), visible.minX + margin),
+                visible.maxX - size.width - margin
+            ),
+            y: min(
+                max(y.rounded(.down), visible.minY + margin),
+                visible.maxY - size.height - margin
+            ),
             width: size.width,
             height: size.height
         )

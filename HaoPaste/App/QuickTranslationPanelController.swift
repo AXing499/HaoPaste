@@ -154,10 +154,9 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
 
         let target: NSRect
         if let anchor, let edge {
-            target = ClipboardShelfLayout.detailFrame(
+            target = ClipboardShelfLayout.centeredDetailFrame(
                 size: windowSize,
-                anchor: anchor,
-                edge: edge
+                anchor: anchor
             )
         } else {
             target = targetFrame()
@@ -421,7 +420,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         panel.level = .floating
         panel.backgroundColor = .clear
         panel.isOpaque = false
-        panel.hasShadow = false
+        panel.hasShadow = true
         panel.hidesOnDeactivate = false
         panel.becomesKeyOnlyIfNeeded = false
         panel.isMovableByWindowBackground = false

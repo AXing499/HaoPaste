@@ -13,7 +13,7 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
     private let manager: ClipboardManager
     private let service: OCRService
     private let panel = ShelfDetailPanel()
-    private let panelSize = NSSize(width: 680, height: 520)
+    private let panelSize = NSSize(width: 640, height: 480)
 
     private var anchor: NSRect?
     private var edge: ClipboardShelfEdge = .top
@@ -95,10 +95,9 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
         hostingView.layer?.backgroundColor = NSColor.clear.cgColor
         panel.contentView = hostingView
 
-        let target = ClipboardShelfLayout.detailFrame(
+        let target = ClipboardShelfLayout.centeredDetailFrame(
             size: panelSize,
-            anchor: anchor,
-            edge: edge
+            anchor: anchor
         )
         panel.setFrame(target, display: false)
         panel.alphaValue = 0

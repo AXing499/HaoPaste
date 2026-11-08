@@ -165,18 +165,12 @@ struct ClipboardShelfView: View {
             let visibleItems = visibleRange.map {
                 ShelfVisibleItem(index: $0, item: loadedItems[$0])
             }
-            // Keep the top filter bar at its final position while the panel
-            // grows downward during the reveal, so the cards emerge first and
-            // the filter bar arrives with the finished shelf.
-            let contentBottom = isSide
-                ? height
-                : ClipboardShelfLayout.panelHeight
-            let filterY = contentBottom
+            let filterY = height
                 - ClipboardShelfLayout.filterBarBottom
                 - ClipboardShelfLayout.filterBarHeight / 2
             let maskHeight = max(
                 0,
-                contentBottom
+                height
                     - ClipboardShelfLayout.filterBarBottom
                     - ClipboardShelfLayout.filterBarHeight
             )
