@@ -127,6 +127,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settings.onShelfEnabledChange = { [weak self] enabled in
             self?.shelfController.setEnabled(enabled)
         }
+        settings.onShelfEdgeChange = { [weak self] _ in
+            self?.shelfController.edgeDidChange()
+        }
 
         settings.onHotKeyChange = { [weak self] configuration in
             self?.applyHotKey(configuration)

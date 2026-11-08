@@ -48,6 +48,10 @@ final class ClipboardShelfController: NSObject {
         isRevealed
     }
 
+    private var edge: ClipboardShelfEdge {
+        settings.shelfEdge
+    }
+
     init(manager: ClipboardManager, settings: AppSettings) {
         self.manager = manager
         self.settings = settings
@@ -125,6 +129,13 @@ final class ClipboardShelfController: NSObject {
 
     func hideIfVisible() {
         hide()
+    }
+
+    func edgeDidChange() {
+        hide()
+        if let screen = ClipboardShelfLayout.screenUnderPointer() {
+            placePanel(on: screen)
+        }
     }
 
     func toggle() {
@@ -206,7 +217,10 @@ final class ClipboardShelfController: NSObject {
                 return
             }
 
-            let revealBand = ClipboardShelfLayout.revealBand(of: screen)
+            let revealBand = ClipboardShelfLayout.revealBand(
+                of: screen,
+                edge: edge
+            )
             guard NSMouseInRect(mouse, revealBand, false) else {
                 hotZoneSince = nil
                 return
@@ -233,7 +247,7 @@ final class ClipboardShelfController: NSObject {
         updateMousePassThrough(mouse: mouse)
 
         var zone = panel.frame
-        if let screen = panel.screen {
+        if edge == .top, let screen = panel.screen {
             // Extend the zone to the top of the screen so moving up into the
             // menu bar to use a menu does not retract the shelf.
             zone.size.height = screen.frame.maxY - zone.minY
@@ -304,11 +318,15 @@ final class ClipboardShelfController: NSObject {
 
         placePanel(on: screen)
 
-        let target = ClipboardShelfLayout.panelFrame(on: screen)
+        let target = ClipboardShelfLayout.panelFrame(on: screen, edge: edge)
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let slide = ClipboardShelfLayout.slideOffset(
+            for: edge,
+            distance: 12
+        )
         let start = reduceMotion
             ? target
-            : target.offsetBy(dx: 0, dy: 12)
+            : target.offsetBy(dx: slide.width, dy: slide.height)
 
         panel.alphaValue = reduceMotion ? 1 : 0
         panel.setFrame(start, display: false)
@@ -349,10 +367,13 @@ final class ClipboardShelfController: NSObject {
 
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         let screen = panel.screen ?? NSScreen.main ?? NSScreen.screens.first
-        let target = screen.map(ClipboardShelfLayout.panelFrame(on:)) ?? panel.frame
+        let target = screen.map {
+            ClipboardShelfLayout.panelFrame(on: $0, edge: edge)
+        } ?? panel.frame
+        let slide = ClipboardShelfLayout.slideOffset(for: edge, distance: 10)
         let end = reduceMotion
             ? target
-            : target.offsetBy(dx: 0, dy: 10)
+            : target.offsetBy(dx: slide.width, dy: slide.height)
 
         let finish = { [weak self] in
             guard let self else { return }
@@ -379,7 +400,7 @@ final class ClipboardShelfController: NSObject {
     }
 
     private func placePanel(on screen: NSScreen) {
-        let frame = ClipboardShelfLayout.panelFrame(on: screen)
+        let frame = ClipboardShelfLayout.panelFrame(on: screen, edge: edge)
         if panel.frame != frame {
             panel.setFrame(frame, display: false)
         }

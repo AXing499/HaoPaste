@@ -54,38 +54,73 @@ struct ClipboardShelfView: View {
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
+            let height = proxy.size.height
+            let edge = settings.shelfEdge
+            let isSide = edge.isSide
             let filtered = manager
                 .filteredItems(query: "", filter: .all)
                 .filter { filter.matches($0) }
-            let capacity = ClipboardShelfLayout.capacity(
-                width: width,
-                limit: settings.shelfItemLimit
-            )
+            let capacity = isSide
+                ? ClipboardShelfLayout.sideCapacity(
+                    height: height,
+                    limit: settings.shelfItemLimit
+                )
+                : ClipboardShelfLayout.capacity(
+                    width: width,
+                    limit: settings.shelfItemLimit
+                )
             let items = Array(filtered.prefix(capacity))
-            let cardWidth = ClipboardShelfLayout.cardWidth(
-                width: width,
-                count: max(items.count, 1)
-            )
-            let rack = ClipboardShelfLayout.rackSpan(
+            let cardWidth = isSide
+                ? ClipboardShelfLayout.sideCardWidth(panelWidth: width)
+                : ClipboardShelfLayout.cardWidth(
+                    width: width,
+                    count: max(items.count, 1)
+                )
+            let topRack = ClipboardShelfLayout.rackSpan(
                 width: width,
                 count: items.count,
                 cardWidth: cardWidth
             )
+            let sideRack = ClipboardShelfLayout.sideRackRange(
+                height: height,
+                count: items.count
+            )
+            let filterY = height
+                - ClipboardShelfLayout.filterBarBottom
+                - ClipboardShelfLayout.filterBarHeight / 2
 
             ZStack(alignment: .top) {
-                ShelfRackView(
-                    start: rack.lowerBound,
-                    end: rack.upperBound,
-                    sag: ClipboardShelfLayout.sag(
-                        span: rack.upperBound - rack.lowerBound
+                if isSide {
+                    ShelfSideRackView(
+                        railX: edge == .left
+                            ? ClipboardShelfLayout.sideRailInset
+                            : width - ClipboardShelfLayout.sideRailInset,
+                        cardCenterX: width / 2,
+                        cardWidth: cardWidth,
+                        start: sideRack.lowerBound,
+                        end: sideRack.upperBound,
+                        count: items.count
                     )
-                )
-                .animation(Theme.gentleSpring, value: rack.lowerBound)
-                .animation(Theme.gentleSpring, value: rack.upperBound)
+                    .animation(Theme.gentleSpring, value: sideRack.lowerBound)
+                    .animation(Theme.gentleSpring, value: sideRack.upperBound)
+                } else {
+                    ShelfRackView(
+                        start: topRack.lowerBound,
+                        end: topRack.upperBound,
+                        sag: ClipboardShelfLayout.sag(
+                            span: topRack.upperBound - topRack.lowerBound
+                        )
+                    )
+                    .animation(Theme.gentleSpring, value: topRack.lowerBound)
+                    .animation(Theme.gentleSpring, value: topRack.upperBound)
+                }
 
                 if items.isEmpty {
                     emptyState
-                        .position(x: width / 2, y: 102)
+                        .position(
+                            x: width / 2,
+                            y: isSide ? height / 2 - 40 : 102
+                        )
                         .transition(
                             .scale(scale: 0.94, anchor: .center)
                                 .combined(with: .opacity)
@@ -95,19 +130,25 @@ struct ClipboardShelfView: View {
                 ForEach(Array(items.enumerated()), id: \.element.id) {
                     index,
                     item in
-                    let centerX = ClipboardShelfLayout.centerX(
-                        index: index,
-                        count: items.count,
-                        width: width,
-                        cardWidth: cardWidth
-                    )
-                    let ropeY = ClipboardShelfLayout.ropeY(
-                        x: centerX,
-                        rackStart: rack.lowerBound,
-                        rackEnd: rack.upperBound
-                    )
-                    let cardTop = ropeY + ClipboardShelfLayout.cardTopOffset
                     let isHovering = interaction.hoveredItemID == item.id
+                    let centerX = isSide
+                        ? width / 2
+                        : ClipboardShelfLayout.centerX(
+                            index: index,
+                            count: items.count,
+                            width: width,
+                            cardWidth: cardWidth
+                        )
+                    let cardTop = isSide
+                        ? ClipboardShelfLayout.sideCardTop(index: index)
+                        : ClipboardShelfLayout.ropeY(
+                            x: centerX,
+                            rackStart: topRack.lowerBound,
+                            rackEnd: topRack.upperBound
+                        ) + ClipboardShelfLayout.cardTopOffset
+
+                    let angle = cardAngles[index % cardAngles.count]
+                        * (isSide ? 0.45 : 1)
 
                     ShelfCardView(
                         item: item,
@@ -116,7 +157,8 @@ struct ClipboardShelfView: View {
                         imageURL: manager.imageURL(for: item),
                         isHovering: isHovering,
                         isCopied: copiedID == item.id,
-                        baseAngle: cardAngles[index % cardAngles.count],
+                        baseAngle: angle,
+                        edge: edge,
                         canDragOut: canDragOut(item),
                         dragProvider: { dragProvider(for: item) },
                         onCopy: { copy(item) },
@@ -152,12 +194,7 @@ struct ClipboardShelfView: View {
                     totalCount: filtered.count
                 )
                 .shelfHitArea(.filterBar)
-                .position(
-                    x: width / 2,
-                    y: ClipboardShelfLayout.panelHeight
-                        - ClipboardShelfLayout.filterBarBottom
-                        - ClipboardShelfLayout.filterBarHeight / 2
-                )
+                .position(x: width / 2, y: filterY)
             }
             .coordinateSpace(name: "ClipboardShelf")
             .onPreferenceChange(ShelfHitTargetsKey.self) { targets in
@@ -356,6 +393,129 @@ private struct ShelfRackView: View, Animatable {
             }
         }
         .frame(height: 64, alignment: .top)
+        .allowsHitTesting(false)
+    }
+}
+
+/// A vertical peg rail for left / right edge mode. Cards hang from arms
+/// clipped to their outer top edge; the rail stays visible near the screen edge.
+private struct ShelfSideRackView: View, Animatable {
+    var railX: CGFloat
+    var cardCenterX: CGFloat
+    var cardWidth: CGFloat
+    var start: CGFloat
+    var end: CGFloat
+    var count: Int
+
+    var animatableData: AnimatablePair<
+        AnimatablePair<CGFloat, CGFloat>,
+        AnimatablePair<CGFloat, CGFloat>
+    > {
+        get {
+            AnimatablePair(
+                AnimatablePair(start, end),
+                AnimatablePair(railX, cardCenterX)
+            )
+        }
+        set {
+            start = newValue.first.first
+            end = newValue.first.second
+            railX = newValue.second.first
+            cardCenterX = newValue.second.second
+        }
+    }
+
+    var body: some View {
+        Canvas { context, _ in
+            let plateWidth: CGFloat = 20
+            let plateHeight: CGFloat = 7
+            let isLeft = railX < cardCenterX
+            let clipCenterX = isLeft
+                ? cardCenterX - cardWidth / 2 + 6.5
+                : cardCenterX + cardWidth / 2 - 6.5
+
+            for y in [start, end] {
+                let plate = CGRect(
+                    x: railX - plateWidth / 2,
+                    y: y - plateHeight / 2,
+                    width: plateWidth,
+                    height: plateHeight
+                )
+                context.fill(
+                    Path(roundedRect: plate, cornerRadius: 3.5),
+                    with: .linearGradient(
+                        Gradient(colors: [
+                            Color.primary.opacity(0.20),
+                            Color.primary.opacity(0.08)
+                        ]),
+                        startPoint: CGPoint(x: 0, y: plate.minY),
+                        endPoint: CGPoint(x: 0, y: plate.maxY)
+                    )
+                )
+
+                let screw = CGRect(
+                    x: railX - 1.4,
+                    y: y - 1.4,
+                    width: 2.8,
+                    height: 2.8
+                )
+                context.fill(
+                    Path(ellipseIn: screw),
+                    with: .color(Color.primary.opacity(0.30))
+                )
+            }
+
+            var rail = Path()
+            rail.move(to: CGPoint(x: railX, y: start))
+            rail.addLine(to: CGPoint(x: railX, y: end))
+            context.stroke(
+                rail,
+                with: .linearGradient(
+                    Gradient(colors: [
+                        Color.primary.opacity(0.38),
+                        Color.primary.opacity(0.26),
+                        Color.primary.opacity(0.38)
+                    ]),
+                    startPoint: CGPoint(x: railX, y: start),
+                    endPoint: CGPoint(x: railX, y: end)
+                ),
+                lineWidth: 1.4
+            )
+
+            var highlight = Path()
+            highlight.move(to: CGPoint(x: railX - 0.7, y: start))
+            highlight.addLine(to: CGPoint(x: railX - 0.7, y: end))
+            context.stroke(
+                highlight,
+                with: .color(Color.white.opacity(0.16)),
+                lineWidth: 0.6
+            )
+
+            for index in 0..<max(count, 0) {
+                let y = ClipboardShelfLayout.sideCardTop(index: index)
+                    + ClipboardShelfLayout.clipHeight / 2
+                var arm = Path()
+                arm.move(to: CGPoint(x: railX, y: y))
+                arm.addLine(to: CGPoint(x: clipCenterX, y: y))
+                context.stroke(
+                    arm,
+                    with: .color(Color.primary.opacity(0.24)),
+                    lineWidth: 1.0
+                )
+
+                let peg = CGRect(
+                    x: railX - 1.6,
+                    y: y - 1.6,
+                    width: 3.2,
+                    height: 3.2
+                )
+                context.fill(
+                    Path(ellipseIn: peg),
+                    with: .color(Color.primary.opacity(0.30))
+                )
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .allowsHitTesting(false)
     }
 }

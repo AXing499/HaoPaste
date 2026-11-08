@@ -174,10 +174,25 @@ enum DebugRenderer {
         let isDark = ProcessInfo.processInfo.environment[
             "HAOPASTE_RENDER_APPEARANCE"
         ] == "dark"
+        let edge = ProcessInfo.processInfo.environment[
+            "HAOPASTE_RENDER_SHELF_EDGE"
+        ].flatMap(ClipboardShelfEdge.init(rawValue:)) ?? .top
+        let previousEdge = settings.shelfEdge
+        settings.shelfEdge = edge
 
         let background = isDark
             ? Color(nsColor: NSColor(calibratedRed: 0.09, green: 0.11, blue: 0.17, alpha: 1))
             : Color(nsColor: NSColor(calibratedRed: 0.90, green: 0.93, blue: 0.97, alpha: 1))
+
+        let size = edge.isSide
+            ? CGSize(
+                width: ClipboardShelfLayout.sidePanelWidth,
+                height: 900
+            )
+            : CGSize(
+                width: 1_440,
+                height: ClipboardShelfLayout.panelHeight
+            )
 
         let content = ZStack {
             background
@@ -190,20 +205,16 @@ enum DebugRenderer {
                 onPreviewItem: { _ in }
             )
         }
-        .frame(
-            width: 1_440,
-            height: ClipboardShelfLayout.panelHeight
-        )
+        .frame(width: size.width, height: size.height)
 
         render(
             content: content,
-            size: CGSize(
-                width: 1_440,
-                height: ClipboardShelfLayout.panelHeight
-            ),
-            to: url,
-            completion: completion
-        )
+            size: size,
+            to: url
+        ) {
+            settings.shelfEdge = previousEdge
+            completion()
+        }
     }
 
     static func renderQuickTranslation(

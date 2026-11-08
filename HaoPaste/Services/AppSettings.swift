@@ -16,6 +16,7 @@ final class AppSettings {
     static let defaultHistoryLimit = 200
     static let shelfItemLimitOptions = [6, 8, 10, 12]
     static let defaultShelfItemLimit = 8
+    static let defaultShelfEdge = ClipboardShelfEdge.top
 
     private enum Keys {
         static let maxUnpinnedItems = "settings.maxUnpinnedItems"
@@ -28,6 +29,7 @@ final class AppSettings {
         static let autoTranslateLatestOnOpen = "settings.autoTranslateLatestOnOpen"
         static let shelfEnabled = "settings.shelfEnabled"
         static let shelfItemLimit = "settings.shelfItemLimit"
+        static let shelfEdge = "settings.shelfEdge"
     }
 
     var maxUnpinnedItems: Int {
@@ -97,6 +99,14 @@ final class AppSettings {
         }
     }
 
+    var shelfEdge: ClipboardShelfEdge {
+        didSet {
+            guard oldValue != shelfEdge else { return }
+            defaults.set(shelfEdge.rawValue, forKey: Keys.shelfEdge)
+            onShelfEdgeChange?(shelfEdge)
+        }
+    }
+
     var shelfItemLimit: Int {
         didSet {
             let validated = Self.shelfItemLimitOptions.contains(shelfItemLimit)
@@ -133,6 +143,7 @@ final class AppSettings {
     @ObservationIgnored var onHotKeyChange: ((HotKeyConfiguration) -> Void)?
     @ObservationIgnored var onTranslationHotKeyChange: ((HotKeyConfiguration) -> Void)?
     @ObservationIgnored var onShelfEnabledChange: ((Bool) -> Void)?
+    @ObservationIgnored var onShelfEdgeChange: ((ClipboardShelfEdge) -> Void)?
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var isRevertingHotKey = false
@@ -186,6 +197,10 @@ final class AppSettings {
         self.shelfItemLimit = Self.shelfItemLimitOptions.contains(storedShelfLimit)
             ? storedShelfLimit
             : Self.defaultShelfItemLimit
+
+        let storedShelfEdge = defaults.string(forKey: Keys.shelfEdge)
+            .flatMap(ClipboardShelfEdge.init(rawValue:))
+        self.shelfEdge = storedShelfEdge ?? Self.defaultShelfEdge
 
         if defaults.object(forKey: Keys.capturesImages) == nil {
             self.capturesImages = true

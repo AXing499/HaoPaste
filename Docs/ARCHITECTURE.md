@@ -149,7 +149,8 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `PanelFooterView.swift` | 监听状态与键盘提示 |
 | `PanelViewState.swift` | 搜索、分类、单选 / 多选、锚点、预览状态、焦点触发器 |
 | `HotKeyConfiguration.swift` | Carbon 键码 / 修饰符、显示文案与校验 |
-| `ClipboardShelfLayout.swift` | 挂架几何：卡片宽度 / 容量、绳线弧度、菜单栏展开区域、全屏检测与命中判定 |
+| `ClipboardShelfLayout.swift` | 挂架几何：卡片宽度 / 容量、绳线弧度、菜单栏 / 侧边展开区域、顶 / 侧面板布局、全屏检测与命中判定 |
+| `ClipboardShelfEdge.swift` | 挂架位置：顶部 / 左侧 / 右侧 |
 | `ClipboardShelfFilter.swift` | 挂架筛选：全部 / 文本（含代码、链接、颜色）/ 图片 |
 | `Snippet.swift` | 可复用文本片段模型 |
 | `SnippetRowView.swift` | 面板片段列表行 |
@@ -293,8 +294,11 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 6.11 顶部剪贴板挂架
 
-- `ClipboardShelfController` 以 30Hz 轮询 `NSEvent.mouseLocation`，鼠标在菜单栏中间三分之一区域停留 0.25 秒后展开，离开挂架 0.5 秒后收起。
-- 挂架是覆盖屏幕宽度、高度 232pt 的透明 `NSPanel`，使用 `.nonactivatingPanel`，不激活应用、不抢当前应用的键盘焦点；`ShelfHostingView` 重写 `acceptsFirstMouse`，首次点击即落到卡片上。
+- 挂架位置由 `ClipboardShelfEdge` 决定：顶部 / 左侧 / 右侧三选一，可在设置中切换。
+- `ClipboardShelfController` 在收起时以 10Hz、展开时以 30Hz 轮询 `NSEvent.mouseLocation`；顶部模式取菜单栏中间三分之一，侧边模式取屏幕可见区域左 / 右边缘中间三分之一。悬停 0.25 秒后展开，离开挂架 0.5 秒后收起。
+- 挂架是透明 `NSPanel`：顶部模式覆盖屏幕宽度、高度 232pt；侧边模式宽 232pt、高度等于可见屏幕高度。使用 `.nonactivatingPanel`，不激活应用、不抢当前应用的键盘焦点；`ShelfHostingView` 重写 `acceptsFirstMouse`，首次点击即落到卡片上。
+- 展开 / 收起方向由位置决定：顶部从上方滑入，左侧 / 右侧从对应屏幕边缘滑入。
+- 顶部模式使用水平绳线；侧边模式使用贴近屏幕边缘的竖向导轨和短臂，卡片通过外侧顶角的夹子挂在短臂上，并按屏幕高度自适应显示数量。
 - 面板默认 `ignoresMouseEvents = true`；SwiftUI 通过 `PreferenceKey` 上报卡片与筛选栏的命中矩形，控制器按 30Hz 把鼠标位置换算到面板顶部坐标并切换点击穿透。面板空白区域不拦截下方应用。
 - 卡片显示 `ClipboardShelfLayout.capacity` 计算出的数量：由屏幕宽度、6–12 条设置上限和最小卡片宽度共同决定；卡片横向居中，绳线带轻微弧度。
 - 卡片点击调用 `ClipboardManager.copyToPasteboard`，同步 `changeCount`，不会生成新历史；复制成功后挂架保持展开并显示短暂「已复制」反馈。
@@ -303,7 +307,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 卡片通过 `ItemDragProvider` 支持拖拽到其他应用；右键菜单提供预览、复制、置顶 / 取消置顶、复制纯文本、打开链接 / 文件、Finder 定位、保存图片、复制 Markdown 与颜色格式；悬停时右上角显示置顶 / 删除按钮。
 - 「预览」通过 `PanelController.showPreview(for:)` 打开主面板并直接定位到该条目的预览覆盖层。
 - 控制器在挂架收起时使用 10Hz 轮询，展开时切到 30Hz；定时器带 20% tolerance，降低空闲唤醒与能耗。
-- 筛选切换时，卡片使用插入 / 移除过渡，横杆的起点、终点与下垂幅度通过 `Animatable` 平滑伸缩。
+- 筛选切换时，卡片使用插入 / 移除过渡，横杆的起点、终点与下垂幅度通过 `Animatable` 平滑伸缩；侧边导轨同样支持端点动画。
 - 展开前会检查：HaoPaste 是否位于前台、是否有全屏窗口覆盖当前屏幕、用户是否刚点过菜单栏。点击菜单栏会隐藏挂架并把本次悬停标记为抑制，直到鼠标离开菜单栏。
 - 活动空间 / 屏幕参数变化时自动收起；支持「减弱动态效果」，此时使用无动画的展开 / 收起。
 
@@ -377,7 +381,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-99 个 XCTest 由 app target 作为测试宿主运行：
+102 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。
@@ -385,7 +389,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - `AppSettings`：默认值、持久化、排除规则匹配、非法上限回退。
 - `ClipboardStore`：文本 / 图片资产读写、缺失资产过滤。
 - `ClipboardManager`：FIFO 裁剪、置顶保护、清空。
-- 顶部挂架：筛选规则、容量与卡片宽度、支架 / 绳线几何、菜单栏展开区域、点击命中目标、文本类判断、显示数量持久化。
+- 挂架：筛选规则、顶部与侧边容量、卡片宽度、支架 / 绳线几何、菜单栏 / 侧边展开区域、面板位置、点击命中目标、文本类判断、位置与显示数量持久化。
 - `HistoryArchiveService`：导出、导入、重复导入去重、无效归档报错。
 - `SearchMatcher`：中文、拼音全拼 / 首字母、模糊匹配、相关性排序。
 - `SnippetManager`：片段 CRUD、持久化、搜索、合并。

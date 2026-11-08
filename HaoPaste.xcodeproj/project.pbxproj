@@ -104,6 +104,7 @@
 		EBA73F14980E36C18373EABB /* PanelFooterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31E3D83E025D4E5596130E5 /* PanelFooterView.swift */; };
 		EC684CD410ECA9CF74EE45F0 /* SearchMatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FC01E5172C577ED5FFD5C5B /* SearchMatcherTests.swift */; };
 		EFAAB6EB24DE9EEFDA0D0540 /* HexColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F605FCEA14CB6C5977C2054D /* HexColorTests.swift */; };
+		FD2C2F599672ABB55B443551 /* ClipboardShelfEdge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5C9CAF7BEE3014E591DEF0 /* ClipboardShelfEdge.swift */; };
 		FE0837DBE5C8EB3F1F4FE1DE /* ClipboardShelfTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D29C2063644AC35E074DFE /* ClipboardShelfTests.swift */; };
 		FEC5BF877FA4B586136C3C60 /* SnippetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42D5E4FC242D8EFCD31F56F /* SnippetStore.swift */; };
 /* End PBXBuildFile section */
@@ -158,6 +159,7 @@
 		557E9EE1C130D3CE18E9D7D4 /* HaoPasteApplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HaoPasteApplication.swift; sourceTree = "<group>"; };
 		5BC1C303F14427FE1AE11BAE /* GoogleUnofficialProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleUnofficialProvider.swift; sourceTree = "<group>"; };
 		5C1E8E5926BF16805D508CA9 /* ClipboardShelfController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardShelfController.swift; sourceTree = "<group>"; };
+		5F5C9CAF7BEE3014E591DEF0 /* ClipboardShelfEdge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardShelfEdge.swift; sourceTree = "<group>"; };
 		6164DE97D3F25CA3CC70344C /* QuickTranslationPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickTranslationPanelController.swift; sourceTree = "<group>"; };
 		64E2AAA0279A533DFD780B19 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		65FC93E6FC05ACE56764051B /* HaoPaste.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HaoPaste.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -371,6 +373,7 @@
 			isa = PBXGroup;
 			children = (
 				331DB1B0F0174C1657E57FB7 /* ClipboardItem.swift */,
+				5F5C9CAF7BEE3014E591DEF0 /* ClipboardShelfEdge.swift */,
 				A22CEA918F5A9DE8E7E366F6 /* ClipboardShelfFilter.swift */,
 				909472C9D65CE134370C26E8 /* ClipboardShelfLayout.swift */,
 				D82AF26C12D23C17808B80C8 /* ExcludedApplication.swift */,
@@ -556,6 +559,7 @@
 				0B15C44CA1EC9DF0A6FA4BA5 /* ClipboardManager.swift in Sources */,
 				68C92DE03D8A1BEEC859A129 /* ClipboardMonitor.swift in Sources */,
 				707C666895E6147A486ED5DF /* ClipboardShelfController.swift in Sources */,
+				FD2C2F599672ABB55B443551 /* ClipboardShelfEdge.swift in Sources */,
 				BA027A4881F1B9FB8CC7106D /* ClipboardShelfFilter.swift in Sources */,
 				A8BB673F02D08F159BF4A91E /* ClipboardShelfLayout.swift in Sources */,
 				4F02E23B8BF5CB7CFCE90B2D /* ClipboardShelfPanel.swift in Sources */,
@@ -761,7 +765,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 21;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -781,7 +785,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.10.2;
+				MARKETING_VERSION = 0.11.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -828,7 +832,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 21;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -842,7 +846,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.10.2;
+				MARKETING_VERSION = 0.11.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

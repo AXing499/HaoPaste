@@ -34,6 +34,13 @@ enum ClipboardShelfLayout {
     static let sidePadding: CGFloat = 40
     static let rackInset: CGFloat = 16
     static let rackMargin: CGFloat = 44
+    static let sidePanelWidth: CGFloat = 232
+    static let sidePaddingInner: CGFloat = 38
+    static let sideTopPadding: CGFloat = 28
+    static let sideSpacing: CGFloat = 14
+    static let sideRackInset: CGFloat = 16
+    static let sideRailInset: CGFloat = 16
+    static let sideRevealDepth: CGFloat = 9
     static let filterBarHeight: CGFloat = 28
     static let filterBarBottom: CGFloat = 12
     static let minSag: CGFloat = 12
@@ -48,6 +55,50 @@ enum ClipboardShelfLayout {
     static func totalWidth(count: Int, cardWidth: CGFloat) -> CGFloat {
         guard count > 0 else { return 0 }
         return CGFloat(count) * cardWidth + CGFloat(count - 1) * spacing
+    }
+
+    static func sideCapacity(height: CGFloat, limit: Int) -> Int {
+        let available = max(
+            0,
+            height - sideTopPadding * 2 - filterBarBottom - filterBarHeight
+        )
+        let fitting = Int((available + sideSpacing) / (cardHeight + sideSpacing))
+        return max(1, min(limit, max(1, fitting)))
+    }
+
+    static func sideCardWidth(panelWidth: CGFloat) -> CGFloat {
+        min(
+            maxCardWidth,
+            max(minCardWidth, panelWidth - sidePaddingInner * 2)
+        )
+    }
+
+    static func sideCardTop(index: Int) -> CGFloat {
+        sideTopPadding + CGFloat(index) * (cardHeight + sideSpacing)
+    }
+
+    static func sideRackRange(
+        height: CGFloat,
+        count: Int
+    ) -> ClosedRange<CGFloat> {
+        guard height > 0 else { return 0...0 }
+
+        let minEnd = height - filterBarBottom - filterBarHeight - sideRackInset
+
+        if count == 0 {
+            let middle = height * 0.46
+            let half: CGFloat = 90
+            let start = max(sideRackInset, middle - half)
+            let end = min(minEnd, middle + half)
+            return start...max(start + 8, end)
+        }
+
+        let start = max(sideRackInset, sideTopPadding - 16)
+        let end = min(
+            minEnd,
+            sideCardTop(index: count - 1) + cardHeight + 16
+        )
+        return start...max(start + 8, end)
     }
 
     static func cardWidth(width: CGFloat, count: Int) -> CGFloat {
@@ -133,24 +184,93 @@ enum ClipboardShelfLayout {
     }
 
     static func revealBand(of screen: NSScreen) -> NSRect {
-        let band = menuBarBand(of: screen)
-        let width = band.width / 3
-        return NSRect(
-            x: band.midX - width / 2,
-            y: band.minY,
-            width: width,
-            height: band.height
-        )
+        revealBand(of: screen, edge: .top)
+    }
+
+    static func revealBand(
+        of screen: NSScreen,
+        edge: ClipboardShelfEdge
+    ) -> NSRect {
+        switch edge {
+        case .top:
+            let band = menuBarBand(of: screen)
+            let width = band.width / 3
+            return NSRect(
+                x: band.midX - width / 2,
+                y: band.minY,
+                width: width,
+                height: band.height
+            )
+
+        case .left, .right:
+            let visible = screen.visibleFrame
+            let height = visible.height / 3
+            let depth = max(
+                8,
+                min(12, screen.frame.width * 0.006)
+            )
+            return NSRect(
+                x: edge == .left ? visible.minX : visible.maxX - depth,
+                y: visible.midY - height / 2,
+                width: depth,
+                height: height
+            )
+        }
     }
 
     static func panelFrame(on screen: NSScreen) -> NSRect {
+        panelFrame(on: screen, edge: .top)
+    }
+
+    static func panelFrame(
+        on screen: NSScreen,
+        edge: ClipboardShelfEdge
+    ) -> NSRect {
         let visible = screen.visibleFrame
-        return NSRect(
-            x: visible.minX,
-            y: visible.maxY - panelHeight,
-            width: visible.width,
-            height: panelHeight
-        )
+        switch edge {
+        case .top:
+            return NSRect(
+                x: visible.minX,
+                y: visible.maxY - panelHeight,
+                width: visible.width,
+                height: panelHeight
+            )
+
+        case .left:
+            return NSRect(
+                x: visible.minX,
+                y: visible.minY,
+                width: sidePanelWidth,
+                height: visible.height
+            )
+
+        case .right:
+            return NSRect(
+                x: visible.maxX - sidePanelWidth,
+                y: visible.minY,
+                width: sidePanelWidth,
+                height: visible.height
+            )
+        }
+    }
+
+    static func hoverOffset(for edge: ClipboardShelfEdge) -> CGSize {
+        switch edge {
+        case .top: return CGSize(width: 0, height: -5)
+        case .left: return CGSize(width: 8, height: 0)
+        case .right: return CGSize(width: -8, height: 0)
+        }
+    }
+
+    static func slideOffset(
+        for edge: ClipboardShelfEdge,
+        distance: CGFloat
+    ) -> CGSize {
+        switch edge {
+        case .top: return CGSize(width: 0, height: distance)
+        case .left: return CGSize(width: -distance, height: 0)
+        case .right: return CGSize(width: distance, height: 0)
+        }
     }
 
     static func screenUnderPointer() -> NSScreen? {

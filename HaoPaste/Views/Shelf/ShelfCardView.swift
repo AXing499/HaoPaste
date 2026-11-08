@@ -16,6 +16,7 @@ struct ShelfCardView: View {
     let isHovering: Bool
     let isCopied: Bool
     let baseAngle: Double
+    let edge: ClipboardShelfEdge
     let canDragOut: Bool
     let dragProvider: () -> NSItemProvider
     let onCopy: () -> Void
@@ -31,6 +32,26 @@ struct ShelfCardView: View {
 
     private var bodyShape: RoundedRectangle {
         RoundedRectangle(cornerRadius: 11, style: .continuous)
+    }
+
+    private var rotationAnchor: UnitPoint {
+        switch edge {
+        case .top: return .top
+        case .left: return .topLeading
+        case .right: return .topTrailing
+        }
+    }
+
+    private var clipAlignment: Alignment {
+        switch edge {
+        case .top: return .top
+        case .left: return .topLeading
+        case .right: return .topTrailing
+        }
+    }
+
+    private var actionAlignment: Alignment {
+        edge == .right ? .topLeading : .topTrailing
     }
 
     var body: some View {
@@ -51,12 +72,19 @@ struct ShelfCardView: View {
         )
         .rotationEffect(
             .degrees(isHovering || reduceMotion ? 0 : baseAngle),
-            anchor: .top
+            anchor: rotationAnchor
         )
-        .offset(y: isHovering && !reduceMotion ? -5 : 0)
+        .offset(
+            x: isHovering && !reduceMotion
+                ? ClipboardShelfLayout.hoverOffset(for: edge).width
+                : 0,
+            y: isHovering && !reduceMotion
+                ? ClipboardShelfLayout.hoverOffset(for: edge).height
+                : 0
+        )
         .scaleEffect(
             isHovering && !reduceMotion ? 1.035 : 1,
-            anchor: .top
+            anchor: rotationAnchor
         )
         .animation(reduceMotion ? nil : Theme.spring, value: isHovering)
         .help("点击复制")
@@ -186,6 +214,7 @@ struct ShelfCardView: View {
                 isPinned: item.isPinned,
                 isHovering: isHovering
             )
+            .frame(maxWidth: .infinity, alignment: clipAlignment)
         }
 
         if canDragOut {
@@ -212,8 +241,8 @@ struct ShelfCardView: View {
             )
         }
         .padding(.top, Self.bodyOffset + 6)
-        .padding(.trailing, 7)
-        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(edge == .right ? .leading : .trailing, 7)
+        .frame(maxWidth: .infinity, alignment: actionAlignment)
     }
 
     private var bodyContent: some View {

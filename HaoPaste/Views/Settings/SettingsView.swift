@@ -285,6 +285,53 @@ struct SettingsView: View {
             }
         }
 
+        SettingsCard("剪贴板挂架") {
+            SettingsRow(
+                "启用挂架",
+                subtitle: "鼠标停在所选屏幕边缘的中间区域即可展开；点击卡片复制，鼠标离开后自动收起"
+            ) {
+                Toggle("", isOn: $settings.shelfEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .tint(Color.accentColor)
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                "显示位置",
+                subtitle: "顶部从菜单栏中间展开；左侧 / 右侧从屏幕边缘中间展开"
+            ) {
+                Picker("", selection: $settings.shelfEdge) {
+                    ForEach(ClipboardShelfEdge.allCases) { edge in
+                        Text(edge.title).tag(edge)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 100)
+                .disabled(!settings.shelfEnabled)
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                "显示数量",
+                subtitle: "实际显示数量会根据屏幕尺寸自适应；可在挂架底部切换全部 / 文本 / 图片"
+            ) {
+                Picker("", selection: $settings.shelfItemLimit) {
+                    ForEach(AppSettings.shelfItemLimitOptions, id: \.self) { limit in
+                        Text("\(limit) 条").tag(limit)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 100)
+                .disabled(!settings.shelfEnabled)
+            }
+        }
+
         SettingsCard("翻译") {
             SettingsRow(
                 "快捷翻译剪贴板",
@@ -314,36 +361,6 @@ struct SettingsView: View {
                     .toggleStyle(.switch)
                     .controlSize(.small)
                     .tint(Color.accentColor)
-            }
-        }
-
-        SettingsCard("剪贴板挂架") {
-            SettingsRow(
-                "顶部挂架",
-                subtitle: "鼠标停在菜单栏中间区域即可展开；点击卡片复制，鼠标离开后自动收起"
-            ) {
-                Toggle("", isOn: $settings.shelfEnabled)
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-                    .tint(Color.accentColor)
-            }
-
-            SettingsDivider()
-
-            SettingsRow(
-                "显示数量",
-                subtitle: "实际显示数量会根据屏幕宽度自适应；可在挂架底部切换全部 / 文本 / 图片"
-            ) {
-                Picker("", selection: $settings.shelfItemLimit) {
-                    ForEach(AppSettings.shelfItemLimitOptions, id: \.self) { limit in
-                        Text("\(limit) 条").tag(limit)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .frame(width: 100)
-                .disabled(!settings.shelfEnabled)
             }
         }
 

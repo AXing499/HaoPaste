@@ -21,6 +21,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertTrue(settings.autoTranslateLatestOnOpen)
         XCTAssertTrue(settings.shelfEnabled)
         XCTAssertEqual(settings.shelfItemLimit, 8)
+        XCTAssertEqual(settings.shelfEdge, .top)
         XCTAssertTrue(settings.capturesImages)
         XCTAssertTrue(settings.excludedApplications.isEmpty)
         XCTAssertNil(settings.hotKeyRegistrationError)
@@ -46,6 +47,7 @@ final class AppSettingsTests: XCTestCase {
         settings.autoTranslateLatestOnOpen = false
         settings.shelfEnabled = false
         settings.shelfItemLimit = 10
+        settings.shelfEdge = .left
 
         let reloaded = AppSettings(defaults: defaults)
         XCTAssertEqual(reloaded.maxUnpinnedItems, 500)
@@ -55,6 +57,24 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertFalse(reloaded.autoTranslateLatestOnOpen)
         XCTAssertFalse(reloaded.shelfEnabled)
         XCTAssertEqual(reloaded.shelfItemLimit, 10)
+        XCTAssertEqual(reloaded.shelfEdge, .left)
+    }
+
+    func testShelfEdgeFallsBackToTop() throws {
+        let suite = "HaoPasteTests-ShelfEdge-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        defaults.set("diagonal", forKey: "settings.shelfEdge")
+
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertEqual(settings.shelfEdge, .top)
+
+        settings.shelfEdge = .right
+        XCTAssertEqual(
+            AppSettings(defaults: defaults).shelfEdge,
+            .right
+        )
     }
 
     func testExcludedApplicationsPersistAndDeduplicate() throws {

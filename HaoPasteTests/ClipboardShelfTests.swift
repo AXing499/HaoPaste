@@ -190,6 +190,95 @@ final class ClipboardShelfTests: XCTestCase {
         )
     }
 
+    func testSideShelfGeometry() {
+        XCTAssertEqual(
+            ClipboardShelfLayout.sideCapacity(height: 1_050, limit: 8),
+            6
+        )
+        XCTAssertEqual(
+            ClipboardShelfLayout.sideCapacity(height: 1_440, limit: 8),
+            8
+        )
+        XCTAssertEqual(
+            ClipboardShelfLayout.sideCardWidth(panelWidth: 232),
+            156
+        )
+        XCTAssertEqual(
+            ClipboardShelfLayout.sideCardTop(index: 0),
+            ClipboardShelfLayout.sideTopPadding
+        )
+        XCTAssertEqual(
+            ClipboardShelfLayout.sideCardTop(index: 2),
+            ClipboardShelfLayout.sideTopPadding
+                + 2 * (ClipboardShelfLayout.cardHeight
+                    + ClipboardShelfLayout.sideSpacing)
+        )
+
+        let rack = ClipboardShelfLayout.sideRackRange(
+            height: 1_050,
+            count: 6
+        )
+        XCTAssertGreaterThan(rack.lowerBound, 0)
+        XCTAssertLessThan(rack.upperBound, 1_050)
+        XCTAssertLessThan(rack.upperBound, 1_050 - ClipboardShelfLayout.filterBarHeight)
+    }
+
+    func testSideRevealBandAndPanelFrames() throws {
+        let screen = try XCTUnwrap(NSScreen.main ?? NSScreen.screens.first)
+        let visible = screen.visibleFrame
+
+        let leftReveal = ClipboardShelfLayout.revealBand(
+            of: screen,
+            edge: .left
+        )
+        XCTAssertEqual(leftReveal.minX, visible.minX, accuracy: 0.5)
+        XCTAssertEqual(leftReveal.midY, visible.midY, accuracy: 0.5)
+        XCTAssertEqual(
+            leftReveal.height,
+            visible.height / 3,
+            accuracy: 1
+        )
+        XCTAssertGreaterThanOrEqual(leftReveal.width, 8)
+        XCTAssertLessThanOrEqual(leftReveal.width, 12)
+
+        let rightReveal = ClipboardShelfLayout.revealBand(
+            of: screen,
+            edge: .right
+        )
+        XCTAssertEqual(rightReveal.maxX, visible.maxX, accuracy: 0.5)
+
+        let leftFrame = ClipboardShelfLayout.panelFrame(
+            on: screen,
+            edge: .left
+        )
+        XCTAssertEqual(leftFrame.minX, visible.minX, accuracy: 0.5)
+        XCTAssertEqual(
+            leftFrame.width,
+            ClipboardShelfLayout.sidePanelWidth,
+            accuracy: 0.5
+        )
+        XCTAssertEqual(leftFrame.height, visible.height, accuracy: 0.5)
+
+        let rightFrame = ClipboardShelfLayout.panelFrame(
+            on: screen,
+            edge: .right
+        )
+        XCTAssertEqual(rightFrame.maxX, visible.maxX, accuracy: 0.5)
+
+        XCTAssertEqual(
+            ClipboardShelfLayout.hoverOffset(for: .left).width,
+            8
+        )
+        XCTAssertEqual(
+            ClipboardShelfLayout.hoverOffset(for: .right).width,
+            -8
+        )
+        XCTAssertEqual(
+            ClipboardShelfLayout.hoverOffset(for: .top).height,
+            -5
+        )
+    }
+
     func testShelfHitTargetReturnsCardIdentity() {
         let id = UUID()
         let card = ShelfHitTarget(
