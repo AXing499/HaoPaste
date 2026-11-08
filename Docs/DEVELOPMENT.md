@@ -57,9 +57,10 @@ Release 构建输出：
 | `--render <path>` | Debug：离屏渲染面板 PNG 后退出 |
 | `--render-settings <path>` | Debug：离屏渲染设置窗口 PNG 后退出 |
 | `HAOPASTE_RENDER_APPEARANCE=dark` | Debug 离屏渲染时使用深色外观 |
-| `HAOPASTE_RENDER_SETTINGS_TAB=general\|history\|snippets\|privacy\|about` | Debug 设置渲染的标签页 |
+| `HAOPASTE_RENDER_SETTINGS_TAB=general\|history\|snippets\|intelligence\|privacy\|about` | Debug 设置渲染的标签页 |
 | `HAOPASTE_RENDER_PREVIEW=image\|text` | Debug 渲染预览界面（图片或富文本） |
 | `HAOPASTE_RENDER_MULTI=<数量>` | Debug 渲染多选界面并选中前 N 条 |
+| `HAOPASTE_RENDER_TRANSLATION=success\|consent\|error` | Debug 渲染翻译面板状态 |
 | `--show-settings` | Debug：启动后直接打开设置窗口 |
 | `--export-history <path>` | Debug：将指定 storage 的历史导出为 zip 后退出 |
 | `--import-history <path>` | Debug：将 zip 合并导入指定 storage 后退出 |
@@ -128,8 +129,8 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste-0.5.0.dmg                 # 安装包（app + Applications 快捷方式）
-dist/HaoPaste-0.5.0.dmg.sha256          # SHA-256 校验
+dist/HaoPaste-0.6.0.dmg                 # 安装包（app + Applications 快捷方式）
+dist/HaoPaste-0.6.0.dmg.sha256          # SHA-256 校验
 ```
 
 > `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
@@ -176,11 +177,11 @@ codesign --force --deep --options runtime --timestamp \
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash
-xcrun notarytool submit "dist/HaoPaste-0.5.0.dmg" \
+xcrun notarytool submit "dist/HaoPaste-0.6.0.dmg" \
   --keychain-profile "haopaste-notary" --wait
 
-xcrun stapler staple "dist/HaoPaste-0.5.0.dmg"
-xcrun stapler validate "dist/HaoPaste-0.5.0.dmg"
+xcrun stapler staple "dist/HaoPaste-0.6.0.dmg"
+xcrun stapler validate "dist/HaoPaste-0.6.0.dmg"
 ```
 
 也可以对 `.app` 先公证再打包（Apple 推荐流程根据分发方式调整）。需要 Apple Developer Program 账号。
@@ -190,8 +191,8 @@ xcrun stapler validate "dist/HaoPaste-0.5.0.dmg"
 版本号位于 `project.yml`：
 
 ```yaml
-MARKETING_VERSION: "0.5.0"
-CURRENT_PROJECT_VERSION: "11"
+MARKETING_VERSION: "0.6.0"
+CURRENT_PROJECT_VERSION: "12"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：
@@ -243,7 +244,7 @@ xcodebuild \
   test
 ```
 
-当前 65 个测试覆盖：
+当前 80 个测试覆盖：
 
 - 内容分类器：URL / HEX / JSON / 代码 / SQL / 普通文本边界。
 - `HotKeyConfiguration`：默认值、修饰符、显示顺序、校验。
@@ -256,6 +257,9 @@ xcodebuild \
 - 拖拽：文本 / RTF / 图片 Provider 的类型注册与数据内容。
 - 多选：⌘ 切换、⇧ 范围、锚点、全选与删除后的选择裁剪。
 - 合并：文本顺序、文件 URL、混合路径、去重、图片限制与剪贴板写入。
+- 翻译 Provider：Google / Bing / DeepL / Azure / 百度 / Google Cloud 的请求参数、签名与响应解析。
+- 翻译服务：多引擎回退、授权、长文本分块、缓存、同语言方向切换与未配置引擎跳过。
+- 翻译设置：目标语言、启用状态、引擎顺序与授权持久化。
 
 测试宿主使用的是真实 app target，但 `AppDelegate` 会检测 XCTest 环境并跳过菜单栏、轮询和全局快捷键初始化。CI 工作流位于 `.github/workflows/ci.yml`，会运行测试并额外执行一次 Release 构建。
 
@@ -266,6 +270,8 @@ make demo
 ```
 
 多选回归：按住 `⌘` 点击两条文本 → 按 `↵`，确认剪贴板内容按可见顺序换行合并；选中图片时合并按钮应禁用并显示提示。
+
+翻译回归：联网状态下选中一段英文 → `⌘T` → 允许在线授权，确认 Google 或 Bing 返回中文；在设置 → 智能中配置官方 Key 后点击「测试连接」；翻译长文本时确认进度与分段结果。CI 不访问真实翻译接口，Provider 测试全部使用 `URLProtocol` 模拟响应。
 
 除了示例数据，还可以用系统剪贴板快速验证：
 

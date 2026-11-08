@@ -8,7 +8,7 @@ HaoPaste 是本地优先的 macOS 剪切板管理器，目标是在 Raycast / Pa
 
 1. **键盘优先**：不用离开键盘即可搜索、选择、复制。
 2. **原生语义**：系统材质、系统强调色、SF Symbols、连续圆角、系统字体。
-3. **本地优先**：无账号、无网络、无遥测，历史只存在本机。
+3. **本地优先**：无账号、无遥测，历史只存在本机；默认不联网，在线翻译仅在用户操作时按需发送当前文本。
 4. **低权限**：不申请辅助功能、屏幕录制等敏感权限。
 5. **可维护**：模块边界清晰，无第三方运行时依赖。
 
@@ -27,6 +27,8 @@ HaoPaste 是本地优先的 macOS 剪切板管理器，目标是在 Raycast / Pa
 | 去重 | CryptoKit `SHA256` |
 | 图片处理 | ImageIO / CoreGraphics / AppKit，PNG 归一化 + 缩略图 |
 | 持久化 | Foundation `JSONEncoder` / `JSONDecoder` + 文件系统 |
+| 翻译 | 可插拔 `TranslationProvider`，`URLSession` + HTTPS |
+| 翻译凭证 | macOS Keychain（`Security.framework`） |
 | 数据目录 | `~/Library/Application Support/HaoPaste/` |
 | 工程生成 | XcodeGen（`project.yml`） |
 | 构建 / 发布 | `xcodebuild`、Makefile、`hdiutil`、`codesign` |
@@ -45,6 +47,12 @@ NSApplication (accessory / LSUIElement)
 │   │        └── ClipboardStore        └── NSPasteboard.general
 │   │             ├── history.json
 │   │             └── Images/
+│   │
+│   ├── TranslationService
+│   │   ├── TranslationSettingsStore (UserDefaults)
+│   │   ├── KeychainTranslationCredentialStore
+│   │   └── TranslationProviderFactory
+│   │        └── Google / Bing / DeepL / Azure / 百度 / Google Cloud
 │   │
 │   ├── PanelController
 │   │   ├── ClipboardPanel (NSPanel, borderless, floating)
@@ -95,6 +103,10 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `ContentClassifier.swift` | 文本、URL、HEX、JSON、代码的启发式分类 |
 | `ContentHasher.swift` | 加类型盐的 SHA-256 去重指纹 |
 | `ImageProcessor.swift` | 解码、PNG 归一化、获取像素尺寸、生成最大 560px 缩略图 |
+| `TranslationService.swift` | 翻译状态、引擎优先级、自动回退、授权、长文本分块与内存缓存 |
+| `TranslationSettingsStore.swift` | 目标语言、引擎顺序、启用状态与授权持久化 |
+| `TranslationCredentialStore.swift` | API 凭证的 Keychain 读写（含测试用内存实现） |
+| `Translation/` | Google / Bing / DeepL 非官方通道，Azure / DeepL API / 百度 / Google Cloud 官方适配 |
 | `ItemPreview.swift` | 预览文本构建：RTF / HTML 归一化、字体大小收敛、12 万字符上限 |
 | `ItemDragProvider.swift` | 为文本 / 图片 / 单文件构建 `NSItemProvider`，附带 RTF / HTML 数据 |
 | `MergedContentBuilder.swift` | 多选合并规则：文本换行、文件 URL、混合路径与图片限制 |
@@ -109,6 +121,8 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `ItemRowView.swift` | 条目卡片：图标 / 缩略图、徽章、来源、时间、快捷复制、悬停预览 / 置顶 / 删除、拖拽 |
 | `PreviewOverlayView.swift` | 预览卡片：图片棋盘格、全文 / 富文本、颜色色块、文件列表、拖拽与动作 |
 | `MultiSelectionBar.swift` | 多选浮动操作条：已选数量、合并复制、取消与不支持提示 |
+| `TranslationPaneView.swift` | 翻译面板：语言 / 引擎切换、授权、结果、复制与保存片段 |
+| `TranslationSettingsPage.swift` | 设置「智能」页：引擎优先级、凭证配置与测试 |
 | `FilterTabsView.swift` | 胶囊分类按钮与 matched geometry 滑动选中态 |
 | `EmptyStateView.swift` | 空历史 / 无搜索结果状态 |
 | `PanelFooterView.swift` | 监听状态与键盘提示 |
@@ -230,15 +244,26 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 图片暂不支持合并，操作条会禁用主按钮并显示原因。
 - 合并写入会同步 `changeCount`，因此不会生成新的历史记录，也不会改变原条目的时间。
 
-### 6.9 键盘事件
+### 6.9 翻译
+
+- 翻译入口仅对 `.text` / 富文本开放：`⌘T`、预览底部「翻译」、右键「翻译…」。
+- `TranslationService` 读取 `TranslationSettingsStore` 的引擎顺序，依次尝试已启用且已配置的 Provider；单个 Provider 失败会自动回退到下一个。
+- 首次使用在线引擎时需要显式授权，授权按 Provider 记录；新增引擎会再次询问。
+- 文本按 Provider 的 `maxCharactersPerRequest` 分段翻译，再按换行拼接；翻译结果只做内存 LRU 缓存（50 条）。
+- 本地用 `NLLanguageRecognizer` 检测源语言；若原文已是目标语言，本次翻译会尝试切换中英方向。
+- 复制译文复用 `ClipboardManager.copyTextToPasteboard`，同步 `changeCount`，不会生成历史记录。
+- Google / Bing 使用非官方 HTTP 接口；DeepL 非官方为实验性 JSON-RPC 通道。官方适配使用各家标准 HTTPS API。
+- API 凭证保存在 Keychain；导出备份、日志与 UserDefaults 不包含密钥。
+
+### 6.10 键盘事件
 
 `PanelController` 使用 `NSEvent.addLocalMonitorForEvents(matching: .keyDown)` 在面板为 key window 时处理：
 
 - 方向键：更新 `PanelViewState.selectedID`；按住 `⇧` 时扩展多选范围；
 - `⌘⇧A`：全选当前可见结果；
 - 回车：复制选中项；多选时合并复制并关闭；
-- `⌘P` / `⌘Y` / `⌘⌫` / `⌘W` / `⌘1–9`；
-- `esc`：取消多选；清空搜索；预览中关闭预览；否则关闭面板。
+- `⌘P` / `⌘Y` / `⌘T` / `⌘⌫` / `⌘W` / `⌘1–9`；
+- `esc`：取消多选；清空搜索；预览中关闭预览；翻译中关闭翻译；否则关闭面板。
 - 预览打开时，方向键切换预览条目，回车 / `⌘C` 复制并关闭，其他命令快捷键被忽略。
 
 其余按键原样交还 AppKit / 输入法，因此搜索框和中文输入法保持正常工作。
@@ -273,14 +298,17 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 图片列表只加载 560px 缩略图，原图只在复制或预览时读取。
 - 富文本预览按需读取缓存 JSON；拖拽 Provider 也延迟到拖拽开始时构建，不增加列表渲染开销。
 - 合并复制只遍历当前选中的条目；文件 URL 按路径去重，复杂度与选择数量线性相关。
+- 翻译网络请求通过 `URLSession` 异步执行，不阻塞主线程；长文本按 Provider 上限分块，避免单次请求过大。
 - 去重哈希在采集线程（主线程）执行；对常规文本 / 图片足够快，超大内容可后续迁移到后台任务。
 - 搜索在当前 200 条规模内同步执行；只对含 CJK 的内容按需做拼音转换，结果按相关性排序，无持久化索引。
 - 当前默认上限为 200 条未置顶 + 任意置顶项，可在设置中调整为 100 / 200 / 500 / 1000；排序与搜索为 O(n log n) 级别，规模可控。
 
 ## 9. 隐私与安全
 
-- 无网络访问、无账号、无遥测。
-- 历史与图片保存在用户 Application Support 目录。
+- 无账号、无遥测；默认不发起网络请求。在线翻译只有用户点击并授权后才发送当前文本，图片与历史不会上传。
+- 翻译 API Key 保存在 Keychain；不写入 UserDefaults、日志或导出备份。
+- Google / Bing / DeepL 非官方通道不受服务端 SLA 保障，可能违反服务条款；默认不自动启用 DeepL 非官方通道，并在设置中明确提示风险。
+- 历史与图片保存在用户 Application Support 目录；翻译 API 凭证保存在 macOS 钥匙串，不写入备份或日志。
 - 不申请辅助功能、屏幕录制、自动化权限；全局快捷键使用 Carbon，不依赖 Accessibility。
 - 隐藏类型过滤遵循 NSPasteboard 社区约定，但属于尽力而为：
   - 密码管理器若不设置隐藏类型，内容仍可能被记录；
@@ -294,7 +322,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-65 个 XCTest 由 app target 作为测试宿主运行：
+80 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。
@@ -314,6 +342,9 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 文本 / 富文本 / 图片拖拽 Provider 的类型与数据内容。
 - 多选状态：⌘ 切换、⇧ 范围、锚点稳定、全选与删除后的裁剪。
 - 合并复制：文本顺序、文件 URL、混合路径、去重、图片限制与剪贴板写入。
+- 翻译 Provider：Google / Bing / DeepL / Azure / 百度 / Google Cloud 的请求参数、签名与响应解析。
+- 翻译服务：多引擎回退、授权、长文本分块、内存缓存、同语言方向切换与未配置官方引擎跳过。
+- 翻译设置：目标语言、启用状态、引擎顺序与授权持久化。
 
 运行：`make test`。CI：`.github/workflows/ci.yml`，执行测试并构建 Release。
 

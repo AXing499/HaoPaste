@@ -1,6 +1,6 @@
 # HaoPaste
 
-当前版本：**v0.5.0**
+当前版本：**v0.6.0**
 
 一款原生、轻快、键盘优先的 macOS 剪切板管理器。用 `⌥⌘V` 从任何应用呼出无标题栏悬浮面板，搜索、选择、复制，一气呵成。
 
@@ -21,11 +21,11 @@
    ```bash
    make dmg
    # 输出：
-   # dist/HaoPaste-0.5.0.dmg
-   # dist/HaoPaste-0.5.0.dmg.sha256
+   # dist/HaoPaste-0.6.0.dmg
+   # dist/HaoPaste-0.6.0.dmg.sha256
    ```
 
-2. 双击打开 `dist/HaoPaste-0.5.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
+2. 双击打开 `dist/HaoPaste-0.6.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
 3. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
 4. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
 
@@ -77,6 +77,19 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 - 图片暂不支持合并，操作条会明确提示
 - 合并结果不会写入历史；`esc` 取消多选
 
+### 翻译与多引擎
+
+| 翻译面板 | 在线授权 |
+| --- | --- |
+| ![HaoPaste 翻译](Docs/screenshot-translation.png) | ![HaoPaste 翻译授权](Docs/screenshot-translation-consent.png) |
+
+- `⌘T`、预览底部「翻译」或右键「翻译…」打开翻译面板
+- 支持 Google / Bing 非官方通道，无需 API Key；DeepL 非官方为实验性开关
+- 支持官方 API：Azure Translator、DeepL API、百度翻译、Google Cloud
+- 设置 → 智能：目标语言、引擎优先级、凭证配置、连接测试与授权管理
+- 首次在线翻译会显式询问；非官方通道会标注风险
+- 长文本按段落分块翻译；译文可复制、复制双语或保存为片段
+- 在线翻译只发送当前待翻译文本，图片、历史和文件不会上传
 
 ## 功能
 
@@ -95,6 +108,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
   | `⌘1` – `⌘9` | 直接复制对应序号的条目 |
   | `⌘P` | 置顶 / 取消置顶 |
   | `⌘Y` | 打开 / 关闭选中条目的预览 |
+  | `⌘T` | 翻译选中文本；翻译面板中按 `⌘T` 关闭 |
   | `⌘⌫` | 删除选中条目 |
   | `esc` | 多选时取消多选；有搜索词时清除搜索；否则关闭面板 |
 
@@ -109,6 +123,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 - **快速预览**：`⌘Y` 或悬停眼睛按钮打开预览；支持图片大图、全文 / 富文本、颜色色块与文件列表。
 - **拖拽导出**：把文本、图片或单个文件条目直接拖到其他应用；预览中的图片与文件行同样可拖拽。
 - **多选合并**：`⌘`-点击或 `⇧`-点击多选，按 `↵` 将多条文本合并复制；多个文件条目复制为文件 URL 列表。
+- **翻译**：`⌘T` 或预览中的「翻译」打开翻译面板；支持非官方 Google / Bing 与官方 Azure / DeepL / 百度 / Google Cloud，多引擎自动回退。
 - **Snippets 片段**：在设置中管理常用文本与模板，面板「片段」标签中搜索、键盘选择并一键复制；不会写入历史。
 - **富文本保留**：从浏览器 / 备忘录等复制的 RTF / HTML 格式会随内容保存，复制时优先保留格式；右键可复制为纯文本。
 - **颜色可视化**：HEX 条目显示真实颜色色块，支持复制 HEX / RGB / HSL。
@@ -123,14 +138,15 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 
 ### 设置窗口
 
-| 通用 | 隐私 |
+| 通用 | 智能 |
 | --- | --- |
-| ![HaoPaste 通用设置](Docs/screenshot-settings.png) | ![HaoPaste 隐私设置](Docs/screenshot-settings-privacy.png) |
+| ![HaoPaste 通用设置](Docs/screenshot-settings.png) | ![HaoPaste 智能设置](Docs/screenshot-settings-intelligence.png) |
 
 打开方式：右键菜单栏图标 → **设置…**，或按 `⌘,`。
 
 - **通用**：登录时自动启动、录制新的全局快捷键、暂停 / 恢复监听。
 - **历史**：100 / 200 / 500 / 1000 条未置顶记录上限、清空未置顶或全部记录、在 Finder 中打开数据目录；导出 / 导入完整历史与片段备份。
+- **智能**：默认目标语言、翻译引擎优先级、官方 API 凭证配置与连接测试、在线翻译授权。
 - **隐私**：关闭图片记录、排除指定应用（从“应用程序”选择），被排除应用的新复制内容不会入库。
 - **关于**：版本、快捷键、隐私与权限信息。
 
@@ -142,7 +158,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 # 开发调试
 make run       # Debug 构建并打开
 make demo      # 用可复现的示例数据启动，便于查看界面
-make test      # 运行 65 个 XCTest（自动化测试）
+make test      # 运行 80 个 XCTest（自动化测试）
 
 # 日常使用 / 发布
 make release   # Release 构建
@@ -156,7 +172,7 @@ make install   # 安装到 /Applications 并启动
 
 ## 质量与测试
 
-- **65 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、多选 / 合并、去重/裁剪、存储读写、备份导入导出。
+- **80 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、多选 / 合并、翻译引擎 / 回退 / 授权、去重/裁剪、存储读写、备份导入导出。
 - 测试宿主会自动跳过菜单栏、剪贴板轮询和全局快捷键注册，不影响正常使用。
 - GitHub Actions 工作流：`.github/workflows/ci.yml`，在 macOS 上执行测试并构建 Release。
 - 运行：`make test`。
@@ -168,6 +184,7 @@ make install   # 安装到 /Applications 并启动
 - 鼠标悬停在条目上显示预览、置顶与删除按钮；点击条目主体复制。
 - 选中条目后按 `⌘Y` 打开预览；预览中按 `esc` 返回列表，按 `↵` 复制并关闭。
 - 按住 `⌘` 点击条目切换多选，按住 `⇧` 点击选择连续范围；多选时底部出现合并操作条。
+- 选中文本后按 `⌘T` 打开翻译；翻译面板中 `esc` 返回列表，`↵` 复制译文并关闭。
 - 被选中条目使用系统强调色底色与边框，键盘与鼠标操作共享同一套选中状态。
 - `⌘1`–`⌘9` 对应当前过滤结果中的前九条。
 
@@ -250,14 +267,20 @@ HaoPaste/
 │   ├── SearchMatcher.swift          # 中文 / 拼音 / 模糊搜索
 │   ├── ContentClassifier.swift      # 文本 / URL / JSON / 代码 / HEX 识别
 │   ├── ContentHasher.swift          # SHA-256 指纹
-│   └── ImageProcessor.swift         # PNG 归一化与缩略图生成
+│   ├── ImageProcessor.swift         # PNG 归一化与缩略图生成
+│   ├── TranslationService.swift     # 翻译状态、回退、缓存与授权
+│   ├── TranslationSettingsStore.swift # 目标语言与引擎优先级
+│   ├── TranslationCredentialStore.swift # Keychain 凭证
+│   └── Translation/                 # Google / Bing / DeepL / Azure / 百度 / Google Cloud
 ├── Models/
 │   ├── ClipboardItem.swift
 │   ├── Snippet.swift                # 可复用文本片段
 │   ├── RichTextPayload.swift        # RTF / HTML 缓存
+│   ├── TranslationLanguage.swift    # 语言与各家代码映射
+│   ├── TranslationModels.swift      # Provider / 凭证 / 请求模型
 │   └── HotKeyConfiguration.swift    # 快捷键键码与显示
 ├── State/PanelViewState.swift       # 搜索、筛选、选中项与焦点
-├── Views/                           # ContentView、ItemRowView、PreviewOverlayView、MultiSelectionBar、Settings
+├── Views/                           # ContentView、ItemRowView、PreviewOverlayView、TranslationPaneView、Settings
 ├── Utilities/ImageSavePanel.swift   # 图片另存为 PNG
 ├── Theme/Theme.swift                # 圆角、间距、弹簧动效、细描边
 └── Support/                         # DEMO 数据与离屏截图工具（仅 Debug）
@@ -298,6 +321,11 @@ launchctl unsetenv HAOPASTE_RENDER_PREVIEW
 launchctl setenv HAOPASTE_RENDER_MULTI 3
 open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/multi.png --storage /tmp/haopaste-preview-multi
 launchctl unsetenv HAOPASTE_RENDER_MULTI
+
+# 翻译界面渲染（success / consent / error）
+launchctl setenv HAOPASTE_RENDER_TRANSLATION success
+open -n .build/Build/Products/Debug/HaoPaste.app --args --render /tmp/translation.png --storage /tmp/haopaste-preview-translation
+launchctl unsetenv HAOPASTE_RENDER_TRANSLATION
 ```
 
 `make demo` 等价于以 `--demo --show --storage /tmp/haopaste-demo` 启动一个 Debug 实例。
@@ -319,6 +347,10 @@ launchctl unsetenv HAOPASTE_RENDER_MULTI
 - 超长文本预览只渲染前 12 万个字符，复制仍使用完整内容。
 - 合并复制目前只支持文本 / 文件：图片会提示不支持；富文本条目按纯文本合并。
 - 合并结果不会写入剪贴板历史，也不会改变原条目的时间顺序。
+- 翻译目前只应用于文本 / 富文本；代码、URL、颜色、图片和文件不显示翻译入口。
+- Google / Bing 非官方接口没有公开契约，可能限流或失效；DeepL 非官方当前受服务端版本限制，建议使用官方 API。
+- 在线翻译会把当前文本发送给选中的引擎；API Key 保存在钥匙串，不进入备份。
+- Apple 离线翻译与图片 OCR 将在 v0.6.1 / v0.7.0 接入。
 - 富文本的 RTF / HTML 各自限制在 2MB 以内；超过时自动回退为纯文本。
 - 备份中的文件条目同样只保存路径引用，跨设备恢复后可能不可用。
 - 点击条目只复制，不自动粘贴（不申请辅助功能权限）。
