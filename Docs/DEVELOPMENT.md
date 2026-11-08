@@ -195,7 +195,7 @@ xcrun stapler validate "dist/HaoPaste-0.9.1.dmg"
 
 ```yaml
 MARKETING_VERSION: "0.9.1"
-CURRENT_PROJECT_VERSION: "16"
+CURRENT_PROJECT_VERSION: "17"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：
