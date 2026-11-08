@@ -122,6 +122,14 @@ final class ClipboardManager {
 
         case .text, .code, .url, .colorHex:
             didWrite = pasteboard.setString(item.content, forType: .string)
+            if item.hasRichText, let richText = store.loadRichText(for: item) {
+                if let rtfData = richText.rtfData {
+                    pasteboard.setData(rtfData, forType: .rtf)
+                }
+                if let htmlData = richText.htmlData {
+                    pasteboard.setData(htmlData, forType: .html)
+                }
+            }
         }
 
         // Our own write must not create a duplicate history entry.
@@ -165,7 +173,7 @@ final class ClipboardManager {
     func delete(_ item: ClipboardItem) {
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
         let removed = items.remove(at: index)
-        store.removeImageAssets(for: [removed])
+        store.removeAssets(for: [removed])
         store.scheduleSave(items)
     }
 
@@ -174,14 +182,14 @@ final class ClipboardManager {
         guard !removed.isEmpty else { return }
 
         items.removeAll { !$0.isPinned }
-        store.removeImageAssets(for: removed)
+        store.removeAssets(for: removed)
         store.scheduleSave(items)
     }
 
     func clearAllItems() {
         guard !items.isEmpty else { return }
 
-        store.removeImageAssets(for: items)
+        store.removeAssets(for: items)
         items.removeAll()
         store.scheduleSave(items)
     }
@@ -193,7 +201,7 @@ final class ClipboardManager {
         maxUnpinnedItems = clamped
         let removed = trimHistory()
         if !removed.isEmpty {
-            store.removeImageAssets(for: removed)
+            store.removeAssets(for: removed)
         }
         store.scheduleSave(items)
     }
@@ -264,6 +272,14 @@ final class ClipboardManager {
                     continue
                 }
             } else {
+                var richTextFileName: String?
+                if let richTextDirectory = archive.richTextDirectory {
+                    richTextFileName = try? store.importRichTextFile(
+                        for: imported,
+                        from: richTextDirectory
+                    )
+                }
+
                 newItems.append(
                     ClipboardItem(
                         id: UUID(),
@@ -274,7 +290,8 @@ final class ClipboardManager {
                         createdAt: imported.createdAt,
                         sourceApp: imported.sourceApp,
                         contentHash: imported.contentHash,
-                        filePaths: imported.filePaths
+                        filePaths: imported.filePaths,
+                        richTextFileName: richTextFileName
                     )
                 )
             }
@@ -285,7 +302,7 @@ final class ClipboardManager {
         items.append(contentsOf: newItems)
         let removed = trimHistory()
         if !removed.isEmpty {
-            store.removeImageAssets(for: removed)
+            store.removeAssets(for: removed)
         }
 
         if importedCount > 0 || mergedPinnedCount > 0 {
@@ -341,12 +358,25 @@ final class ClipboardManager {
 
         switch capture.payload {
         case let .text(text, type):
+            let id = UUID()
+            var richTextFileName: String?
+
+            if let richText = capture.richText {
+                do {
+                    richTextFileName = try store.saveRichText(richText, id: id)
+                } catch {
+                    NSLog("HaoPaste: failed to store rich text — \(error.localizedDescription)")
+                }
+            }
+
             item = ClipboardItem(
+                id: id,
                 type: type,
                 content: text,
                 plainText: capture.plainText,
                 sourceApp: capture.sourceApp,
-                contentHash: capture.contentHash
+                contentHash: capture.contentHash,
+                richTextFileName: richTextFileName
             )
 
         case let .files(paths):
@@ -384,7 +414,7 @@ final class ClipboardManager {
 
         let removed = trimHistory()
         if !removed.isEmpty {
-            store.removeImageAssets(for: removed)
+            store.removeAssets(for: removed)
         }
 
         store.scheduleSave(items)

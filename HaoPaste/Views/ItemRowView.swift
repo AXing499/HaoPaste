@@ -123,6 +123,16 @@ struct ItemRowView: View {
                 Divider()
             }
 
+            if item.hasRichText {
+                Button {
+                    onCopyText(item.content)
+                } label: {
+                    Label("复制为纯文本", systemImage: "textformat")
+                }
+
+                Divider()
+            }
+
             Button("复制", action: onCopy)
 
             Button(item.isPinned ? "取消置顶" : "置顶", action: onTogglePin)
@@ -386,6 +396,9 @@ struct ItemRowView: View {
         var parts = [item.formatBadge, item.displayTitle]
         if item.isPinned {
             parts.append("已置顶")
+        }
+        if item.hasRichText {
+            parts.append("富文本")
         }
         if let sourceApp = item.sourceApp {
             parts.append("来自 \(sourceApp.name)")

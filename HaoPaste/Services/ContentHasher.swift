@@ -16,6 +16,24 @@ enum ContentHasher {
         return hexDigest(hasher)
     }
 
+    static func richText(
+        _ text: String,
+        type: ClipboardItemType,
+        rtf: Data?,
+        html: Data?
+    ) -> String {
+        var hasher = SHA256()
+        hasher.update(data: Data(type.rawValue.utf8))
+        hasher.update(data: Data(text.utf8))
+        if let rtf {
+            hasher.update(data: rtf)
+        }
+        if let html {
+            hasher.update(data: html)
+        }
+        return hexDigest(hasher)
+    }
+
     static func imageData(_ data: Data) -> String {
         var hasher = SHA256()
         hasher.update(data: Data(ClipboardItemType.image.rawValue.utf8))

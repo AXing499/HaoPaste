@@ -148,12 +148,40 @@ final class ClipboardMonitor {
         guard let string, !trimmedString.isEmpty else { return nil }
 
         let type = ContentClassifier.classify(string)
+        let richText = readRichTextPayload()
+        let hash = richText.map {
+            ContentHasher.richText(
+                string,
+                type: type,
+                rtf: $0.rtfData,
+                html: $0.htmlData
+            )
+        } ?? ContentHasher.text(string, type: type)
+
         return CapturedClipboard(
             payload: .text(string, type: type),
             plainText: string,
-            contentHash: ContentHasher.text(string, type: type),
-            sourceApp: sourceApp
+            contentHash: hash,
+            sourceApp: sourceApp,
+            richText: richText
         )
+    }
+
+    private func readRichTextPayload() -> RichTextPayload? {
+        let maxBytes = 2_000_000
+
+        var rtf = pasteboard.data(forType: .rtf)
+        if let data = rtf, data.isEmpty || data.count > maxBytes {
+            rtf = nil
+        }
+
+        var html = pasteboard.data(forType: .html)
+        if let data = html, data.isEmpty || data.count > maxBytes {
+            html = nil
+        }
+
+        guard rtf != nil || html != nil else { return nil }
+        return RichTextPayload(rtfData: rtf, htmlData: html)
     }
 
     private func readFileURLs() -> [URL] {

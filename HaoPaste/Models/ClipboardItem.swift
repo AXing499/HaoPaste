@@ -84,6 +84,10 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
     /// multiple files selected together in Finder.
     var filePaths: [String]?
 
+    /// JSON file in Application Support/HaoPaste/RichText containing RTF / HTML
+    /// representations of the plain text.
+    var richTextFileName: String?
+
     init(
         id: UUID = UUID(),
         type: ClipboardItemType,
@@ -96,7 +100,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         imageFileName: String? = nil,
         thumbnailFileName: String? = nil,
         imageDimensions: ImageDimensions? = nil,
-        filePaths: [String]? = nil
+        filePaths: [String]? = nil,
+        richTextFileName: String? = nil
     ) {
         self.id = id
         self.type = type
@@ -110,6 +115,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         self.thumbnailFileName = thumbnailFileName
         self.imageDimensions = imageDimensions
         self.filePaths = filePaths
+        self.richTextFileName = richTextFileName
     }
 
     // MARK: Presentation helpers
@@ -185,8 +191,13 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         case .colorHex:
             return "HEX"
         case .text, .code, .url:
-            return "\(plainText.count) 字符"
+            let base = "\(plainText.count) 字符"
+            return hasRichText ? "富文本 · \(base)" : base
         }
+    }
+
+    var hasRichText: Bool {
+        richTextFileName != nil
     }
 
     var fileCount: Int {
@@ -294,4 +305,19 @@ struct CapturedClipboard {
     let plainText: String
     let contentHash: String
     let sourceApp: SourceApplication?
+    let richText: RichTextPayload?
+
+    init(
+        payload: Payload,
+        plainText: String,
+        contentHash: String,
+        sourceApp: SourceApplication?,
+        richText: RichTextPayload? = nil
+    ) {
+        self.payload = payload
+        self.plainText = plainText
+        self.contentHash = contentHash
+        self.sourceApp = sourceApp
+        self.richText = richText
+    }
 }

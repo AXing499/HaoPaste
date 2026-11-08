@@ -43,12 +43,14 @@ final class HistoryArchiveService {
         let itemCount: Int
         let imageCount: Int
         let snippetCount: Int?
+        let richTextCount: Int?
     }
 
     struct ExportSummary {
         let itemCount: Int
         let imageCount: Int
         let snippetCount: Int
+        let richTextCount: Int
     }
 
     struct ImportSummary {
@@ -63,11 +65,12 @@ final class HistoryArchiveService {
         let items: [ClipboardItem]
         let snippets: [Snippet]
         let imagesDirectory: URL?
+        let richTextDirectory: URL?
         let manifest: Manifest?
         let temporaryDirectory: URL
     }
 
-    private let supportedSchemaVersion = 2
+    private let supportedSchemaVersion = 3
     private let store: ClipboardStore
     private let fileManager = FileManager.default
 
@@ -88,10 +91,16 @@ final class HistoryArchiveService {
             .appendingPathComponent("HaoPasteBackup", isDirectory: true)
         let imagesDirectory = payloadDirectory
             .appendingPathComponent("Images", isDirectory: true)
+        let richTextDirectory = payloadDirectory
+            .appendingPathComponent("RichText", isDirectory: true)
 
         do {
             try fileManager.createDirectory(
                 at: imagesDirectory,
+                withIntermediateDirectories: true
+            )
+            try fileManager.createDirectory(
+                at: richTextDirectory,
                 withIntermediateDirectories: true
             )
         } catch {
@@ -103,6 +112,7 @@ final class HistoryArchiveService {
         }
 
         var imageCount = 0
+        var richTextCount = 0
 
         do {
             for item in items where item.type == .image {
@@ -135,6 +145,23 @@ final class HistoryArchiveService {
                 imageCount += 1
             }
 
+            for item in items {
+                guard
+                    let sourceURL = store.richTextURL(for: item),
+                    fileManager.fileExists(atPath: sourceURL.path)
+                else {
+                    continue
+                }
+
+                let fileName = (item.richTextFileName as NSString?)?.lastPathComponent
+                    ?? sourceURL.lastPathComponent
+                try fileManager.copyItem(
+                    at: sourceURL,
+                    to: richTextDirectory.appendingPathComponent(fileName)
+                )
+                richTextCount += 1
+            }
+
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .millisecondsSince1970
             encoder.outputFormatting = [.sortedKeys]
@@ -158,7 +185,8 @@ final class HistoryArchiveService {
                 exportedAt: .now,
                 itemCount: items.count,
                 imageCount: imageCount,
-                snippetCount: snippets.count
+                snippetCount: snippets.count,
+                richTextCount: richTextCount
             )
 
             let manifestEncoder = JSONEncoder()
@@ -186,7 +214,8 @@ final class HistoryArchiveService {
         return ExportSummary(
             itemCount: items.count,
             imageCount: imageCount,
-            snippetCount: snippets.count
+            snippetCount: snippets.count,
+            richTextCount: richTextCount
         )
     }
 
@@ -233,6 +262,10 @@ final class HistoryArchiveService {
             let imagesDirectory = fileManager.fileExists(atPath: imagesURL.path)
                 ? imagesURL
                 : nil
+            let richTextURL = root.appendingPathComponent("RichText", isDirectory: true)
+            let richTextDirectory = fileManager.fileExists(atPath: richTextURL.path)
+                ? richTextURL
+                : nil
 
             var manifest: Manifest?
             let manifestURL = root.appendingPathComponent("manifest.json")
@@ -252,6 +285,7 @@ final class HistoryArchiveService {
                 items: items,
                 snippets: snippets,
                 imagesDirectory: imagesDirectory,
+                richTextDirectory: richTextDirectory,
                 manifest: manifest,
                 temporaryDirectory: temporaryDirectory
             )

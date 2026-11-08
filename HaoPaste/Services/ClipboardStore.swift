@@ -32,6 +32,7 @@ final class ClipboardStore {
 
     private let baseURL: URL
     private let imagesURL: URL
+    private let richTextDirectoryURL: URL
     private let historyURL: URL
 
     private var pendingSave: Task<Void, Never>?
@@ -53,6 +54,7 @@ final class ClipboardStore {
         let resolvedBaseURL = baseURL ?? Self.defaultBaseURL()
         self.baseURL = resolvedBaseURL
         self.imagesURL = resolvedBaseURL.appendingPathComponent("Images", isDirectory: true)
+        self.richTextDirectoryURL = resolvedBaseURL.appendingPathComponent("RichText", isDirectory: true)
         self.historyURL = resolvedBaseURL.appendingPathComponent("history.json", isDirectory: false)
 
         createDirectoriesIfNeeded()
@@ -69,11 +71,28 @@ final class ClipboardStore {
             let data = try Data(contentsOf: historyURL)
             let decoded = try decoder.decode([ClipboardItem].self, from: data)
 
-            // Image records whose file disappeared are no longer usable.
-            return decoded.filter { item in
-                guard item.type == .image else { return true }
-                guard let fileName = item.imageFileName else { return false }
-                return FileManager.default.fileExists(atPath: imageURL(named: fileName).path)
+            // Drop image records whose file disappeared and degrade rich text
+            // records to plain text if their cached representation is missing.
+            return decoded.compactMap { decodedItem in
+                var item = decodedItem
+
+                if item.type == .image {
+                    guard
+                        let fileName = item.imageFileName,
+                        FileManager.default.fileExists(atPath: imageURL(named: fileName).path)
+                    else {
+                        return nil
+                    }
+                }
+
+                if let richTextFileName = item.richTextFileName,
+                   !FileManager.default.fileExists(
+                       atPath: richTextFileURL(named: richTextFileName).path
+                   ) {
+                    item.richTextFileName = nil
+                }
+
+                return item
             }
         } catch {
             NSLog("HaoPaste: failed to load history — \(error.localizedDescription)")
@@ -135,7 +154,18 @@ final class ClipboardStore {
         return imageURL(named: fileName)
     }
 
-    func removeImageAssets(for items: [ClipboardItem]) {
+    func removeAssets(for items: [ClipboardItem]) {
+        removeImageAssets(for: items)
+
+        for item in items {
+            guard let richTextFileName = item.richTextFileName else { continue }
+            try? FileManager.default.removeItem(
+                at: richTextFileURL(named: richTextFileName)
+            )
+        }
+    }
+
+    private func removeImageAssets(for items: [ClipboardItem]) {
         for item in items where item.type == .image {
             if let fileName = item.imageFileName {
                 try? FileManager.default.removeItem(at: imageURL(named: fileName))
@@ -144,6 +174,56 @@ final class ClipboardStore {
                 try? FileManager.default.removeItem(at: imageURL(named: thumbnailFileName))
             }
         }
+    }
+
+    // MARK: - Rich text assets
+
+    func saveRichText(_ payload: RichTextPayload, id: UUID) throws -> String {
+        let fileName = "\(id.uuidString).json"
+        let data = try JSONEncoder().encode(payload)
+        try data.write(
+            to: richTextFileURL(named: fileName),
+            options: .atomic
+        )
+        return fileName
+    }
+
+    func richTextURL(for item: ClipboardItem) -> URL? {
+        guard let fileName = item.richTextFileName else { return nil }
+        return richTextFileURL(named: fileName)
+    }
+
+    func loadRichText(for item: ClipboardItem) -> RichTextPayload? {
+        guard let url = richTextURL(for: item) else { return nil }
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return try? JSONDecoder().decode(RichTextPayload.self, from: data)
+    }
+
+    func importRichTextFile(
+        for item: ClipboardItem,
+        from directory: URL
+    ) throws -> String? {
+        guard let sourceFileName = item.richTextFileName else { return nil }
+        let sourceName = URL(fileURLWithPath: sourceFileName).lastPathComponent
+        let sourceURL = directory.appendingPathComponent(sourceName, isDirectory: false)
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
+            return nil
+        }
+
+        // Validate before copying so malformed backups cannot poison the cache.
+        let data = try Data(contentsOf: sourceURL)
+        _ = try JSONDecoder().decode(RichTextPayload.self, from: data)
+
+        let newFileName = "\(UUID().uuidString).json"
+        try data.write(
+            to: richTextFileURL(named: newFileName),
+            options: .atomic
+        )
+        return newFileName
+    }
+
+    var richTextAssetsDirectoryURL: URL {
+        richTextDirectoryURL
     }
 
     /// Copies an image item from an imported archive into the local image cache,
@@ -243,10 +323,15 @@ final class ClipboardStore {
         imagesURL.appendingPathComponent(fileName, isDirectory: false)
     }
 
+    private func richTextFileURL(named fileName: String) -> URL {
+        richTextDirectoryURL.appendingPathComponent(fileName, isDirectory: false)
+    }
+
     private func createDirectoriesIfNeeded() {
         do {
             try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true)
             try FileManager.default.createDirectory(at: imagesURL, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: richTextDirectoryURL, withIntermediateDirectories: true)
         } catch {
             NSLog("HaoPaste: could not create storage directories — \(error.localizedDescription)")
         }

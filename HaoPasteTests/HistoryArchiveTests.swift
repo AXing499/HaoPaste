@@ -32,6 +32,29 @@ final class HistoryArchiveTests: XCTestCase {
             contentHash: ContentHasher.files([sampleFile.path]),
             filePaths: [sampleFile.path]
         )
+        let richTextPayload = RichTextPayload(
+            rtfData: Data(#"{\rtf1\ansi Rich Hello}"#.utf8),
+            htmlData: Data("<b>Rich Hello</b>".utf8)
+        )
+        let richTextID = UUID()
+        let richTextFileName = try sourceStore.saveRichText(
+            richTextPayload,
+            id: richTextID
+        )
+        let richTextItem = ClipboardItem(
+            id: richTextID,
+            type: .text,
+            content: "Rich Hello",
+            plainText: "Rich Hello",
+            createdAt: now.addingTimeInterval(-35),
+            contentHash: ContentHasher.richText(
+                "Rich Hello",
+                type: .text,
+                rtf: richTextPayload.rtfData,
+                html: richTextPayload.htmlData
+            ),
+            richTextFileName: richTextFileName
+        )
         let sourceSnippets = [
             Snippet(title: "Email", content: "hello@example.com"),
             Snippet(title: "Signature", content: "—— HaoPaste")
@@ -58,7 +81,8 @@ final class HistoryArchiveTests: XCTestCase {
                 thumbnailFileName: storedImage.thumbnailFileName,
                 imageDimensions: storedImage.dimensions
             ),
-            fileItem
+            fileItem,
+            richTextItem
         ]
         sourceStore.saveNow(sourceItems)
 
@@ -74,9 +98,10 @@ final class HistoryArchiveTests: XCTestCase {
             to: archiveURL,
             snippets: sourceSnippets
         )
-        XCTAssertEqual(exportSummary.itemCount, 4)
+        XCTAssertEqual(exportSummary.itemCount, 5)
         XCTAssertEqual(exportSummary.imageCount, 1)
         XCTAssertEqual(exportSummary.snippetCount, 2)
+        XCTAssertEqual(exportSummary.richTextCount, 1)
         XCTAssertTrue(FileManager.default.fileExists(atPath: archiveURL.path))
 
         let destinationStore = ClipboardStore(baseURL: destinationDirectory)
@@ -88,10 +113,10 @@ final class HistoryArchiveTests: XCTestCase {
         defer { destinationManager.shutdown() }
 
         let firstImport = try destinationManager.importHistory(from: archiveURL)
-        XCTAssertEqual(firstImport.importedCount, 4)
+        XCTAssertEqual(firstImport.importedCount, 5)
         XCTAssertEqual(firstImport.mergedPinnedCount, 0)
         XCTAssertEqual(firstImport.skippedCount, 0)
-        XCTAssertEqual(destinationManager.items.count, 4)
+        XCTAssertEqual(destinationManager.items.count, 5)
         XCTAssertEqual(destinationManager.pinnedCount, 1)
 
         let importedImage = try XCTUnwrap(
@@ -111,14 +136,30 @@ final class HistoryArchiveTests: XCTestCase {
 
         let secondImport = try destinationManager.importHistory(from: archiveURL)
         XCTAssertEqual(secondImport.importedCount, 0)
-        XCTAssertEqual(secondImport.skippedCount, 4)
-        XCTAssertEqual(destinationManager.items.count, 4)
+        XCTAssertEqual(secondImport.skippedCount, 5)
+        XCTAssertEqual(destinationManager.items.count, 5)
 
         let importedFile = try XCTUnwrap(
             destinationManager.items.first { $0.type == .file }
         )
         XCTAssertEqual(importedFile.filePaths, [sampleFile.path])
         XCTAssertTrue(importedFile.hasAvailableFiles)
+
+        let importedRichText = try XCTUnwrap(
+            destinationManager.items.first { $0.hasRichText }
+        )
+        XCTAssertNotEqual(importedRichText.richTextFileName, richTextFileName)
+        XCTAssertEqual(
+            destinationStore.loadRichText(for: importedRichText),
+            richTextPayload
+        )
+        XCTAssertTrue(
+            FileManager.default.fileExists(
+                atPath: try XCTUnwrap(
+                    destinationStore.richTextURL(for: importedRichText)
+                ).path
+            )
+        )
 
         let destinationSnippets = SnippetManager(
             store: SnippetStore(baseURL: destinationDirectory)
