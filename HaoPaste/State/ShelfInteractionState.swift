@@ -14,4 +14,8 @@ final class ShelfInteractionState {
     /// Driven by the controller's hit testing rather than SwiftUI onHover, so
     /// the highlight never sticks when click-through toggles between cards.
     var hoveredItemID: UUID?
+
+    /// Points scrolled from the leading edge. The controller clamps this
+    /// against the metrics reported by the shelf layout.
+    var scrollOffset: CGFloat = 0
 }

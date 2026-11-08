@@ -194,15 +194,27 @@ enum DebugRenderer {
                 height: ClipboardShelfLayout.panelHeight
             )
 
+        let interaction = ShelfInteractionState()
+        if ProcessInfo.processInfo.environment[
+            "HAOPASTE_RENDER_SHELF_HOVER"
+        ] == "1" {
+            interaction.hoveredItemID = manager
+                .filteredItems(query: "", filter: .all)
+                .first?
+                .id
+        }
+
         let content = ZStack {
             background
 
             ClipboardShelfView(
                 manager: manager,
                 settings: settings,
-                interaction: ShelfInteractionState(),
+                interaction: interaction,
                 onHitTargetsChanged: { _ in },
-                onPreviewItem: { _ in }
+                onPreviewItem: { _ in },
+                onTranslateItem: { _ in },
+                onMaxScrollOffsetChanged: { _ in }
             )
         }
         .frame(width: size.width, height: size.height)

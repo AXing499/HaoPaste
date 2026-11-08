@@ -46,24 +46,9 @@ enum ClipboardShelfLayout {
     static let minSag: CGFloat = 12
     static let maxSag: CGFloat = 24
 
-    static func capacity(width: CGFloat, limit: Int) -> Int {
-        let available = max(0, width - sidePadding * 2)
-        let fitting = Int((available + spacing) / (minCardWidth + spacing))
-        return max(1, min(limit, max(1, fitting)))
-    }
-
     static func totalWidth(count: Int, cardWidth: CGFloat) -> CGFloat {
         guard count > 0 else { return 0 }
         return CGFloat(count) * cardWidth + CGFloat(count - 1) * spacing
-    }
-
-    static func sideCapacity(height: CGFloat, limit: Int) -> Int {
-        let available = max(
-            0,
-            height - sideTopPadding * 2 - filterBarBottom - filterBarHeight
-        )
-        let fitting = Int((available + sideSpacing) / (cardHeight + sideSpacing))
-        return max(1, min(limit, max(1, fitting)))
     }
 
     static func sideCardWidth(panelWidth: CGFloat) -> CGFloat {
@@ -79,11 +64,16 @@ enum ClipboardShelfLayout {
 
     static func sideRackRange(
         height: CGFloat,
-        count: Int
+        count: Int,
+        scrollable: Bool = false
     ) -> ClosedRange<CGFloat> {
         guard height > 0 else { return 0...0 }
 
-        let minEnd = height - filterBarBottom - filterBarHeight - sideRackInset
+        let minEnd = sideVisibleBottom(height: height) - sideRackInset
+
+        if scrollable {
+            return sideRackInset...max(sideRackInset + 8, minEnd)
+        }
 
         if count == 0 {
             let middle = height * 0.46
@@ -99,6 +89,99 @@ enum ClipboardShelfLayout {
             sideCardTop(index: count - 1) + cardHeight + 16
         )
         return start...max(start + 8, end)
+    }
+
+    static func sideVisibleBottom(height: CGFloat) -> CGFloat {
+        max(
+            0,
+            height - filterBarBottom - filterBarHeight - 12
+        )
+    }
+
+    static func sideContentHeight(count: Int) -> CGFloat {
+        guard count > 0 else { return 0 }
+        return CGFloat(count) * cardHeight
+            + CGFloat(count - 1) * sideSpacing
+    }
+
+    static func sideMaxScrollOffset(
+        height: CGFloat,
+        count: Int
+    ) -> CGFloat {
+        max(
+            0,
+            sideContentHeight(count: count)
+                + sideTopPadding * 2
+                - sideVisibleBottom(height: height)
+        )
+    }
+
+    static func topMaxScrollOffset(
+        width: CGFloat,
+        count: Int,
+        cardWidth: CGFloat
+    ) -> CGFloat {
+        max(
+            0,
+            totalWidth(count: count, cardWidth: cardWidth)
+                + sidePadding * 2
+                - width
+        )
+    }
+
+    static func topRackSpan(
+        width: CGFloat,
+        count: Int,
+        cardWidth: CGFloat,
+        scrollable: Bool
+    ) -> ClosedRange<CGFloat> {
+        if scrollable {
+            let start = rackInset
+            let end = max(start + 8, width - rackInset)
+            return start...end
+        }
+        return rackSpan(
+            width: width,
+            count: count,
+            cardWidth: cardWidth
+        )
+    }
+
+    static func sideVisibleRange(
+        count: Int,
+        offset: CGFloat,
+        height: CGFloat,
+        buffer: CGFloat
+    ) -> Range<Int> {
+        guard count > 0 else { return 0..<0 }
+
+        let step = cardHeight + sideSpacing
+        let visibleBottom = sideVisibleBottom(height: height)
+        let lower = offset - sideTopPadding - buffer - cardHeight
+        let upper = offset - sideTopPadding + visibleBottom + buffer
+        let first = max(0, Int(floor(lower / step)))
+        let last = min(count, Int(ceil(upper / step)) + 1)
+        return first..<max(first, last)
+    }
+
+    static func topVisibleRange(
+        width: CGFloat,
+        count: Int,
+        cardWidth: CGFloat,
+        offset: CGFloat,
+        scrollable: Bool,
+        buffer: CGFloat
+    ) -> Range<Int> {
+        guard count > 0 else { return 0..<0 }
+        guard scrollable else { return 0..<count }
+
+        let step = cardWidth + spacing
+        let startX = sidePadding
+        let lower = offset - startX - buffer - cardWidth
+        let upper = offset - startX + width + buffer
+        let first = max(0, Int(floor(lower / step)))
+        let last = min(count, Int(ceil(upper / step)) + 1)
+        return first..<max(first, last)
     }
 
     static func cardWidth(width: CGFloat, count: Int) -> CGFloat {
@@ -291,7 +374,12 @@ enum ClipboardShelfLayout {
         at point: CGPoint,
         in targets: [ShelfHitTarget]
     ) -> ShelfHitTarget? {
-        targets.first { $0.rect.insetBy(dx: -4, dy: -4).contains(point) }
+        let hits = targets.filter {
+            $0.rect.insetBy(dx: -4, dy: -4).contains(point)
+        }
+        // Side cards can scroll under the floating filter bar; the bar is
+        // visually on top, so it must win hit testing in the overlap.
+        return hits.first { $0.kind == .filterBar } ?? hits.first
     }
 
     static func isFullScreen(on screen: NSScreen) -> Bool {

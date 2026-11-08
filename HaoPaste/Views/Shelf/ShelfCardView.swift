@@ -24,6 +24,7 @@ struct ShelfCardView: View {
     let onTogglePin: () -> Void
     let onDelete: () -> Void
     let onPreview: () -> Void
+    let onTranslate: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -50,10 +51,6 @@ struct ShelfCardView: View {
         }
     }
 
-    private var actionAlignment: Alignment {
-        edge == .right ? .topLeading : .topTrailing
-    }
-
     var body: some View {
         ZStack(alignment: .top) {
             copySurface
@@ -61,8 +58,8 @@ struct ShelfCardView: View {
                 .onTapGesture(perform: onCopy)
 
             if isHovering {
-                actionCluster
-                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                actionBar
+                    .transition(.opacity.combined(with: .scale(scale: 0.94)))
             }
         }
         .frame(
@@ -101,6 +98,20 @@ struct ShelfCardView: View {
                 onCopy()
             } label: {
                 Label("复制", systemImage: "doc.on.doc")
+            }
+
+            if item.isTranslatable {
+                Button {
+                    onTranslate()
+                } label: {
+                    Label("翻译…", systemImage: "translate")
+                }
+            } else if item.type == .image, imageURL != nil {
+                Button {
+                    onTranslate()
+                } label: {
+                    Label("识图并翻译", systemImage: "text.viewfinder")
+                }
             }
 
             Button {
@@ -224,8 +235,31 @@ struct ShelfCardView: View {
         }
     }
 
-    private var actionCluster: some View {
+    private var actionBar: some View {
         HStack(spacing: 4) {
+            ShelfActionButton(
+                symbol: "eye",
+                tint: Color.secondary,
+                label: "预览",
+                action: onPreview
+            )
+
+            if item.isTranslatable {
+                ShelfActionButton(
+                    symbol: "translate",
+                    tint: Color.accentColor,
+                    label: "翻译",
+                    action: onTranslate
+                )
+            } else if item.type == .image, imageURL != nil {
+                ShelfActionButton(
+                    symbol: "text.viewfinder",
+                    tint: Color.accentColor,
+                    label: "识图并翻译",
+                    action: onTranslate
+                )
+            }
+
             ShelfActionButton(
                 symbol: item.isPinned ? "pin.slash" : "pin",
                 tint: item.isPinned ? Color.accentColor : Color.secondary,
@@ -240,9 +274,21 @@ struct ShelfCardView: View {
                 action: onDelete
             )
         }
-        .padding(.top, Self.bodyOffset + 6)
-        .padding(edge == .right ? .leading : .trailing, 7)
-        .frame(maxWidth: .infinity, alignment: actionAlignment)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3.5)
+        .background {
+            Capsule()
+                .fill(.regularMaterial)
+                .allowsHitTesting(false)
+        }
+        .overlay {
+            Capsule()
+                .strokeBorder(Theme.hairlineColor, lineWidth: 0.5)
+                .allowsHitTesting(false)
+        }
+        .shadow(color: Color.black.opacity(0.14), radius: 4, y: 2)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .padding(.bottom, 7)
     }
 
     private var bodyContent: some View {

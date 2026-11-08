@@ -116,6 +116,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.shelfController?.hideIfVisible()
             self?.panelController?.showPreview(for: item)
         }
+        shelfController.onTranslateItem = { [weak self] item in
+            self?.shelfController?.hideIfVisible()
+            if item.type == .image {
+                self?.panelController?.showOCRTranslation(for: item)
+            } else {
+                self?.panelController?.showTranslation(for: item)
+            }
+        }
         panelController.onWillPresent = { [weak self] in
             self?.shelfController?.hideIfVisible()
         }

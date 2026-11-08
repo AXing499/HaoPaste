@@ -50,15 +50,7 @@ final class ClipboardShelfTests: XCTestCase {
         XCTAssertFalse(file.isTextLike)
     }
 
-    func testShelfCapacityAndCardWidth() {
-        XCTAssertEqual(
-            ClipboardShelfLayout.capacity(width: 1_440, limit: 8),
-            8
-        )
-        XCTAssertEqual(
-            ClipboardShelfLayout.capacity(width: 640, limit: 8),
-            4
-        )
+    func testShelfCardWidth() {
         XCTAssertGreaterThanOrEqual(
             ClipboardShelfLayout.cardWidth(width: 1_440, count: 8),
             ClipboardShelfLayout.minCardWidth
@@ -192,14 +184,6 @@ final class ClipboardShelfTests: XCTestCase {
 
     func testSideShelfGeometry() {
         XCTAssertEqual(
-            ClipboardShelfLayout.sideCapacity(height: 1_050, limit: 8),
-            6
-        )
-        XCTAssertEqual(
-            ClipboardShelfLayout.sideCapacity(height: 1_440, limit: 8),
-            8
-        )
-        XCTAssertEqual(
             ClipboardShelfLayout.sideCardWidth(panelWidth: 232),
             156
         )
@@ -221,6 +205,94 @@ final class ClipboardShelfTests: XCTestCase {
         XCTAssertGreaterThan(rack.lowerBound, 0)
         XCTAssertLessThan(rack.upperBound, 1_050)
         XCTAssertLessThan(rack.upperBound, 1_050 - ClipboardShelfLayout.filterBarHeight)
+    }
+
+    func testShelfScrollMetrics() {
+        XCTAssertEqual(
+            ClipboardShelfLayout.sideMaxScrollOffset(
+                height: 1_050,
+                count: 8
+            ),
+            276,
+            accuracy: 0.5
+        )
+        XCTAssertEqual(
+            ClipboardShelfLayout.sideMaxScrollOffset(
+                height: 1_050,
+                count: 6
+            ),
+            0,
+            accuracy: 0.5
+        )
+        XCTAssertEqual(
+            ClipboardShelfLayout.topMaxScrollOffset(
+                width: 1_440,
+                count: 11,
+                cardWidth: 118
+            ),
+            78,
+            accuracy: 0.5
+        )
+        XCTAssertEqual(
+            ClipboardShelfLayout.topMaxScrollOffset(
+                width: 1_920,
+                count: 8,
+                cardWidth: 156
+            ),
+            0,
+            accuracy: 0.5
+        )
+
+        let sideRack = ClipboardShelfLayout.sideRackRange(
+            height: 1_050,
+            count: 8,
+            scrollable: true
+        )
+        XCTAssertEqual(
+            sideRack.lowerBound,
+            ClipboardShelfLayout.sideRackInset,
+            accuracy: 0.5
+        )
+        XCTAssertEqual(
+            sideRack.upperBound,
+            ClipboardShelfLayout.sideVisibleBottom(height: 1_050)
+                - ClipboardShelfLayout.sideRackInset,
+            accuracy: 0.5
+        )
+
+        let topRack = ClipboardShelfLayout.topRackSpan(
+            width: 1_440,
+            count: 11,
+            cardWidth: 118,
+            scrollable: true
+        )
+        XCTAssertEqual(
+            topRack.lowerBound,
+            ClipboardShelfLayout.rackInset,
+            accuracy: 0.5
+        )
+        XCTAssertEqual(topRack.upperBound, 1_424, accuracy: 0.5)
+
+        let sideRange = ClipboardShelfLayout.sideVisibleRange(
+            count: 8,
+            offset: 276,
+            height: 1_050,
+            buffer: 0
+        )
+        XCTAssertFalse(sideRange.isEmpty)
+        XCTAssertLessThanOrEqual(sideRange.upperBound, 8)
+
+        let topRange = ClipboardShelfLayout.topVisibleRange(
+            width: 1_440,
+            count: 11,
+            cardWidth: 118,
+            offset: 78,
+            scrollable: true,
+            buffer: 0
+        )
+        XCTAssertFalse(topRange.isEmpty)
+        XCTAssertEqual(topRange.lowerBound, 0)
+        XCTAssertLessThanOrEqual(topRange.upperBound, 11)
     }
 
     func testSideRevealBandAndPanelFrames() throws {

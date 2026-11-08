@@ -317,12 +317,15 @@ struct SettingsView: View {
             SettingsDivider()
 
             SettingsRow(
-                "显示数量",
-                subtitle: "实际显示数量会根据屏幕尺寸自适应；可在挂架底部切换全部 / 文本 / 图片"
+                "加载数量",
+                subtitle: "最多加载的卡片数量；超出屏幕后可用触控板或滚轮滑动查看，也可选择「不限」"
             ) {
                 Picker("", selection: $settings.shelfItemLimit) {
                     ForEach(AppSettings.shelfItemLimitOptions, id: \.self) { limit in
-                        Text("\(limit) 条").tag(limit)
+                        Text(
+                            limit < 0 ? "不限" : "\(limit) 条"
+                        )
+                        .tag(limit)
                     }
                 }
                 .labelsHidden()

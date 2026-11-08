@@ -14,7 +14,10 @@ import ServiceManagement
 final class AppSettings {
     static let historyLimitOptions = [100, 200, 500, 1_000]
     static let defaultHistoryLimit = 200
-    static let shelfItemLimitOptions = [6, 8, 10, 12]
+    static let unlimitedShelfItemLimit = -1
+    static let shelfItemLimitOptions = [
+        6, 8, 10, 12, unlimitedShelfItemLimit
+    ]
     static let defaultShelfItemLimit = 8
     static let defaultShelfEdge = ClipboardShelfEdge.top
 

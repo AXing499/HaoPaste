@@ -1,6 +1,6 @@
 # HaoPaste
 
-当前版本：**v0.11.0**
+当前版本：**v0.12.0**
 
 一款原生、轻快、键盘优先的 macOS 剪切板管理器。用 `⌥⌘V` 从任何应用呼出无标题栏悬浮面板，搜索、选择、复制，一气呵成。
 
@@ -21,11 +21,11 @@
    ```bash
    make dmg
    # 输出：
-   # dist/HaoPaste-0.11.0.dmg
-   # dist/HaoPaste-0.11.0.dmg.sha256
+   # dist/HaoPaste-0.12.0.dmg
+   # dist/HaoPaste-0.12.0.dmg.sha256
    ```
 
-2. 双击打开 `dist/HaoPaste-0.11.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
+2. 双击打开 `dist/HaoPaste-0.12.0.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
 3. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
 4. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
 
@@ -49,13 +49,15 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 
 ![HaoPaste 侧边挂架](Docs/screenshot-shelf-side.png)
 
+![HaoPaste 挂架操作](Docs/screenshot-shelf-actions.png)
+
 - 默认开启。把鼠标移到所选屏幕边缘的中间三分之一区域，最近的记录会展开；默认位置是顶部菜单栏
-- 设置 → 通用 → 显示位置可切换顶部 / 左侧 / 右侧；侧边模式使用竖向挂架，卡片数量按屏幕高度自适应
+- 设置 → 通用 → 显示位置可切换顶部 / 左侧 / 右侧；侧边模式使用竖向挂架，超出屏幕后上下滑动查看
 - 点击卡片立即复制，挂架保持展开，方便连续复制；鼠标移开后自动收起
-- 悬停卡片可快速置顶 / 删除；右键还可预览、复制、置顶、复制纯文本、打开链接 / 文件、保存图片与复制 Markdown / 颜色格式
+- 悬停卡片底部显示预览、翻译 / 识图并翻译、置顶、删除；右键也可完成复制、纯文本、打开链接 / 文件、保存图片与颜色格式等操作
 - 支持把文本、图片或单个文件卡片直接拖到其他应用
 - 底部可在「全部 / 文本 / 图片」之间切换；「文本」同时包含代码、链接和颜色
-- 默认显示 8 条，可在设置 → 通用 → 剪贴板挂架调整 6 / 8 / 10 / 12 条；实际数量会随屏幕尺寸自适应
+- 加载数量可设为 6 / 8 / 10 / 12 / 不限；超出屏幕后，顶部左右滑动、左侧 / 右侧上下滑动查看，并显示滚动指示
 - 菜单栏右键菜单可手动显示 / 收起挂架
 - 全屏应用、HaoPaste 自身在前台，或正在操作菜单栏时不会自动展开
 
@@ -139,7 +141,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 ## 功能
 
 - **系统级唤起**：默认 `⌥⌘V` 全局快捷键，或点击菜单栏剪贴板图标；快捷键可在设置中录入修改。
-- **剪贴板挂架（顶部 / 左侧 / 右侧）**：鼠标停在所选屏幕边缘中间区域即展开最近记录；点击卡片复制并保持展开，支持全部 / 文本 / 图片筛选、6–12 条显示数量、悬停置顶 / 删除、右键菜单与拖拽导出。
+- **剪贴板挂架（顶部 / 左侧 / 右侧）**：鼠标停在所选屏幕边缘中间区域即展开最近记录；点击卡片复制并保持展开，支持全部 / 文本 / 图片筛选、6/8/10/12/不限加载数量、双向滚动、悬停预览 / 翻译 / 置顶 / 删除、右键菜单与拖拽导出。
 - **无标题栏悬浮面板**：`.regularMaterial` 磨砂背景、16pt 连续圆角、0.5pt 细描边、柔和阴影。
 - **即时搜索**：按内容、来源应用、类型或格式搜索；支持中文、拼音全拼 / 首字母缩写与模糊匹配，并按相关性排序。
 - **分类药丸**：全部 / 文本 / 代码 / 图片 / 文件 / 链接 / 片段，胶囊选中态平滑滑动。
@@ -162,7 +164,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 
 - **卡片交互**：悬停高亮、1pt 微位移、弹簧动效；悬停后显示置顶与删除按钮；支持右键菜单。
 - **点击外部关闭**：点击面板外侧或切换到其他应用时自动收起。
-- **设置窗口**：自定义全局快捷键、登录时自动启动、暂停监听、历史容量、挂架开关 / 显示位置 / 显示数量、清空记录、打开数据目录。
+- **设置窗口**：自定义全局快捷键、登录时自动启动、暂停监听、历史容量、挂架开关 / 显示位置 / 加载数量（含不限）、清空记录、打开数据目录。
 - **隐私控制**：按应用排除剪贴板记录、关闭图片记录；隐藏类型过滤始终开启。
 - **备份与迁移**：将历史、图片与片段导出为 `.zip`，导入时自动合并、去重并保留置顶状态。
 - **智能识别**：自动区分纯文本、链接、代码 / JSON、颜色值（HEX）、图片与文件。
@@ -208,7 +210,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 # 开发调试
 make run       # Debug 构建并打开
 make demo      # 用可复现的示例数据启动，便于查看界面
-make test      # 运行 102 个 XCTest（自动化测试）
+make test      # 运行 103 个 XCTest（自动化测试）
 
 # 日常使用 / 发布
 make release   # Release 构建
@@ -222,7 +224,7 @@ make install   # 安装到 /Applications 并启动
 
 ## 质量与测试
 
-- **102 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、多选 / 合并、翻译引擎 / 回退 / 授权、快捷翻译 / 自动翻译策略、剪贴板挂架布局 / 筛选 / 点击命中、OCR / 批量识别 / 缓存、去重/裁剪、存储读写、备份导入导出。
+- **103 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、多选 / 合并、翻译引擎 / 回退 / 授权、快捷翻译 / 自动翻译策略、剪贴板挂架布局 / 滚动 / 筛选 / 点击命中 / 操作条、OCR / 批量识别 / 缓存、去重/裁剪、存储读写、备份导入导出。
 - 测试宿主会自动跳过菜单栏、剪贴板轮询和全局快捷键注册，不影响正常使用。
 - GitHub Actions 工作流：`.github/workflows/ci.yml`，在 macOS 上执行测试并构建 Release。
 - 运行：`make test`。
@@ -341,7 +343,7 @@ HaoPaste/
 │   ├── TranslationModels.swift      # Provider / 凭证 / 请求模型
 │   └── HotKeyConfiguration.swift    # 快捷键键码与显示
 ├── State/PanelViewState.swift       # 搜索、筛选、选中项与焦点
-│   └── ShelfInteractionState.swift  # 挂架悬停状态
+│   └── ShelfInteractionState.swift  # 挂架悬停与滚动状态
 ├── Views/                           # ContentView、ItemRowView、PreviewOverlayView、TranslationPaneView、OCRPaneView、BatchOCRPaneView、Shelf、Settings
 ├── Utilities/ImageSavePanel.swift   # 图片另存为 PNG
 ├── Theme/Theme.swift                # 圆角、间距、弹簧动效、细描边
@@ -403,6 +405,11 @@ launchctl setenv HAOPASTE_RENDER_SHELF_EDGE left
 open -n .build/Build/Products/Debug/HaoPaste.app --args --render-shelf /tmp/shelf-side.png --storage /tmp/haopaste-preview-shelf-side
 launchctl unsetenv HAOPASTE_RENDER_SHELF_EDGE
 
+# 悬停操作条渲染
+launchctl setenv HAOPASTE_RENDER_SHELF_HOVER 1
+open -n .build/Build/Products/Debug/HaoPaste.app --args --render-shelf /tmp/shelf-actions.png --storage /tmp/haopaste-preview-shelf-actions
+launchctl unsetenv HAOPASTE_RENDER_SHELF_HOVER
+
 # 直接展示顶部挂架（无需把鼠标移到菜单栏）
 open -n .build/Build/Products/Debug/HaoPaste.app --args --show-shelf --storage /tmp/haopaste-preview-shelf
 
@@ -443,7 +450,7 @@ launchctl unsetenv HAOPASTE_RENDER_OCR
 - 富文本的 RTF / HTML 各自限制在 2MB 以内；超过时自动回退为纯文本。
 - 备份中的文件条目同样只保存路径引用，跨设备恢复后可能不可用。
 - 点击条目只复制，不自动粘贴（不申请辅助功能权限）。
-- 挂架在顶部 / 左侧 / 右侧中三选一，暂不支持横向滚动；如果 Dock 放在左侧或右侧，侧边触发区域可能被 Dock 占用，可改用另一侧。
+- 挂架在顶部 / 左侧 / 右侧中三选一；顶部横向滚动、侧边纵向滚动。如果 Dock 放在左侧或右侧，侧边触发区域可能被 Dock 占用，可改用另一侧。
 - 未实现 iCloud 同步。
 - 导出的 `.zip` 备份包含完整剪贴板内容，且未加密；请妥善保管。
 - 登录时启动依赖 `SMAppService`；如果系统要求批准，需要在“系统设置 → 通用 → 登录项”中允许。

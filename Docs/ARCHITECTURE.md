@@ -109,7 +109,7 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | --- | --- |
 | `ClipboardMonitor.swift` | 350ms 轮询 `changeCount`，过滤隐藏类型，生成 `CapturedClipboard` |
 | `ClipboardManager.swift` | 核心业务：去重、置顶、删除、清空、复制回剪贴板、FIFO 裁剪、历史容量 |
-| `AppSettings.swift` | 用户偏好、快捷键、历史上限、登录项状态、排除应用、图片记录开关、挂架开关与显示数量 |
+| `AppSettings.swift` | 用户偏好、快捷键、历史上限、登录项状态、排除应用、图片记录开关、挂架开关 / 位置 / 加载数量 |
 | `ClipboardStore.swift` | JSON 历史记录、图片资产、防抖写入、目录管理、导入图片资产 |
 | `SnippetStore.swift` | `snippets.json` 持久化 |
 | `SnippetManager.swift` | 片段 CRUD、过滤、备份合并与可观察状态 |
@@ -149,7 +149,7 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `PanelFooterView.swift` | 监听状态与键盘提示 |
 | `PanelViewState.swift` | 搜索、分类、单选 / 多选、锚点、预览状态、焦点触发器 |
 | `HotKeyConfiguration.swift` | Carbon 键码 / 修饰符、显示文案与校验 |
-| `ClipboardShelfLayout.swift` | 挂架几何：卡片宽度 / 容量、绳线弧度、菜单栏 / 侧边展开区域、顶 / 侧面板布局、全屏检测与命中判定 |
+| `ClipboardShelfLayout.swift` | 挂架几何：卡片宽度、滚动上限、可见范围、绳线弧度、菜单栏 / 侧边展开区域、顶 / 侧面板布局、全屏检测与命中判定 |
 | `ClipboardShelfEdge.swift` | 挂架位置：顶部 / 左侧 / 右侧 |
 | `ClipboardShelfFilter.swift` | 挂架筛选：全部 / 文本（含代码、链接、颜色）/ 图片 |
 | `Snippet.swift` | 可复用文本片段模型 |
@@ -298,11 +298,14 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - `ClipboardShelfController` 在收起时以 10Hz、展开时以 30Hz 轮询 `NSEvent.mouseLocation`；顶部模式取菜单栏中间三分之一，侧边模式取屏幕可见区域左 / 右边缘中间三分之一。悬停 0.25 秒后展开，离开挂架 0.5 秒后收起。
 - 挂架是透明 `NSPanel`：顶部模式覆盖屏幕宽度、高度 232pt；侧边模式宽 232pt、高度等于可见屏幕高度。使用 `.nonactivatingPanel`，不激活应用、不抢当前应用的键盘焦点；`ShelfHostingView` 重写 `acceptsFirstMouse`，首次点击即落到卡片上。
 - 展开 / 收起方向由位置决定：顶部从上方滑入，左侧 / 右侧从对应屏幕边缘滑入。
-- 顶部模式使用水平绳线；侧边模式使用贴近屏幕边缘的竖向导轨和短臂，卡片通过外侧顶角的夹子挂在短臂上，并按屏幕高度自适应显示数量。
+- 顶部模式使用水平绳线；侧边模式使用贴近屏幕边缘的竖向导轨和短臂，卡片通过外侧顶角的夹子挂在短臂上；超出屏幕的卡片通过滚动查看。
 - 面板默认 `ignoresMouseEvents = true`；SwiftUI 通过 `PreferenceKey` 上报卡片与筛选栏的命中矩形，控制器按 30Hz 把鼠标位置换算到面板顶部坐标并切换点击穿透。面板空白区域不拦截下方应用。
-- 卡片显示 `ClipboardShelfLayout.capacity` 计算出的数量：由屏幕宽度、6–12 条设置上限和最小卡片宽度共同决定；卡片横向居中，绳线带轻微弧度。
+- 加载数量来自设置（6 / 8 / 10 / 12 / 不限），是加载上限而不是屏幕可见上限；顶部卡片横向排列，侧边卡片纵向排列。加载内容超出视口时，只渲染可见范围附近的卡片，并在顶部横向 / 侧边纵向滚动。
+- 滚动位置保存在 `ShelfInteractionState.scrollOffset`，视图上报最大滚动距离；控制器在 `ShelfHostingView.scrollWheel(with:)` 中接管滚轮事件并夹紧边界。顶部同时支持横向滑动与鼠标滚轮，侧边使用纵向滑动。
+- 滚动时挂架保持固定：顶部绳子不动，卡片沿绳滑动；侧边导轨固定在屏幕边缘，短臂和夹子随卡片移动。边缘显示滚动指示器。
 - 卡片点击调用 `ClipboardManager.copyToPasteboard`，同步 `changeCount`，不会生成新历史；复制成功后挂架保持展开并显示短暂「已复制」反馈。
 - 悬停状态由控制器根据同一套命中矩形计算并写入 `ShelfInteractionState`，不依赖 SwiftUI `onHover`，因此卡片之间的点击穿透切换不会留下错位或卡住的高亮。
+- 悬停卡片底部显示操作条：预览、翻译 / 识图并翻译、置顶、删除；预览与翻译会收起挂架并打开主面板，翻译复用 `TranslationService`，图片走 `OCRService` 的识图并翻译流程。
 - 筛选栏使用点击手势而非 `Button`，并把材质背景与描边设为不参与命中测试；这是非激活面板中稳定响应点击的关键。
 - 卡片通过 `ItemDragProvider` 支持拖拽到其他应用；右键菜单提供预览、复制、置顶 / 取消置顶、复制纯文本、打开链接 / 文件、Finder 定位、保存图片、复制 Markdown 与颜色格式；悬停时右上角显示置顶 / 删除按钮。
 - 「预览」通过 `PanelController.showPreview(for:)` 打开主面板并直接定位到该条目的预览覆盖层。
@@ -381,7 +384,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-102 个 XCTest 由 app target 作为测试宿主运行：
+103 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。
@@ -389,7 +392,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - `AppSettings`：默认值、持久化、排除规则匹配、非法上限回退。
 - `ClipboardStore`：文本 / 图片资产读写、缺失资产过滤。
 - `ClipboardManager`：FIFO 裁剪、置顶保护、清空。
-- 挂架：筛选规则、顶部与侧边容量、卡片宽度、支架 / 绳线几何、菜单栏 / 侧边展开区域、面板位置、点击命中目标、文本类判断、位置与显示数量持久化。
+- 挂架：筛选规则、卡片宽度、滚动上限与可见范围、顶部 / 侧边支架几何、菜单栏 / 侧边展开区域、面板位置、点击命中目标、文本类判断、位置 / 加载数量持久化。
 - `HistoryArchiveService`：导出、导入、重复导入去重、无效归档报错。
 - `SearchMatcher`：中文、拼音全拼 / 首字母、模糊匹配、相关性排序。
 - `SnippetManager`：片段 CRUD、持久化、搜索、合并。

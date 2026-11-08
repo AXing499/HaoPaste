@@ -38,9 +38,11 @@ final class ClipboardShelfController: NSObject {
     private let interaction: ShelfInteractionState
     private let actionRelay: ShelfActionRelay
     private var menuBarSuppressed = false
+    private var maxScrollOffset: CGFloat = 0
 
     var onVisibilityChanged: (() -> Void)?
     var onPreviewItem: ((ClipboardItem) -> Void)?
+    var onTranslateItem: ((ClipboardItem) -> Void)?
     /// Return true while another HaoPaste window owns the screen.
     var isRevealBlocked: (() -> Bool)?
 
@@ -74,6 +76,12 @@ final class ClipboardShelfController: NSObject {
             },
             onPreviewItem: { item in
                 actionRelay.onPreview?(item)
+            },
+            onTranslateItem: { item in
+                actionRelay.onTranslate?(item)
+            },
+            onMaxScrollOffsetChanged: { maxOffset in
+                actionRelay.onMaxScrollOffset?(maxOffset)
             }
         )
         let hostingView = ShelfHostingView(rootView: rootView)
@@ -88,6 +96,19 @@ final class ClipboardShelfController: NSObject {
 
         actionRelay.onPreview = { [weak self] item in
             self?.onPreviewItem?(item)
+        }
+        actionRelay.onTranslate = { [weak self] item in
+            self?.onTranslateItem?(item)
+        }
+        actionRelay.onMaxScrollOffset = { [weak self] maxOffset in
+            guard let self else { return }
+            self.maxScrollOffset = maxOffset
+            if self.interaction.scrollOffset > maxOffset {
+                self.interaction.scrollOffset = maxOffset
+            }
+        }
+        hostingView.onScrollWheel = { [weak self] event in
+            self?.handleScrollWheel(event) ?? false
         }
 
         if let screen = ClipboardShelfLayout.screenUnderPointer() {
@@ -132,6 +153,7 @@ final class ClipboardShelfController: NSObject {
     }
 
     func edgeDidChange() {
+        interaction.scrollOffset = 0
         hide()
         if let screen = ClipboardShelfLayout.screenUnderPointer() {
             placePanel(on: screen)
@@ -153,6 +175,33 @@ final class ClipboardShelfController: NSObject {
         manualVisited = false
         menuBarSuppressed = false
         reveal(on: screen)
+    }
+
+    private func handleScrollWheel(_ event: NSEvent) -> Bool {
+        guard isRevealed, !isHiding, maxScrollOffset > 0.5 else {
+            return false
+        }
+
+        let rawDelta: CGFloat
+        if edge == .top {
+            rawDelta = event.scrollingDeltaX != 0
+                ? event.scrollingDeltaX
+                : event.scrollingDeltaY
+        } else {
+            rawDelta = event.scrollingDeltaY
+        }
+
+        let multiplier: CGFloat = event.hasPreciseScrollingDeltas ? 1 : 10
+        let delta = rawDelta * multiplier
+        guard abs(delta) > 0.01 else { return false }
+
+        let next = min(
+            max(interaction.scrollOffset - delta, 0),
+            maxScrollOffset
+        )
+        guard next != interaction.scrollOffset else { return true }
+        interaction.scrollOffset = next
+        return true
     }
 
     /// `NSApp.isActive` can become true when the nonactivating panel becomes
@@ -336,6 +385,7 @@ final class ClipboardShelfController: NSObject {
         isRevealed = true
         awaySince = nil
         interaction.hoveredItemID = nil
+        interaction.scrollOffset = 0
         startMouseTracking(interval: Timing.visiblePollInterval)
 
         if !reduceMotion {
@@ -358,6 +408,7 @@ final class ClipboardShelfController: NSObject {
         isRevealed = false
         isHiding = true
         interaction.hoveredItemID = nil
+        interaction.scrollOffset = 0
         startMouseTracking(interval: Timing.hiddenPollInterval)
         manualOpen = false
         manualVisited = false
@@ -486,12 +537,23 @@ private final class ShelfHitTargetStore {
 
 private final class ShelfActionRelay {
     var onPreview: ((ClipboardItem) -> Void)?
+    var onTranslate: ((ClipboardItem) -> Void)?
+    var onMaxScrollOffset: ((CGFloat) -> Void)?
 }
 
 /// The shelf is shown while another app is active, so the first click must
 /// reach the card instead of being consumed by window activation.
 private final class ShelfHostingView<Content: View>: NSHostingView<Content> {
+    var onScrollWheel: ((NSEvent) -> Bool)?
+
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         true
+    }
+
+    override func scrollWheel(with event: NSEvent) {
+        if onScrollWheel?(event) == true {
+            return
+        }
+        super.scrollWheel(with: event)
     }
 }
