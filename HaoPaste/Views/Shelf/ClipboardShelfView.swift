@@ -267,6 +267,7 @@ struct ClipboardShelfView: View {
                         cardHeight: cardHeight,
                         edge: edge,
                         fallDirection: fallDirection,
+                        fallDuration: settings.shelfCardFallDuration,
                         canDragOut: canDragOut(item),
                         dragProvider: { dragProvider(for: item) },
                         onCopy: { copy(item) },

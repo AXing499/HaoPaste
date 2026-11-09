@@ -333,6 +333,28 @@ struct SettingsView: View {
                 .frame(width: 100)
                 .disabled(!settings.shelfEnabled)
             }
+
+            SettingsDivider()
+
+            SettingsRow(
+                "卡片下落时间",
+                subtitle: "点击夹子删除卡片时的下落动画时长；夹子会单独松开和掉落"
+            ) {
+                Picker("", selection: $settings.shelfCardFallDuration) {
+                    ForEach(AppSettings.shelfCardFallDurationOptions, id: \.self) { duration in
+                        Text(
+                            duration == floor(duration)
+                                ? "\(Int(duration)) 秒"
+                                : "\(duration) 秒"
+                        )
+                        .tag(duration)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 100)
+                .disabled(!settings.shelfEnabled)
+            }
         }
 
         SettingsCard("翻译") {

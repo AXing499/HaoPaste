@@ -18,6 +18,7 @@ struct ShelfCardView: View {
     let cardHeight: CGFloat
     let edge: ClipboardShelfEdge
     let fallDirection: CGFloat
+    let fallDuration: TimeInterval
     let canDragOut: Bool
     let dragProvider: () -> NSItemProvider
     let onCopy: () -> Void
@@ -29,6 +30,7 @@ struct ShelfCardView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isFalling = false
+    @State private var isClipDropping = false
 
     private static let bodyOffset = ClipboardShelfLayout.bodyOffset
 
@@ -78,11 +80,26 @@ struct ShelfCardView: View {
                 reduceMotion ? nil : Theme.spring,
                 value: isHovering
             )
+            .offset(
+                x: isFalling ? 16 * fallDirection : 0,
+                y: isFalling ? 150 : 0
+            )
+            .rotationEffect(
+                .degrees(isFalling ? 9 * Double(fallDirection) : 0),
+                anchor: .top
+            )
+            .opacity(isFalling ? 0 : 1)
+            .animation(
+                reduceMotion ? nil : .easeIn(duration: fallDuration),
+                value: isFalling
+            )
 
             ShelfClipView(
                 itemID: item.id,
                 isPinned: item.isPinned,
                 isHovering: isHovering,
+                isDropping: isClipDropping,
+                dropDuration: clipDropDuration,
                 onRelease: release
             )
             .frame(maxWidth: .infinity, alignment: clipAlignment)
@@ -92,20 +109,7 @@ struct ShelfCardView: View {
             height: cardHeight,
             alignment: .top
         )
-        .offset(
-            x: isFalling ? 16 * fallDirection : 0,
-            y: isFalling ? 150 : 0
-        )
-        .rotationEffect(
-            .degrees(isFalling ? 9 * Double(fallDirection) : 0),
-            anchor: .top
-        )
-        .opacity(isFalling ? 0 : 1)
-        .allowsHitTesting(!isFalling)
-        .animation(
-            reduceMotion ? nil : .easeIn(duration: 0.75),
-            value: isFalling
-        )
+        .allowsHitTesting(!isFalling && !isClipDropping)
         .help("点击复制")
         .accessibilityLabel("\(item.formatBadge)，\(item.displayTitle)")
         .accessibilityHint("复制到剪贴板")
@@ -524,15 +528,35 @@ struct ShelfCardView: View {
         }
     }
 
+    private var clipDropDuration: TimeInterval {
+        min(0.4, max(0.2, fallDuration * 0.6))
+    }
+
     private func release() {
         guard !isFalling else { return }
+
+        let bodyDuration = max(0.1, fallDuration)
+        let dropDuration = clipDropDuration
+        let dropDelay = bodyDuration * 0.5
+
         withAnimation(
-            reduceMotion ? nil : .easeIn(duration: 0.75)
+            reduceMotion ? nil : .easeIn(duration: bodyDuration)
         ) {
             isFalling = true
         }
-        let delay: TimeInterval = reduceMotion ? 0.05 : 0.78
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + dropDelay) {
+            withAnimation(
+                reduceMotion ? nil : .easeIn(duration: dropDuration)
+            ) {
+                isClipDropping = true
+            }
+        }
+
+        let total = reduceMotion
+            ? 0.1
+            : max(bodyDuration, dropDelay + dropDuration) + 0.05
+        DispatchQueue.main.asyncAfter(deadline: .now() + total) {
             onDelete()
         }
     }
@@ -579,6 +603,8 @@ private struct ShelfClipView: View {
     let itemID: UUID
     let isPinned: Bool
     let isHovering: Bool
+    let isDropping: Bool
+    let dropDuration: TimeInterval
     let onRelease: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -643,9 +669,16 @@ private struct ShelfClipView: View {
             anchor: .top
         )
         .offset(y: isOpen ? -3 : 0)
+        .rotationEffect(
+            .degrees(isDropping ? 24 : 0),
+            anchor: .top
+        )
+        .offset(y: isDropping ? 42 : 0)
+        .opacity(isDropping ? 0 : 1)
         .scaleEffect(isHovering ? 1.06 : 1)
         .shadow(color: Color.black.opacity(0.18), radius: 1.5, y: 1)
         .contentShape(Rectangle())
+        .allowsHitTesting(!isDropping)
         .shelfHitArea(.cardClip(itemID))
         .onTapGesture(perform: unclip)
         .help("点击松开夹子并删除")
@@ -661,13 +694,19 @@ private struct ShelfClipView: View {
                 : .spring(response: 0.18, dampingFraction: 0.62),
             value: isOpen
         )
+        .animation(
+            reduceMotion
+                ? nil
+                : .easeIn(duration: dropDuration),
+            value: isDropping
+        )
         .onChange(of: itemID) { _, _ in
             isOpen = false
         }
     }
 
     private func unclip() {
-        guard !isOpen else { return }
+        guard !isOpen, !isDropping else { return }
         withAnimation(
             reduceMotion
                 ? nil

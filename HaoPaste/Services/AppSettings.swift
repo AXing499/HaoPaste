@@ -22,6 +22,8 @@ final class AppSettings {
     static let defaultShelfEdge = ClipboardShelfEdge.top
     static let trashRetentionOptions = [1, 7, 30, 90]
     static let defaultTrashRetentionDays = 7
+    static let shelfCardFallDurationOptions: [Double] = [0.3, 0.5, 0.75, 1.0, 1.2]
+    static let defaultShelfCardFallDuration: Double = 0.75
 
     private enum Keys {
         static let maxUnpinnedItems = "settings.maxUnpinnedItems"
@@ -34,6 +36,7 @@ final class AppSettings {
         static let autoTranslateLatestOnOpen = "settings.autoTranslateLatestOnOpen"
         static let autoTranslateDefaultOffMigrated = "settings.autoTranslateDefaultOffMigrated"
         static let trashRetentionDays = "settings.trashRetentionDays"
+        static let shelfCardFallDuration = "settings.shelfCardFallDuration"
         static let shelfEnabled = "settings.shelfEnabled"
         static let shelfItemLimit = "settings.shelfItemLimit"
         static let shelfEdge = "settings.shelfEdge"
@@ -94,6 +97,25 @@ final class AppSettings {
             defaults.set(
                 autoTranslateLatestOnOpen,
                 forKey: Keys.autoTranslateLatestOnOpen
+            )
+        }
+    }
+
+    var shelfCardFallDuration: Double {
+        didSet {
+            let validated = Self.shelfCardFallDurationOptions.contains(shelfCardFallDuration)
+                ? shelfCardFallDuration
+                : Self.defaultShelfCardFallDuration
+
+            if validated != shelfCardFallDuration {
+                shelfCardFallDuration = validated
+                return
+            }
+
+            guard oldValue != shelfCardFallDuration else { return }
+            defaults.set(
+                shelfCardFallDuration,
+                forKey: Keys.shelfCardFallDuration
             )
         }
     }
@@ -220,6 +242,11 @@ final class AppSettings {
         self.trashRetentionDays = Self.trashRetentionOptions.contains(storedTrashRetention)
             ? storedTrashRetention
             : Self.defaultTrashRetentionDays
+
+        let storedFallDuration = defaults.double(forKey: Keys.shelfCardFallDuration)
+        self.shelfCardFallDuration = Self.shelfCardFallDurationOptions.contains(storedFallDuration)
+            ? storedFallDuration
+            : Self.defaultShelfCardFallDuration
 
         if defaults.object(forKey: Keys.shelfEnabled) == nil {
             self.shelfEnabled = true
