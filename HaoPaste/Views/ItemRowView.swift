@@ -369,6 +369,7 @@ struct ItemRowView: View {
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
+                .pointingHandCursor()
                 .help("快速复制")
                 .opacity(isHovering ? 0 : 1)
                 .scaleEffect(isHovering ? 0.92 : 1)

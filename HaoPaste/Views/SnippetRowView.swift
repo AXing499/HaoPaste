@@ -85,6 +85,7 @@ struct SnippetRowView: View {
         }
         .buttonStyle(.plain)
         .focusable(false)
+        .pointingHandCursor()
         .background {
             Theme.cardShape
                 .fill(backgroundColor)

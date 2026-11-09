@@ -533,7 +533,6 @@ private struct ShelfActionButton: View {
             }
             .contentShape(Circle())
             .onTapGesture(perform: action)
-            .pointingHandCursor()
             .shadow(color: Color.black.opacity(0.12), radius: 2, y: 1)
             .accessibilityElement()
             .accessibilityLabel(label)
@@ -618,7 +617,6 @@ private struct ShelfClipView: View {
         .shadow(color: Color.black.opacity(0.18), radius: 1.5, y: 1)
         .contentShape(Rectangle())
         .onTapGesture(perform: unclip)
-        .pointingHandCursor()
         .help("点击松开夹子并删除")
         .accessibilityElement()
         .accessibilityLabel("松开夹子并删除")

@@ -70,6 +70,7 @@ struct RoundIconButton: View {
         }
         .buttonStyle(.plain)
         .focusable(false)
+        .pointingHandCursor()
         .onHover { hovering in
             isHovering = hovering
         }

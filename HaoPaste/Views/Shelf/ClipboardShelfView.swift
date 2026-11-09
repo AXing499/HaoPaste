@@ -458,7 +458,7 @@ struct ClipboardShelfView: View {
     private func delete(_ item: ClipboardItem) {
         // Let the released card fall away instead of fading in place; the
         // remaining cards slide in with the same accelerating curve.
-        withAnimation(.easeIn(duration: 0.45)) {
+        withAnimation(.easeIn(duration: 0.75)) {
             manager.delete(item)
         }
     }
@@ -849,7 +849,6 @@ private struct ShelfFilterBar: View {
                     .onTapGesture {
                         select(option)
                     }
-                    .pointingHandCursor()
                     .accessibilityElement()
                     .accessibilityLabel(option.title)
                     .accessibilityAddTraits(filter == option ? .isSelected : [])

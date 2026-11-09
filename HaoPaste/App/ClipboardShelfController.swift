@@ -31,6 +31,7 @@ final class ClipboardShelfController: NSObject {
     private var isRevealed = false
     private var isHiding = false
     private var isRevealing = false
+    private var isPointerHandPushed = false
     private var manualOpen = false
     private var manualVisited = false
     private var hotZoneSince: Date?
@@ -342,6 +343,7 @@ final class ClipboardShelfController: NSObject {
         guard isRevealed, !isHiding, !isRevealing else {
             panel.ignoresMouseEvents = true
             interaction.hoveredItemID = nil
+            releasePointerCursor()
             return
         }
 
@@ -365,10 +367,37 @@ final class ClipboardShelfController: NSObject {
             interaction.hoveredItemID = hoveredID
         }
 
+        let wantsPointer: Bool
+        if let kind = target?.kind {
+            switch kind {
+            case .card, .filterBar:
+                wantsPointer = true
+            }
+        } else {
+            wantsPointer = false
+        }
+        updatePointerCursor(wantsPointer)
+
         let acceptsMouse = target != nil
         if panel.ignoresMouseEvents == acceptsMouse {
             panel.ignoresMouseEvents = !acceptsMouse
         }
+    }
+
+    private func updatePointerCursor(_ wantsPointer: Bool) {
+        if wantsPointer, !isPointerHandPushed {
+            NSCursor.pointingHand.push()
+            isPointerHandPushed = true
+        } else if !wantsPointer, isPointerHandPushed {
+            NSCursor.pop()
+            isPointerHandPushed = false
+        }
+    }
+
+    private func releasePointerCursor() {
+        guard isPointerHandPushed else { return }
+        NSCursor.pop()
+        isPointerHandPushed = false
     }
 
     // MARK: - Reveal / retract
@@ -415,6 +444,7 @@ final class ClipboardShelfController: NSObject {
     private func hide() {
         guard isRevealed, !isHiding else { return }
 
+        releasePointerCursor()
         onWillHide?()
         isRevealed = false
         isHiding = true
