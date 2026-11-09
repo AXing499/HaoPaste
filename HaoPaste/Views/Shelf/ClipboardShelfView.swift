@@ -365,6 +365,13 @@ struct ClipboardShelfView: View {
                 flashScrollHint()
             }
             .animation(Theme.gentleSpring, value: count)
+            // A new generated copy usually replaces the oldest card, so the
+            // count stays the same. Animate by item identity as well so the
+            // insertion still drops the new card onto the line smoothly.
+            .animation(
+                Theme.gentleSpring,
+                value: loadedItems.map(\.id)
+            )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
