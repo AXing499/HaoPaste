@@ -644,7 +644,7 @@ private struct ShelfClipView: View {
         ) {
             isOpen = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             onDelete()
         }
     }

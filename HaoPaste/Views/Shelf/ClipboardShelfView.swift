@@ -289,8 +289,7 @@ struct ClipboardShelfView: View {
                             insertion: .scale(scale: 0.86, anchor: .top)
                                 .combined(with: .opacity)
                                 .combined(with: .offset(y: -14)),
-                            removal: .offset(y: 34)
-                                .combined(with: .scale(scale: 0.94, anchor: .top))
+                            removal: .offset(y: 132)
                                 .combined(with: .opacity)
                         )
                     )
@@ -428,7 +427,9 @@ struct ClipboardShelfView: View {
     }
 
     private func delete(_ item: ClipboardItem) {
-        withAnimation(Theme.gentleSpring) {
+        // Let the released card fall away instead of fading in place; the
+        // remaining cards slide in with the same accelerating curve.
+        withAnimation(.easeIn(duration: 0.4)) {
             manager.delete(item)
         }
     }
