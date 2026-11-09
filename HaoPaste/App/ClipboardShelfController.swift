@@ -32,6 +32,7 @@ final class ClipboardShelfController: NSObject {
     private var isHiding = false
     private var isRevealing = false
     private var isPointerHandPushed = false
+    private var activationRestoreApp: NSRunningApplication?
     private var manualOpen = false
     private var manualVisited = false
     private var hotZoneSince: Date?
@@ -358,9 +359,10 @@ final class ClipboardShelfController: NSObject {
             in: hitTargetStore.targets
         )
         let hoveredID: UUID?
-        if case let .card(id) = target?.kind {
+        switch target?.kind {
+        case let .card(id), let .cardClip(id), let .cardActions(id):
             hoveredID = id
-        } else {
+        case .filterBar, .none:
             hoveredID = nil
         }
         if interaction.hoveredItemID != hoveredID {
@@ -370,11 +372,16 @@ final class ClipboardShelfController: NSObject {
         let wantsPointer: Bool
         if let kind = target?.kind {
             switch kind {
-            case .card, .filterBar:
+            case .cardClip, .cardActions, .filterBar:
                 wantsPointer = true
+            case .card:
+                wantsPointer = false
             }
         } else {
             wantsPointer = false
+        }
+        if wantsPointer {
+            activateForShelfIfNeeded()
         }
         updatePointerCursor(wantsPointer)
 
@@ -382,6 +389,35 @@ final class ClipboardShelfController: NSObject {
         if panel.ignoresMouseEvents == acceptsMouse {
             panel.ignoresMouseEvents = !acceptsMouse
         }
+    }
+
+    private func activateForShelfIfNeeded() {
+        guard !NSApp.isActive else {
+            panel.makeKey()
+            return
+        }
+
+        if activationRestoreApp == nil {
+            activationRestoreApp = NSWorkspace.shared.frontmostApplication
+            if activationRestoreApp?.processIdentifier
+                == ProcessInfo.processInfo.processIdentifier {
+                activationRestoreApp = nil
+            }
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        panel.makeKey()
+    }
+
+    private func restoreApplicationAfterShelf() {
+        guard let app = activationRestoreApp else { return }
+        // Do not steal focus back if the user switched away, or if another
+        // HaoPaste window (main panel, translation card) is now key.
+        guard NSApp.isActive, NSApp.keyWindow == nil else {
+            activationRestoreApp = nil
+            return
+        }
+        activationRestoreApp = nil
+        app.activate(options: [])
     }
 
     private func updatePointerCursor(_ wantsPointer: Bool) {
@@ -478,6 +514,7 @@ final class ClipboardShelfController: NSObject {
             self.panel.alphaValue = 1
             self.panel.setFrame(target, display: false)
             self.isHiding = false
+            self.restoreApplicationAfterShelf()
             self.onVisibilityChanged?()
         }
 

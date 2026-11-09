@@ -17,6 +17,7 @@ struct ShelfCardView: View {
     let isCopied: Bool
     let cardHeight: CGFloat
     let edge: ClipboardShelfEdge
+    let fallDirection: CGFloat
     let canDragOut: Bool
     let dragProvider: () -> NSItemProvider
     let onCopy: () -> Void
@@ -27,6 +28,7 @@ struct ShelfCardView: View {
     let onTranslate: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isFalling = false
 
     private static let bodyOffset = ClipboardShelfLayout.bodyOffset
 
@@ -81,7 +83,7 @@ struct ShelfCardView: View {
                 itemID: item.id,
                 isPinned: item.isPinned,
                 isHovering: isHovering,
-                onDelete: onDelete
+                onRelease: release
             )
             .frame(maxWidth: .infinity, alignment: clipAlignment)
         }
@@ -89,6 +91,20 @@ struct ShelfCardView: View {
             width: cardWidth,
             height: cardHeight,
             alignment: .top
+        )
+        .offset(
+            x: isFalling ? 16 * fallDirection : 0,
+            y: isFalling ? 150 : 0
+        )
+        .rotationEffect(
+            .degrees(isFalling ? 9 * Double(fallDirection) : 0),
+            anchor: .top
+        )
+        .opacity(isFalling ? 0 : 1)
+        .allowsHitTesting(!isFalling)
+        .animation(
+            reduceMotion ? nil : .easeIn(duration: 0.75),
+            value: isFalling
         )
         .help("点击复制")
         .accessibilityLabel("\(item.formatBadge)，\(item.displayTitle)")
@@ -213,7 +229,7 @@ struct ShelfCardView: View {
             Divider()
 
             Button(role: .destructive) {
-                onDelete()
+                release()
             } label: {
                 Label("删除", systemImage: "trash")
             }
@@ -279,6 +295,7 @@ struct ShelfCardView: View {
                 .allowsHitTesting(false)
         }
         .shadow(color: Color.black.opacity(0.14), radius: 4, y: 2)
+        .shelfHitArea(.cardActions(item.id))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         .padding(.bottom, 7)
     }
@@ -506,6 +523,19 @@ struct ShelfCardView: View {
             return item.imageDimensions?.displayText ?? "图片"
         }
     }
+
+    private func release() {
+        guard !isFalling else { return }
+        withAnimation(
+            reduceMotion ? nil : .easeIn(duration: 0.75)
+        ) {
+            isFalling = true
+        }
+        let delay: TimeInterval = reduceMotion ? 0.05 : 0.78
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            onDelete()
+        }
+    }
 }
 
 // MARK: - Actions
@@ -549,7 +579,7 @@ private struct ShelfClipView: View {
     let itemID: UUID
     let isPinned: Bool
     let isHovering: Bool
-    let onDelete: () -> Void
+    let onRelease: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isOpen = false
@@ -616,6 +646,7 @@ private struct ShelfClipView: View {
         .scaleEffect(isHovering ? 1.06 : 1)
         .shadow(color: Color.black.opacity(0.18), radius: 1.5, y: 1)
         .contentShape(Rectangle())
+        .shelfHitArea(.cardClip(itemID))
         .onTapGesture(perform: unclip)
         .help("点击松开夹子并删除")
         .accessibilityElement()
@@ -645,7 +676,7 @@ private struct ShelfClipView: View {
             isOpen = true
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            onDelete()
+            onRelease()
         }
     }
 }

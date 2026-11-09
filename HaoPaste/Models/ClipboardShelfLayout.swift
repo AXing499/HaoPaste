@@ -11,6 +11,8 @@ import CoreGraphics
 struct ShelfHitTarget: Equatable {
     enum Kind: Equatable {
         case card(UUID)
+        case cardClip(UUID)
+        case cardActions(UUID)
         case filterBar
     }
 
@@ -490,9 +492,10 @@ enum ClipboardShelfLayout {
     ) -> ShelfHitTarget? {
         let hits = targets.filter { target in
             let isCard: Bool
-            if case .card = target.kind {
+            switch target.kind {
+            case .card:
                 isCard = true
-            } else {
+            case .cardClip, .cardActions, .filterBar:
                 isCard = false
             }
             // Hovering lifts the card (and its clip) a few points, so the
@@ -501,6 +504,20 @@ enum ClipboardShelfLayout {
                 dx: isCard ? -10 : -4,
                 dy: isCard ? -12 : -4
             ).contains(point)
+        }
+        // Smaller controls win over the card body so the pointer cursor can
+        // distinguish the clip and action bar from a plain card hover.
+        if let action = hits.first(where: {
+            if case .cardActions = $0.kind { return true }
+            return false
+        }) {
+            return action
+        }
+        if let clip = hits.first(where: {
+            if case .cardClip = $0.kind { return true }
+            return false
+        }) {
+            return clip
         }
         // Side cards can scroll under the floating filter bar; the bar is
         // visually on top, so it must win hit testing in the overlap.

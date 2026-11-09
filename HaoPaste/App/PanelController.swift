@@ -839,7 +839,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     // MARK: - Focus
 
     private func activatePanel() {
-        NSApp.activate()
+        NSApp.activate(ignoringOtherApps: true)
         panel.makeKeyAndOrderFront(nil)
         panel.orderFrontRegardless()
         installKeyMonitor()

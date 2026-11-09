@@ -318,8 +318,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 卡片按条目 ID 复用视图：删除或过滤后新出现的卡片会得到新的夹子状态；`ShelfClipView` 还会在 `itemID` 变化时重置释放状态，避免新卡片继承已打开夹子而无法再次删除。
 - `ShelfCardView` 的外框必须使用传入的 `cardHeight`，不能使用固定高度；固定高度会让短卡片的内容被上移、长卡片的内容被下移，导致夹子离线并压住下一张卡片。
 - 顶部绳线的下垂弧度加大，卡片不设置基础旋转，夹子线环中心直接落在绳线上；侧边短臂的高度取卡片顶部加夹子线环中心，因此夹子始终对准短臂。卡片内容严格按动态卡片高度布局，长卡片不会溢出到下一张；筛选栏上方再叠加渐隐遮罩，避免遮挡筛选栏。
-- 夹子本身是删除入口：金色回形夹的线环穿过绳线 / 短臂，卡片上沿进入夹口，点击后夹子先抬起打开，约 0.2 秒后卡片通过 `FallingCardModifier` 以 0.75 秒 ease-in 曲线旋转、横向漂移并下落 150pt，淡出时剩余卡片同时平滑补位；夹子位于复制手势之外，避免误触复制。
-- 主面板的行内操作按钮、复制行、分类药丸等 SwiftUI 控件使用 `pointingHandCursor()` 推入 `NSCursor.pointingHand`；挂架是非激活面板，SwiftUI `onHover` 不稳定，因此由 `ClipboardShelfController` 在 30Hz 命中检测中根据卡片 / 筛选栏目标推入和弹出光标，面板隐藏或进入非交互区域时释放。
+- 夹子本身是删除入口：金色回形夹的线环穿过绳线 / 短臂，卡片上沿进入夹口，点击后夹子先抬起打开，约 0.2 秒后 `ShelfCardView` 的 `isFalling` 状态以独立 0.75 秒 ease-in 动画旋转、横向漂移并下落 150pt；动画结束后才删除条目，剩余的卡片再用列表弹簧补位。此前把下落挂在列表的 removal transition 上，会被容器的 `.animation(value: ids)` 覆盖成约 0.2 秒，因此现在改为卡片内部状态动画。
+- 主面板打开时调用 `NSApp.activate(ignoringOtherApps: true)`，行内操作按钮、复制行、分类药丸等 SwiftUI 控件使用 `pointingHandCursor()` 推入 `NSCursor.pointingHand`；挂架是非激活面板，系统不会显示非激活窗口的光标变化，因此 `ClipboardShelfController` 在指针进入夹子 / 操作条 / 筛选栏的精确命中目标时短暂激活 HaoPaste 并推入光标，面板收起后恢复进入前的应用。卡片主体仍保持非激活悬停，避免仅移动鼠标就抢焦点。
 - 卡片命中区域在悬停抬升时向四周扩大，尤其覆盖夹子线环，保证夹子可点击。
 - 预览 / 识图 / 翻译都以独立浮动卡片出现在当前屏幕中央；`ShelfPreviewPanelController` 复用 `PreviewOverlayView`，`ShelfOCRPanelController` 复用 `OCRPaneView`，翻译复用快捷翻译卡片。弹框窗口尺寸与卡片一致并启用 `hasShadow = true`，使用 macOS 原生窗口阴影；SwiftUI 阴影只在主面板内嵌遮罩场景保留。挂架在这些卡片打开期间暂停自动收起，关闭后恢复。
 - 控制器在挂架收起时使用 10Hz 轮询，展开时切到 30Hz；定时器带 20% tolerance，降低空闲唤醒与能耗。
