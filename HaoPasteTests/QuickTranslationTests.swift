@@ -75,6 +75,23 @@ final class QuickTranslationTests: XCTestCase {
         )
     }
 
+    func testAutoTranslationLatestItemIgnoresPinOrder() {
+        let pinnedOld = TestFixtures.makeTextItem(
+            "old pinned item",
+            isPinned: true,
+            createdAt: Date(timeIntervalSince1970: 100)
+        )
+        let newest = TestFixtures.makeTextItem(
+            "newest item",
+            createdAt: Date(timeIntervalSince1970: 200)
+        )
+
+        XCTAssertEqual(
+            AutoTranslationPolicy.latestItem(in: [pinnedOld, newest])?.id,
+            newest.id
+        )
+    }
+
     func testClipboardTranslationReaderTrimsText() {
         let pasteboard = TestFixtures.makeCustomPasteboard()
         pasteboard.clearContents()

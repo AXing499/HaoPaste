@@ -280,7 +280,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 本地用 `NLLanguageRecognizer` 检测源语言；若原文已是目标语言，本次翻译会尝试切换中英方向。
 - 复制译文复用 `ClipboardManager.copyTextToPasteboard`，同步 `changeCount`，不会生成历史记录。
 - 快捷翻译卡片 `QuickTranslationPanelController` 使用独立的 `TranslationService` 状态，但共享 `TranslationSettingsStore` 与 Keychain 凭证；读取 `NSPasteboard.general` 当前纯文本，`⌥⌘T` / 菜单栏均可触发。
-- 面板打开时可自动翻译最新记录：`AutoTranslationPolicy` 检查开关、记录签名、可翻译类型、检测语言与目标语言；每条记录只自动触发一次，图片与同语言文本跳过。默认开启，可在设置 → 通用关闭。
+- 面板打开时可自动翻译最新记录：默认关闭；`AutoTranslationPolicy.latestItem` 按 `createdAt` 选出真正的最新记录（固定条目只在列表排序中靠前，不会冒充最新），再检查签名、可翻译类型、检测语言与目标语言；每条记录只自动触发一次，图片与同语言文本跳过。旧版本默认开启，升级时做一次性关闭迁移，之后尊重用户选择。
 - Google / Bing 使用非官方 HTTP 接口；DeepL 非官方为实验性 JSON-RPC 通道。官方适配使用各家标准 HTTPS API。
 - API 凭证保存在 Keychain；导出备份、日志与 UserDefaults 不包含密钥。
 
@@ -393,7 +393,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-105 个 XCTest 由 app target 作为测试宿主运行：
+106 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。

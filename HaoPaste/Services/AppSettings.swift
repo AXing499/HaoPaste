@@ -30,6 +30,7 @@ final class AppSettings {
         static let translationHotKeyCode = "settings.translationHotKeyCode"
         static let translationHotKeyModifiers = "settings.translationHotKeyModifiers"
         static let autoTranslateLatestOnOpen = "settings.autoTranslateLatestOnOpen"
+        static let autoTranslateDefaultOffMigrated = "settings.autoTranslateDefaultOffMigrated"
         static let shelfEnabled = "settings.shelfEnabled"
         static let shelfItemLimit = "settings.shelfItemLimit"
         static let shelfEdge = "settings.shelfEdge"
@@ -182,8 +183,12 @@ final class AppSettings {
             ? storedTranslationHotKey
             : .translationDefault
 
-        if defaults.object(forKey: Keys.autoTranslateLatestOnOpen) == nil {
-            self.autoTranslateLatestOnOpen = true
+        // Auto-translation used to default on. Turn it off once for existing
+        // installs as well as fresh ones, then respect the user's choice.
+        if !defaults.bool(forKey: Keys.autoTranslateDefaultOffMigrated) {
+            self.autoTranslateLatestOnOpen = false
+            defaults.set(false, forKey: Keys.autoTranslateLatestOnOpen)
+            defaults.set(true, forKey: Keys.autoTranslateDefaultOffMigrated)
         } else {
             self.autoTranslateLatestOnOpen = defaults.bool(
                 forKey: Keys.autoTranslateLatestOnOpen

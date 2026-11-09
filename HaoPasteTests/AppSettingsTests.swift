@@ -18,7 +18,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.maxUnpinnedItems, 200)
         XCTAssertEqual(settings.hotKey, .default)
         XCTAssertEqual(settings.translationHotKey, .translationDefault)
-        XCTAssertTrue(settings.autoTranslateLatestOnOpen)
+        XCTAssertFalse(settings.autoTranslateLatestOnOpen)
         XCTAssertTrue(settings.shelfEnabled)
         XCTAssertEqual(settings.shelfItemLimit, 8)
         XCTAssertEqual(settings.shelfEdge, .top)

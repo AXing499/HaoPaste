@@ -357,7 +357,7 @@ struct SettingsView: View {
 
             SettingsRow(
                 "打开面板时翻译最新记录",
-                subtitle: "仅对与目标语言不同的新文本自动执行；每条记录只自动翻译一次，图片不会自动翻译"
+                subtitle: "默认关闭；仅对与目标语言不同的最新文本自动执行；每条记录只自动翻译一次，图片不会自动翻译"
             ) {
                 Toggle("", isOn: $settings.autoTranslateLatestOnOpen)
                     .labelsHidden()

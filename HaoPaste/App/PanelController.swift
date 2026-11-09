@@ -219,13 +219,13 @@ final class PanelController: NSObject, NSWindowDelegate {
         }
 
         guard
-            let item = manager.filteredItems(query: "", filter: .all).first,
+            let item = AutoTranslationPolicy.latestItem(
+                in: manager.filteredItems(query: "", filter: .all)
+            ),
             item.isTranslatable
         else {
             return
         }
-
-        guard state.selectedID == item.id else { return }
 
         guard AutoTranslationPolicy.shouldTranslate(
             item: item,
@@ -236,6 +236,9 @@ final class PanelController: NSObject, NSWindowDelegate {
             return
         }
 
+        if state.selectedID != item.id {
+            state.selectedID = item.id
+        }
         lastAutoTranslatedSignature = AutoTranslationPolicy.signature(for: item)
         translationService.present(item: item)
     }

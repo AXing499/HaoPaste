@@ -9,6 +9,17 @@ import AppKit
 import Foundation
 
 enum AutoTranslationPolicy {
+    /// The newest record by copy time. Pinned items sort first in the UI but
+    /// must not be mistaken for the latest clipboard entry.
+    static func latestItem(in items: [ClipboardItem]) -> ClipboardItem? {
+        items.max { lhs, rhs in
+            if lhs.createdAt != rhs.createdAt {
+                return lhs.createdAt < rhs.createdAt
+            }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
+    }
+
     static func signature(for item: ClipboardItem) -> String {
         "\(item.id.uuidString)-\(item.createdAt.timeIntervalSince1970)"
     }
