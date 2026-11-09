@@ -342,12 +342,8 @@ struct SettingsView: View {
             ) {
                 Picker("", selection: $settings.shelfCardFallDuration) {
                     ForEach(AppSettings.shelfCardFallDurationOptions, id: \.self) { duration in
-                        Text(
-                            duration == floor(duration)
-                                ? "\(Int(duration)) 秒"
-                                : "\(duration) 秒"
-                        )
-                        .tag(duration)
+                        Text(fallDurationLabel(duration))
+                            .tag(duration)
                     }
                 }
                 .labelsHidden()
@@ -652,6 +648,17 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private func fallDurationLabel(_ duration: Double) -> String {
+        var value = String(format: "%.2f", duration)
+        while value.hasSuffix("0") {
+            value.removeLast()
+        }
+        if value.hasSuffix(".") {
+            value.removeLast()
+        }
+        return "\(value) 秒"
     }
 
     private func confirmEmptyTrash() {
