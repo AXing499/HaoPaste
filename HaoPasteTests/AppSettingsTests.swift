@@ -21,6 +21,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertFalse(settings.autoTranslateLatestOnOpen)
         XCTAssertTrue(settings.shelfEnabled)
         XCTAssertEqual(settings.shelfItemLimit, 8)
+        XCTAssertEqual(settings.trashRetentionDays, 7)
         XCTAssertEqual(settings.shelfEdge, .top)
         XCTAssertTrue(settings.capturesImages)
         XCTAssertTrue(settings.excludedApplications.isEmpty)
@@ -48,6 +49,7 @@ final class AppSettingsTests: XCTestCase {
         settings.shelfEnabled = false
         settings.shelfItemLimit = 10
         settings.shelfEdge = .left
+        settings.trashRetentionDays = 30
 
         let reloaded = AppSettings(defaults: defaults)
         XCTAssertEqual(reloaded.maxUnpinnedItems, 500)
@@ -58,6 +60,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertFalse(reloaded.shelfEnabled)
         XCTAssertEqual(reloaded.shelfItemLimit, 10)
         XCTAssertEqual(reloaded.shelfEdge, .left)
+        XCTAssertEqual(reloaded.trashRetentionDays, 30)
     }
 
     func testShelfEdgeFallsBackToTop() throws {

@@ -15,7 +15,11 @@ final class ClipboardManager {
     // MARK: - Observable state
 
     private(set) var items: [ClipboardItem] = []
+    private(set) var trashedItems: [TrashedClipboardItem] = []
     private(set) var isMonitoringPaused = false
+
+    /// How long recently deleted entries stay recoverable.
+    var trashRetentionDays = 7
 
     // MARK: - Dependencies
 
@@ -45,6 +49,8 @@ final class ClipboardManager {
         hasStarted = true
 
         items = store.loadItems()
+        trashedItems = store.loadTrash()
+        purgeExpiredTrash()
 
         monitor.isSourceExcluded = { [weak self] source in
             self?.isSourceExcluded?(source) ?? false
@@ -61,6 +67,7 @@ final class ClipboardManager {
     func shutdown() {
         monitor.stop()
         store.saveNow(items)
+        store.saveTrashNow(trashedItems)
     }
 
     // MARK: - Monitoring
@@ -215,8 +222,79 @@ final class ClipboardManager {
     func delete(_ item: ClipboardItem) {
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
         let removed = items.remove(at: index)
-        store.removeAssets(for: [removed])
+        trashedItems.removeAll { $0.id == removed.id }
+        trashedItems.insert(
+            TrashedClipboardItem(item: removed, deletedAt: .now),
+            at: 0
+        )
         store.scheduleSave(items)
+        store.scheduleSaveTrash(trashedItems)
+    }
+
+    // MARK: - Recently deleted
+
+    func updateTrashRetention(_ days: Int) {
+        let clamped = max(1, days)
+        guard clamped != trashRetentionDays else {
+            purgeExpiredTrash()
+            return
+        }
+        trashRetentionDays = clamped
+        purgeExpiredTrash()
+    }
+
+    func restore(_ entry: TrashedClipboardItem) {
+        guard let index = trashedItems.firstIndex(where: { $0.id == entry.id }) else {
+            return
+        }
+        let removed = trashedItems.remove(at: index)
+
+        // If the same content is already back in history, just clear the
+        // duplicate trash entry instead of inserting a second copy.
+        if items.contains(where: { $0.contentHash == removed.item.contentHash }) {
+            store.removeAssets(for: [removed.item])
+        } else {
+            var restored = removed.item
+            restored.createdAt = .now
+            items.insert(restored, at: 0)
+
+            let trimmed = trimHistory()
+            if !trimmed.isEmpty {
+                store.removeAssets(for: trimmed)
+            }
+        }
+
+        store.scheduleSave(items)
+        store.scheduleSaveTrash(trashedItems)
+    }
+
+    func permanentlyDelete(_ entry: TrashedClipboardItem) {
+        guard let index = trashedItems.firstIndex(where: { $0.id == entry.id }) else {
+            return
+        }
+        let removed = trashedItems.remove(at: index)
+        store.removeAssets(for: [removed.item])
+        store.scheduleSaveTrash(trashedItems)
+    }
+
+    func emptyTrash() {
+        guard !trashedItems.isEmpty else { return }
+        store.removeAssets(for: trashedItems.map(\.item))
+        trashedItems.removeAll()
+        store.scheduleSaveTrash(trashedItems)
+    }
+
+    func purgeExpiredTrash(now: Date = .now) {
+        guard !trashedItems.isEmpty else { return }
+        let cutoff = now.addingTimeInterval(
+            -Double(max(1, trashRetentionDays)) * 24 * 60 * 60
+        )
+        let expired = trashedItems.filter { $0.deletedAt < cutoff }
+        guard !expired.isEmpty else { return }
+
+        trashedItems.removeAll { $0.deletedAt < cutoff }
+        store.removeAssets(for: expired.map(\.item))
+        store.scheduleSaveTrash(trashedItems)
     }
 
     func clearUnpinnedItems() {
@@ -385,6 +463,14 @@ final class ClipboardManager {
 
         if case .image = capture.payload, isImageCaptureEnabled?() == false {
             return
+        }
+
+        if let trashedIndex = trashedItems.firstIndex(
+            where: { $0.item.contentHash == capture.contentHash }
+        ) {
+            let removed = trashedItems.remove(at: trashedIndex)
+            store.removeAssets(for: [removed.item])
+            store.scheduleSaveTrash(trashedItems)
         }
 
         // De-duplication: an identical entry is moved to the top, keeping its

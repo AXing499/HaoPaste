@@ -285,6 +285,7 @@ enum ClipboardFilter: String, CaseIterable, Identifiable, Sendable {
     case file
     case url
     case snippets
+    case trash
 
     var id: String { rawValue }
 
@@ -297,6 +298,7 @@ enum ClipboardFilter: String, CaseIterable, Identifiable, Sendable {
         case .file: return "文件"
         case .url: return "链接"
         case .snippets: return "片段"
+        case .trash: return "最近删除"
         }
     }
 
@@ -315,8 +317,9 @@ enum ClipboardFilter: String, CaseIterable, Identifiable, Sendable {
             return item.type == .file
         case .url:
             return item.type == .url
-        case .snippets:
-            // Snippets are a separate data source handled by the panel.
+        case .snippets, .trash:
+            // Snippets and Recently Deleted are separate data sources
+            // handled by the panel.
             return false
         }
     }

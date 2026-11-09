@@ -26,6 +26,24 @@ struct ShelfScrollMetricsKey: PreferenceKey {
     }
 }
 
+private struct FallingCardModifier: ViewModifier, Animatable {
+    var progress: CGFloat
+    let drift: CGFloat
+    let rotation: Double
+
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .offset(x: drift * progress, y: 150 * progress)
+            .rotationEffect(.degrees(rotation * Double(progress)), anchor: .top)
+            .opacity(1 - progress)
+    }
+}
+
 private struct ShelfVisibleItem: Identifiable {
     let index: Int
     let item: ClipboardItem
@@ -256,6 +274,7 @@ struct ClipboardShelfView: View {
                             rackStart: topRack.lowerBound,
                             rackEnd: topRack.upperBound
                         ) + ClipboardShelfLayout.cardTopOffset
+                    let fallDirection: CGFloat = index.isMultiple(of: 2) ? -1 : 1
                     ShelfCardView(
                         item: item,
                         cardWidth: cardWidth,
@@ -289,8 +308,18 @@ struct ClipboardShelfView: View {
                             insertion: .scale(scale: 0.86, anchor: .top)
                                 .combined(with: .opacity)
                                 .combined(with: .offset(y: -14)),
-                            removal: .offset(y: 132)
-                                .combined(with: .opacity)
+                            removal: .modifier(
+                                active: FallingCardModifier(
+                                    progress: 1,
+                                    drift: 16 * fallDirection,
+                                    rotation: 9 * Double(fallDirection)
+                                ),
+                                identity: FallingCardModifier(
+                                    progress: 0,
+                                    drift: 16 * fallDirection,
+                                    rotation: 9 * Double(fallDirection)
+                                )
+                            )
                         )
                     )
                     .zIndex(isHovering ? 100 : 10 - Double(index))
@@ -429,7 +458,7 @@ struct ClipboardShelfView: View {
     private func delete(_ item: ClipboardItem) {
         // Let the released card fall away instead of fading in place; the
         // remaining cards slide in with the same accelerating curve.
-        withAnimation(.easeIn(duration: 0.4)) {
+        withAnimation(.easeIn(duration: 0.45)) {
             manager.delete(item)
         }
     }
@@ -820,6 +849,7 @@ private struct ShelfFilterBar: View {
                     .onTapGesture {
                         select(option)
                     }
+                    .pointingHandCursor()
                     .accessibilityElement()
                     .accessibilityLabel(option.title)
                     .accessibilityAddTraits(filter == option ? .isSelected : [])

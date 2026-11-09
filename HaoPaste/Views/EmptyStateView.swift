@@ -102,3 +102,46 @@ struct SnippetEmptyStateView: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+struct TrashEmptyStateView: View {
+    let query: String
+    let retentionDays: Int
+
+    private var isSearching: Bool {
+        !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.primary.opacity(0.04))
+                    .frame(width: 64, height: 64)
+
+                Image(systemName: isSearching ? "magnifyingglass" : "trash")
+                    .font(.system(size: 23, weight: .light, design: .rounded))
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(spacing: 4) {
+                Text(isSearching ? "没有找到匹配内容" : "最近删除为空")
+                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .foregroundStyle(.primary)
+
+                Text(
+                    isSearching
+                        ? "换个关键词试试。"
+                        : "删除的记录会在这里保留 \(retentionDays) 天，之后自动清除。"
+                )
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        .accessibilityElement(children: .combine)
+    }
+}

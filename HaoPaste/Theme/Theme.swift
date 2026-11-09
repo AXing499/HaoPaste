@@ -5,6 +5,7 @@
 //  Shared visual tokens. Everything is built on system semantic colors.
 //
 
+import AppKit
 import SwiftUI
 
 enum Theme {
@@ -51,6 +52,12 @@ enum Theme {
 }
 
 extension View {
+    /// Shows the standard pointing-hand cursor while the pointer is over an
+    /// actionable custom view (SwiftUI buttons do not draw it automatically).
+    func pointingHandCursor() -> some View {
+        modifier(PointingHandCursorModifier())
+    }
+
     /// A 0.5 pt inset border that follows the provided squircle shape.
     func hairlineStroke<S: InsettableShape>(
         _ shape: S,
@@ -59,5 +66,29 @@ extension View {
         overlay {
             shape.strokeBorder(color, lineWidth: Theme.hairline)
         }
+    }
+}
+
+
+private struct PointingHandCursorModifier: ViewModifier {
+    @State private var isPushed = false
+
+    func body(content: Content) -> some View {
+        content
+            .onHover { hovering in
+                if hovering {
+                    guard !isPushed else { return }
+                    NSCursor.pointingHand.push()
+                    isPushed = true
+                } else if isPushed {
+                    NSCursor.pop()
+                    isPushed = false
+                }
+            }
+            .onDisappear {
+                guard isPushed else { return }
+                NSCursor.pop()
+                isPushed = false
+            }
     }
 }

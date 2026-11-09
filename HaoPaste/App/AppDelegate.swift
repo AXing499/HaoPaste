@@ -59,7 +59,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         manager.isImageCaptureEnabled = { [weak settings] in
             settings?.capturesImages ?? true
         }
+        manager.trashRetentionDays = settings.trashRetentionDays
         manager.start()
+        settings.onTrashRetentionChange = { [weak self] days in
+            self?.manager.updateTrashRetention(days)
+        }
         manager.updateMaxUnpinnedItems(settings.maxUnpinnedItems)
         settings.onHistoryLimitChange = { [weak self] limit in
             self?.manager.updateMaxUnpinnedItems(limit)

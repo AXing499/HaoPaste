@@ -34,8 +34,10 @@ final class ClipboardStore {
     private let imagesURL: URL
     private let richTextDirectoryURL: URL
     private let historyURL: URL
+    private let trashURL: URL
 
     private var pendingSave: Task<Void, Never>?
+    private var pendingTrashSave: Task<Void, Never>?
 
     private let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
@@ -56,6 +58,7 @@ final class ClipboardStore {
         self.imagesURL = resolvedBaseURL.appendingPathComponent("Images", isDirectory: true)
         self.richTextDirectoryURL = resolvedBaseURL.appendingPathComponent("RichText", isDirectory: true)
         self.historyURL = resolvedBaseURL.appendingPathComponent("history.json", isDirectory: false)
+        self.trashURL = resolvedBaseURL.appendingPathComponent("trash.json", isDirectory: false)
 
         createDirectoriesIfNeeded()
     }
@@ -114,6 +117,62 @@ final class ClipboardStore {
         pendingSave?.cancel()
         pendingSave = nil
         write(items)
+    }
+
+    // MARK: - Recently deleted
+
+    func loadTrash() -> [TrashedClipboardItem] {
+        guard FileManager.default.fileExists(atPath: trashURL.path) else {
+            return []
+        }
+
+        do {
+            let data = try Data(contentsOf: trashURL)
+            let decoded = try decoder.decode([TrashedClipboardItem].self, from: data)
+
+            return decoded.compactMap { entry in
+                var item = entry.item
+
+                if item.type == .image {
+                    guard
+                        let fileName = item.imageFileName,
+                        FileManager.default.fileExists(atPath: imageURL(named: fileName).path)
+                    else {
+                        return nil
+                    }
+                }
+
+                if let richTextFileName = item.richTextFileName,
+                   !FileManager.default.fileExists(
+                       atPath: richTextFileURL(named: richTextFileName).path
+                   ) {
+                    item.richTextFileName = nil
+                }
+
+                return TrashedClipboardItem(
+                    item: item,
+                    deletedAt: entry.deletedAt
+                )
+            }
+        } catch {
+            NSLog("HaoPaste: failed to load trash — \(error.localizedDescription)")
+            return []
+        }
+    }
+
+    func scheduleSaveTrash(_ items: [TrashedClipboardItem]) {
+        pendingTrashSave?.cancel()
+        pendingTrashSave = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            guard !Task.isCancelled, let self else { return }
+            self.writeTrash(items)
+        }
+    }
+
+    func saveTrashNow(_ items: [TrashedClipboardItem]) {
+        pendingTrashSave?.cancel()
+        pendingTrashSave = nil
+        writeTrash(items)
     }
 
     // MARK: - Image assets
@@ -316,6 +375,15 @@ final class ClipboardStore {
             try data.write(to: historyURL, options: .atomic)
         } catch {
             NSLog("HaoPaste: failed to save history — \(error.localizedDescription)")
+        }
+    }
+
+    private func writeTrash(_ items: [TrashedClipboardItem]) {
+        do {
+            let data = try encoder.encode(items)
+            try data.write(to: trashURL, options: .atomic)
+        } catch {
+            NSLog("HaoPaste: failed to save trash — \(error.localizedDescription)")
         }
     }
 

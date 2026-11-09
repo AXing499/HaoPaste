@@ -410,6 +410,44 @@ struct SettingsView: View {
             }
         }
 
+        SettingsCard("最近删除") {
+            SettingsRow(
+                "保留时间",
+                subtitle: "删除的记录会在这里保留一段时间，到期后自动清除"
+            ) {
+                Picker("", selection: $settings.trashRetentionDays) {
+                    ForEach(AppSettings.trashRetentionOptions, id: \.self) { days in
+                        Text("\(days) 天").tag(days)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 120)
+            }
+
+            SettingsDivider()
+
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("最近删除")
+                        .font(.system(.body, design: .rounded))
+                    Text("当前保留 \(manager.trashedItems.count) 条记录")
+                        .font(.system(size: 10.5, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 10)
+
+                Button("清空最近删除…") {
+                    confirmEmptyTrash()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .disabled(manager.trashedItems.isEmpty)
+            }
+            .padding(14)
+        }
+
         SettingsCard("存储") {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
@@ -592,6 +630,20 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private func confirmEmptyTrash() {
+        guard !manager.trashedItems.isEmpty else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "清空最近删除？"
+        alert.informativeText = "所有最近删除的记录将被永久删除，此操作无法撤销。"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "清空")
+        alert.addButton(withTitle: "取消")
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        manager.emptyTrash()
     }
 
     private func confirmDeleteSnippet(_ snippet: Snippet) {

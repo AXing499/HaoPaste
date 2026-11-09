@@ -156,7 +156,9 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `ClipboardShelfEdge.swift` | 挂架位置：顶部 / 左侧 / 右侧 |
 | `ClipboardShelfFilter.swift` | 挂架筛选：全部 / 文本（含代码、链接、颜色）/ 图片 |
 | `Snippet.swift` | 可复用文本片段模型 |
+| `TrashedClipboardItem.swift` | 最近删除条目与删除时间 |
 | `SnippetRowView.swift` | 面板片段列表行，右键支持编辑 / 删除 |
+| `TrashRowView.swift` | 最近删除列表行，支持恢复与彻底删除 |
 | `RichTextPayload.swift` | RTF / HTML 富文本缓存模型 |
 | `ExcludedApplication.swift` | 按应用的隐私排除规则 |
 | `Theme.swift` | 圆角、间距、弹簧动效、描边颜色、字体辅助 |
@@ -229,6 +231,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 通用页：登录时自动启动（`SMAppService.mainApp`）、全局快捷键录制、暂停监听。
 - 历史页：未置顶记录上限（100 / 200 / 500 / 1000）、清空未置顶 / 全部、在 Finder 中显示数据目录，以及导出 / 导入 `.zip` 备份。
 - 片段页：创建 / 编辑 / 删除片段；面板提供独立「片段」标签，支持「新建片段」、文本条目右键「保存为片段」、片段行右键编辑 / 删除、搜索、键盘选择和快速复制。打开面板内编辑器时会暂停 `PanelController` 的键盘拦截，让输入框获得完整键盘事件。
+- 最近删除：`ClipboardManager.delete` 把条目移入 `trashedItems` 而不是立刻删除资源；`trash.json` 记录条目和 `deletedAt`，历史与最近删除分两个 JSON 保存。`ClipboardFilter.trash` 在面板中显示最近删除标签，`TrashRowView` 提供恢复 / 彻底删除。`purgeExpiredTrash` 在启动、打开面板和修改保留时间时清理过期条目，保留时间由 `AppSettings.trashRetentionDays` 控制。
 - 隐私页：图片记录开关、按应用排除列表（通过 `NSOpenPanel` 选择 `.app`，记录 Bundle ID / 名称）。
 - 设置保存在 `UserDefaults`；应用启动时读取并将历史上限同步给 `ClipboardManager`。
 - 历史上限调低后立即执行一次 FIFO 裁剪，置顶记录始终保留。
@@ -315,7 +318,8 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 卡片按条目 ID 复用视图：删除或过滤后新出现的卡片会得到新的夹子状态；`ShelfClipView` 还会在 `itemID` 变化时重置释放状态，避免新卡片继承已打开夹子而无法再次删除。
 - `ShelfCardView` 的外框必须使用传入的 `cardHeight`，不能使用固定高度；固定高度会让短卡片的内容被上移、长卡片的内容被下移，导致夹子离线并压住下一张卡片。
 - 顶部绳线的下垂弧度加大，卡片不设置基础旋转，夹子线环中心直接落在绳线上；侧边短臂的高度取卡片顶部加夹子线环中心，因此夹子始终对准短臂。卡片内容严格按动态卡片高度布局，长卡片不会溢出到下一张；筛选栏上方再叠加渐隐遮罩，避免遮挡筛选栏。
-- 夹子本身是删除入口：金色回形夹的线环穿过绳线 / 短臂，卡片上沿进入夹口，点击后夹子先抬起打开，约 0.2 秒后卡片以 ease-in 曲线向下滑落 132pt 并淡出，剩余卡片同时平滑补位；夹子位于复制手势之外，避免误触复制。
+- 夹子本身是删除入口：金色回形夹的线环穿过绳线 / 短臂，卡片上沿进入夹口，点击后夹子先抬起打开，约 0.2 秒后卡片通过 `FallingCardModifier` 以 ease-in 曲线旋转、横向漂移并下落 150pt，淡出时剩余卡片同时平滑补位；夹子位于复制手势之外，避免误触复制。
+- 悬停预览 / 提取文字 / 翻译 / 置顶按钮、回形夹和分类药丸时使用 `pointingHandCursor()` 推入 `NSCursor.pointingHand`，离开或视图消失时弹出，提示可点击。
 - 卡片命中区域在悬停抬升时向四周扩大，尤其覆盖夹子线环，保证夹子可点击。
 - 预览 / 识图 / 翻译都以独立浮动卡片出现在当前屏幕中央；`ShelfPreviewPanelController` 复用 `PreviewOverlayView`，`ShelfOCRPanelController` 复用 `OCRPaneView`，翻译复用快捷翻译卡片。弹框窗口尺寸与卡片一致并启用 `hasShadow = true`，使用 macOS 原生窗口阴影；SwiftUI 阴影只在主面板内嵌遮罩场景保留。挂架在这些卡片打开期间暂停自动收起，关闭后恢复。
 - 控制器在挂架收起时使用 10Hz 轮询，展开时切到 30Hz；定时器带 20% tolerance，降低空闲唤醒与能耗。
@@ -393,7 +397,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-106 个 XCTest 由 app target 作为测试宿主运行：
+108 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。

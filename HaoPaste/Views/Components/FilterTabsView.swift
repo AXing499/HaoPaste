@@ -64,6 +64,7 @@ private struct FilterPill: View {
         }
         .buttonStyle(.plain)
         .focusable(false)
+        .pointingHandCursor()
         .onHover { hovering in
             isHovering = hovering
         }

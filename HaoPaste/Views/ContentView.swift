@@ -28,6 +28,10 @@ struct ContentView: View {
         state.filter == .snippets
     }
 
+    private var isTrashMode: Bool {
+        state.filter == .trash
+    }
+
     private var visibleItems: [ClipboardItem] {
         isSnippetMode
             ? []
@@ -38,6 +42,13 @@ struct ContentView: View {
         isSnippetMode
             ? snippetManager.filtered(query: state.searchText)
             : []
+    }
+
+    private var visibleTrash: [TrashedClipboardItem] {
+        guard isTrashMode else { return [] }
+        let query = state.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return manager.trashedItems }
+        return manager.trashedItems.filter { $0.item.matches(query) }
     }
 
     private var visibleIDs: [UUID] {
@@ -107,8 +118,16 @@ struct ContentView: View {
                 contentList
                 PanelFooterView(
                     isPaused: manager.isMonitoringPaused,
-                    itemCount: isSnippetMode ? snippetManager.snippets.count : manager.items.count,
-                    itemLabel: isSnippetMode ? "个片段" : "条记录",
+                    itemCount: isSnippetMode
+                        ? snippetManager.snippets.count
+                        : isTrashMode
+                            ? manager.trashedItems.count
+                            : manager.items.count,
+                    itemLabel: isSnippetMode
+                        ? "个片段"
+                        : isTrashMode
+                            ? "条最近删除"
+                            : "条记录",
                     isSearching: state.isSearching
                 )
             }
@@ -314,20 +333,47 @@ struct ContentView: View {
                             }
                     }
                     .buttonStyle(.plain)
+                    .pointingHandCursor()
                     .help("新建片段")
+                }
+
+                if isTrashMode {
+                    Button {
+                        confirmEmptyTrash()
+                    } label: {
+                        Label("清空", systemImage: "trash")
+                            .font(.system(size: 10.5, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Color.secondary)
+                            .padding(.horizontal, 9)
+                            .frame(height: 22)
+                            .background {
+                                Capsule()
+                                    .fill(Color.primary.opacity(0.05))
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .pointingHandCursor()
+                    .disabled(manager.trashedItems.isEmpty)
+                    .help("清空最近删除")
                 }
 
                 Text(
                     isSnippetMode
                         ? "\(visibleSnippets.count) 个片段"
-                        : "\(visibleItems.count) 条"
+                        : isTrashMode
+                            ? "\(visibleTrash.count) 条最近删除"
+                            : "\(visibleItems.count) 条"
                 )
                 .font(.system(size: 10.5, weight: .medium, design: .rounded))
                 .foregroundStyle(.tertiary)
                 .contentTransition(.numericText())
                 .animation(
                     reduceMotion ? nil : Theme.spring,
-                    value: isSnippetMode ? visibleSnippets.count : visibleItems.count
+                    value: isSnippetMode
+                        ? visibleSnippets.count
+                        : isTrashMode
+                            ? visibleTrash.count
+                            : visibleItems.count
                 )
             }
         }
@@ -344,7 +390,11 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
 
             TextField(
-                isSnippetMode ? "搜索片段…" : "搜索剪切板历史…",
+                isSnippetMode
+                    ? "搜索片段…"
+                    : isTrashMode
+                        ? "搜索最近删除…"
+                        : "搜索剪切板历史…",
                 text: $state.searchText
             )
             .textFieldStyle(.plain)
@@ -404,6 +454,8 @@ struct ContentView: View {
     private var contentList: some View {
         if isSnippetMode {
             snippetList
+        } else if isTrashMode {
+            trashList
         } else {
             historyList
         }
@@ -543,6 +595,44 @@ struct ContentView: View {
         .frame(maxHeight: .infinity)
     }
 
+    private var trashList: some View {
+        ScrollView {
+            LazyVStack(spacing: Theme.rowSpacing) {
+                ForEach(visibleTrash) { entry in
+                    TrashRowView(
+                        entry: entry,
+                        retentionDays: manager.trashRetentionDays,
+                        onRestore: {
+                            restoreTrash(entry)
+                        },
+                        onDelete: {
+                            confirmDeleteTrash(entry)
+                        }
+                    )
+                    .transition(
+                        .asymmetric(
+                            insertion: .opacity,
+                            removal: .opacity.combined(with: .scale(scale: 0.98))
+                        )
+                    )
+                }
+            }
+            .padding(.horizontal, Theme.contentPadding)
+            .padding(.top, 2)
+            .padding(.bottom, 6)
+            .animation(reduceMotion ? nil : Theme.gentleSpring, value: visibleTrash.map(\.id))
+        }
+        .scrollIndicators(.never)
+        .overlay {
+            if visibleTrash.isEmpty {
+                TrashEmptyStateView(
+                    query: state.searchText,
+                    retentionDays: manager.trashRetentionDays
+                )
+            }
+        }
+    }
+
     private var snippetList: some View {
         ScrollViewReader { proxy in
             ScrollView(.vertical) {
@@ -623,8 +713,47 @@ struct ContentView: View {
     private func ensureSelectionForCurrentMode() {
         if isSnippetMode {
             state.ensureSnippetSelection(in: visibleSnippets)
+        } else if isTrashMode {
+            state.selectedID = nil
+            state.clearMultiSelection()
         } else {
             state.ensureSelection(in: visibleItems)
+        }
+    }
+
+    private func restoreTrash(_ entry: TrashedClipboardItem) {
+        withAnimation(reduceMotion ? nil : Theme.gentleSpring) {
+            manager.restore(entry)
+        }
+    }
+
+    private func confirmDeleteTrash(_ entry: TrashedClipboardItem) {
+        let alert = NSAlert()
+        alert.messageText = "彻底删除这条记录？"
+        alert.informativeText = "此操作无法撤销。"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "彻底删除")
+        alert.addButton(withTitle: "取消")
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        withAnimation(reduceMotion ? nil : Theme.gentleSpring) {
+            manager.permanentlyDelete(entry)
+        }
+    }
+
+    private func confirmEmptyTrash() {
+        guard !manager.trashedItems.isEmpty else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "清空最近删除？"
+        alert.informativeText = "所有最近删除的记录将被永久删除，此操作无法撤销。"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "清空")
+        alert.addButton(withTitle: "取消")
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        withAnimation(reduceMotion ? nil : Theme.gentleSpring) {
+            manager.emptyTrash()
         }
     }
 

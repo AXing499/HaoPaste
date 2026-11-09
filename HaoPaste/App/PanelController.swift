@@ -126,6 +126,8 @@ final class PanelController: NSObject, NSWindowDelegate {
             previousApplication = nil
         }
 
+        manager.updateTrashRetention(settings.trashRetentionDays)
+        manager.purgeExpiredTrash()
         let firstItemID = manager.filteredItems(query: "", filter: .all).first?.id
         state.prepareForPresentation(firstItemID: firstItemID)
 

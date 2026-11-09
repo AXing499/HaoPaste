@@ -20,6 +20,8 @@ final class AppSettings {
     ]
     static let defaultShelfItemLimit = 8
     static let defaultShelfEdge = ClipboardShelfEdge.top
+    static let trashRetentionOptions = [1, 7, 30, 90]
+    static let defaultTrashRetentionDays = 7
 
     private enum Keys {
         static let maxUnpinnedItems = "settings.maxUnpinnedItems"
@@ -31,6 +33,7 @@ final class AppSettings {
         static let translationHotKeyModifiers = "settings.translationHotKeyModifiers"
         static let autoTranslateLatestOnOpen = "settings.autoTranslateLatestOnOpen"
         static let autoTranslateDefaultOffMigrated = "settings.autoTranslateDefaultOffMigrated"
+        static let trashRetentionDays = "settings.trashRetentionDays"
         static let shelfEnabled = "settings.shelfEnabled"
         static let shelfItemLimit = "settings.shelfItemLimit"
         static let shelfEdge = "settings.shelfEdge"
@@ -95,6 +98,23 @@ final class AppSettings {
         }
     }
 
+    var trashRetentionDays: Int {
+        didSet {
+            let validated = Self.trashRetentionOptions.contains(trashRetentionDays)
+                ? trashRetentionDays
+                : Self.defaultTrashRetentionDays
+
+            if validated != trashRetentionDays {
+                trashRetentionDays = validated
+                return
+            }
+
+            guard oldValue != trashRetentionDays else { return }
+            defaults.set(trashRetentionDays, forKey: Keys.trashRetentionDays)
+            onTrashRetentionChange?(trashRetentionDays)
+        }
+    }
+
     var shelfEnabled: Bool {
         didSet {
             guard oldValue != shelfEnabled else { return }
@@ -148,6 +168,7 @@ final class AppSettings {
     @ObservationIgnored var onTranslationHotKeyChange: ((HotKeyConfiguration) -> Void)?
     @ObservationIgnored var onShelfEnabledChange: ((Bool) -> Void)?
     @ObservationIgnored var onShelfEdgeChange: ((ClipboardShelfEdge) -> Void)?
+    @ObservationIgnored var onTrashRetentionChange: ((Int) -> Void)?
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var isRevertingHotKey = false
@@ -194,6 +215,11 @@ final class AppSettings {
                 forKey: Keys.autoTranslateLatestOnOpen
             )
         }
+
+        let storedTrashRetention = defaults.integer(forKey: Keys.trashRetentionDays)
+        self.trashRetentionDays = Self.trashRetentionOptions.contains(storedTrashRetention)
+            ? storedTrashRetention
+            : Self.defaultTrashRetentionDays
 
         if defaults.object(forKey: Keys.shelfEnabled) == nil {
             self.shelfEnabled = true
