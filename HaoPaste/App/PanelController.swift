@@ -372,6 +372,11 @@ final class PanelController: NSObject, NSWindowDelegate {
     }
 
     private func handleKeyDown(_ event: NSEvent) -> Bool {
+        // The inline snippet editor owns the keyboard while visible.
+        if state.isEditingSnippet {
+            return false
+        }
+
         let flags = event.modifierFlags.intersection([.command, .option, .control, .shift])
         let isCommandOnly = flags == .command
 

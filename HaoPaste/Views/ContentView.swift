@@ -22,6 +22,7 @@ struct ContentView: View {
     let onCopySnippet: (Snippet) -> Void
 
     @FocusState private var isSearchFocused: Bool
+    @State private var snippetEditor: SnippetEditorTarget?
 
     private var isSnippetMode: Bool {
         state.filter == .snippets
@@ -229,6 +230,22 @@ struct ContentView: View {
                 .zIndex(3)
                 .transition(.opacity)
             }
+
+            if let editor = snippetEditor {
+                SnippetEditorOverlay(
+                    title: editor.title,
+                    content: editor.content,
+                    isEditing: editor.snippet != nil,
+                    onSave: { title, content in
+                        saveSnippet(editor: editor, title: title, content: content)
+                    },
+                    onCancel: {
+                        dismissSnippetEditor()
+                    }
+                )
+                .zIndex(20)
+                .transition(.opacity)
+            }
         }
         .frame(width: Theme.panelSize.width, height: Theme.panelSize.height)
         .background {
@@ -243,6 +260,10 @@ struct ContentView: View {
         }
         .onChange(of: state.focusToken) { _, _ in
             isSearchFocused = true
+        }
+        .onChange(of: state.presentationToken) { _, _ in
+            snippetEditor = nil
+            state.isEditingSnippet = false
         }
         .onChange(of: state.searchText) { _, _ in
             state.endPreview()
@@ -277,6 +298,24 @@ struct ContentView: View {
                 FilterTabsView(selection: $state.filter)
 
                 Spacer(minLength: 8)
+
+                if isSnippetMode {
+                    Button {
+                        presentNewSnippet()
+                    } label: {
+                        Label("新建片段", systemImage: "plus")
+                            .font(.system(size: 10.5, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Color.accentColor)
+                            .padding(.horizontal, 9)
+                            .frame(height: 22)
+                            .background {
+                                Capsule()
+                                    .fill(Color.accentColor.opacity(0.10))
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .help("新建片段")
+                }
 
                 Text(
                     isSnippetMode
@@ -411,6 +450,9 @@ struct ContentView: View {
                                 onCopy(item)
                             },
                             onCopyText: onCopyText,
+                            onSaveSnippet: {
+                                presentSnippetEditor(for: item)
+                            },
                             onPreview: {
                                 state.beginPreview(item)
                             },
@@ -516,6 +558,12 @@ struct ContentView: View {
                             isSelected: state.selectedSnippetID == snippet.id,
                             onCopy: {
                                 onCopySnippet(snippet)
+                            },
+                            onEdit: {
+                                presentSnippetEditor(snippet)
+                            },
+                            onDelete: {
+                                confirmDeleteSnippet(snippet)
                             }
                         )
                         .id(snippet.id)
@@ -580,6 +628,77 @@ struct ContentView: View {
         }
     }
 
+    private func presentNewSnippet() {
+        snippetEditor = SnippetEditorTarget(
+            snippet: nil,
+            title: "",
+            content: ""
+        )
+        state.isEditingSnippet = true
+        isSearchFocused = false
+    }
+
+    private func presentSnippetEditor(_ snippet: Snippet) {
+        snippetEditor = SnippetEditorTarget(
+            snippet: snippet,
+            title: snippet.title,
+            content: snippet.content
+        )
+        state.isEditingSnippet = true
+        isSearchFocused = false
+    }
+
+    private func presentSnippetEditor(for item: ClipboardItem) {
+        let title = item.displayTitle
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let content = item.plainText.isEmpty ? item.content : item.plainText
+        snippetEditor = SnippetEditorTarget(
+            snippet: nil,
+            title: title.isEmpty ? "未命名片段" : String(title.prefix(40)),
+            content: content
+        )
+        state.isEditingSnippet = true
+        isSearchFocused = false
+    }
+
+    private func saveSnippet(
+        editor: SnippetEditorTarget,
+        title: String,
+        content: String
+    ) {
+        if let snippet = editor.snippet {
+            snippetManager.update(snippet, title: title, content: content)
+            dismissSnippetEditor()
+        } else if let created = snippetManager.create(
+            title: title,
+            content: content
+        ) {
+            state.selectedSnippetID = created.id
+            dismissSnippetEditor()
+        }
+        ensureSelectionForCurrentMode()
+    }
+
+    private func dismissSnippetEditor() {
+        snippetEditor = nil
+        state.isEditingSnippet = false
+        state.requestSearchFocus()
+    }
+
+    private func confirmDeleteSnippet(_ snippet: Snippet) {
+        let alert = NSAlert()
+        alert.messageText = "删除片段「\(snippet.title)」？"
+        alert.informativeText = "此操作无法撤销。"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "删除")
+        alert.addButton(withTitle: "取消")
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        snippetManager.delete(snippet)
+        ensureSelectionForCurrentMode()
+        state.requestSearchFocus()
+    }
+
     private func saveOCRSnippet(_ text: String, title: String? = nil) {
         guard !text.isEmpty else { return }
 
@@ -625,6 +744,46 @@ struct ContentView: View {
             return
         }
         onCopy(item)
+    }
+}
+
+private struct SnippetEditorTarget: Identifiable {
+    let id = UUID()
+    let snippet: Snippet?
+    let title: String
+    let content: String
+}
+
+private struct SnippetEditorOverlay: View {
+    let title: String
+    let content: String
+    let isEditing: Bool
+    let onSave: (String, String) -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.28)
+                .contentShape(Rectangle())
+                .onTapGesture(perform: onCancel)
+
+            SnippetEditorSheet(
+                title: title,
+                content: content,
+                isEditing: isEditing,
+                onSave: onSave,
+                onCancel: onCancel
+            )
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Theme.hairlineColor, lineWidth: Theme.hairline)
+            }
+            .shadow(color: Color.black.opacity(0.24), radius: 24, x: 0, y: 10)
+            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .onTapGesture {}
+        }
     }
 }
 

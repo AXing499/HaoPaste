@@ -1133,7 +1133,7 @@ private struct SnippetEditorContext: Identifiable {
     let snippet: Snippet?
 }
 
-private struct SnippetEditorSheet: View {
+struct SnippetEditorSheet: View {
     let isEditing: Bool
     let onSave: (String, String) -> Void
     let onCancel: () -> Void

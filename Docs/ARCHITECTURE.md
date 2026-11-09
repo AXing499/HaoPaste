@@ -156,14 +156,14 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `ClipboardShelfEdge.swift` | 挂架位置：顶部 / 左侧 / 右侧 |
 | `ClipboardShelfFilter.swift` | 挂架筛选：全部 / 文本（含代码、链接、颜色）/ 图片 |
 | `Snippet.swift` | 可复用文本片段模型 |
-| `SnippetRowView.swift` | 面板片段列表行 |
+| `SnippetRowView.swift` | 面板片段列表行，右键支持编辑 / 删除 |
 | `RichTextPayload.swift` | RTF / HTML 富文本缓存模型 |
 | `ExcludedApplication.swift` | 按应用的隐私排除规则 |
 | `Theme.swift` | 圆角、间距、弹簧动效、描边颜色、字体辅助 |
 | `HexColor.swift` | HEX 解析、色块、RGB / HSL 表示 |
 | `SearchMatcher.swift` | 中文 / 拼音 / 模糊搜索与相关性评分 |
 | `SettingsView.swift` | 设置窗口：通用、历史、片段、隐私、关于 |
-| `SnippetEditorSheet.swift` | 片段新建 / 编辑表单（位于 SettingsView.swift） |
+| `SnippetEditorSheet.swift` | 片段新建 / 编辑表单（位于 SettingsView.swift，设置与面板共用） |
 | `ShortcutRecorderView.swift` | 快捷键捕获与冲突错误展示 |
 
 ## 5. 数据模型
@@ -228,7 +228,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 - 通用页：登录时自动启动（`SMAppService.mainApp`）、全局快捷键录制、暂停监听。
 - 历史页：未置顶记录上限（100 / 200 / 500 / 1000）、清空未置顶 / 全部、在 Finder 中显示数据目录，以及导出 / 导入 `.zip` 备份。
-- 片段页：创建 / 编辑 / 删除片段；面板提供独立「片段」标签，支持搜索、键盘选择和快速复制。
+- 片段页：创建 / 编辑 / 删除片段；面板提供独立「片段」标签，支持「新建片段」、文本条目右键「保存为片段」、片段行右键编辑 / 删除、搜索、键盘选择和快速复制。打开面板内编辑器时会暂停 `PanelController` 的键盘拦截，让输入框获得完整键盘事件。
 - 隐私页：图片记录开关、按应用排除列表（通过 `NSOpenPanel` 选择 `.app`，记录 Bundle ID / 名称）。
 - 设置保存在 `UserDefaults`；应用启动时读取并将历史上限同步给 `ClipboardManager`。
 - 历史上限调低后立即执行一次 FIFO 裁剪，置顶记录始终保留。

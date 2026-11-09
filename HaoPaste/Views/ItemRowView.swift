@@ -19,6 +19,7 @@ struct ItemRowView: View {
     let onRowClick: () -> Void
     let onCopy: () -> Void
     let onCopyText: (String) -> Void
+    let onSaveSnippet: () -> Void
     let onPreview: () -> Void
     let onTranslate: () -> Void
     let onExtractText: () -> Void
@@ -84,6 +85,17 @@ struct ItemRowView: View {
                     onTranslate()
                 } label: {
                     Label("翻译…", systemImage: "character.bubble")
+                }
+            }
+
+            if item.type == .text
+                || item.type == .code
+                || item.type == .url
+                || item.type == .colorHex {
+                Button {
+                    onSaveSnippet()
+                } label: {
+                    Label("保存为片段…", systemImage: "text.quote")
                 }
             }
 

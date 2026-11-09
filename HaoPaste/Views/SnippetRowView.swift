@@ -12,6 +12,8 @@ struct SnippetRowView: View {
     let index: Int
     let isSelected: Bool
     let onCopy: () -> Void
+    let onEdit: () -> Void
+    let onDelete: () -> Void
 
     @State private var isHovering = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -105,6 +107,11 @@ struct SnippetRowView: View {
         .animation(reduceMotion ? nil : Theme.spring, value: isSelected)
         .contextMenu {
             Button("复制片段", action: onCopy)
+
+            Divider()
+
+            Button("编辑片段…", action: onEdit)
+            Button("删除片段…", role: .destructive, action: onDelete)
         }
         .help("点击复制片段")
         .accessibilityElement(children: .combine)

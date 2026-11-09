@@ -24,6 +24,9 @@ final class PanelViewState {
     /// History item shown in the quick preview overlay, if any.
     var previewingItemID: UUID?
 
+    /// True while the in-panel snippet editor owns the keyboard.
+    var isEditingSnippet = false
+
     var isPreviewing: Bool {
         previewingItemID != nil
     }
@@ -50,6 +53,7 @@ final class PanelViewState {
         selectedIDs.removeAll()
         selectionAnchorID = nil
         previewingItemID = nil
+        isEditingSnippet = false
         focusToken &+= 1
         presentationToken &+= 1
     }
