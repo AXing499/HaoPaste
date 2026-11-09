@@ -116,7 +116,7 @@ struct ShelfCardView: View {
                 Button {
                     onTranslate()
                 } label: {
-                    Label("识图并翻译", systemImage: "text.viewfinder")
+                    Label("提取文字…", systemImage: "text.viewfinder")
                 }
             }
 
@@ -253,7 +253,7 @@ struct ShelfCardView: View {
                 ShelfActionButton(
                     symbol: "text.viewfinder",
                     tint: Color.accentColor,
-                    label: "识图并翻译",
+                    label: "提取文字",
                     action: onTranslate
                 )
             }

@@ -143,7 +143,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.shelfOCRController.present(
                     item: item,
                     imageURL: imageURL,
-                    translateAfterRecognition: true,
+                    translateAfterRecognition: false,
                     anchor: anchor,
                     edge: edge
                 )

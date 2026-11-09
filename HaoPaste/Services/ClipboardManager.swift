@@ -149,8 +149,8 @@ final class ClipboardManager {
         return true
     }
 
-    /// Writes arbitrary text (actions such as Markdown links or color formats)
-    /// without adding a synthetic history entry.
+    /// Writes text produced inside HaoPaste (OCR, translation, snippets and
+    /// other derived actions) and keeps it in history, just like a normal copy.
     @discardableResult
     func copyTextToPasteboard(_ text: String) -> Bool {
         let pasteboard = monitor.pasteboard
@@ -158,10 +158,28 @@ final class ClipboardManager {
         let didWrite = pasteboard.setString(text, forType: .string)
         monitor.synchronizeChangeCount()
 
-        if !didWrite {
+        guard didWrite else {
             NSSound.beep()
+            return false
         }
-        return didWrite
+
+        captureGeneratedText(text)
+        return true
+    }
+
+    private func captureGeneratedText(_ text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let type = ContentClassifier.classify(text)
+        handleCapture(
+            CapturedClipboard(
+                payload: .text(text, type: type),
+                plainText: text,
+                contentHash: ContentHasher.text(text, type: type),
+                sourceApp: nil
+            )
+        )
     }
 
     /// Writes multiple entries as one payload without adding a history record.

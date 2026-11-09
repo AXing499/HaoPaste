@@ -126,4 +126,21 @@ final class ClipboardManagerTests: XCTestCase {
             "rgb(255, 138, 91)"
         )
     }
+
+    func testCopiedGeneratedTextIsCapturedInHistory() throws {
+        let directory = try TestFixtures.temporaryDirectory()
+        defer { TestFixtures.remove(directory) }
+
+        let pasteboard = TestFixtures.makeCustomPasteboard()
+        let manager = ClipboardManager(
+            store: ClipboardStore(baseURL: directory),
+            monitor: ClipboardMonitor(pasteboard: pasteboard)
+        )
+        manager.start()
+        defer { manager.shutdown() }
+
+        XCTAssertTrue(manager.copyTextToPasteboard("识别出的文字"))
+        XCTAssertEqual(manager.items.first?.plainText, "识别出的文字")
+        XCTAssertEqual(manager.items.first?.type, .text)
+    }
 }
