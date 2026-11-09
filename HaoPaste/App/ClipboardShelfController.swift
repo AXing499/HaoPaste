@@ -385,10 +385,15 @@ final class ClipboardShelfController: NSObject {
     }
 
     private func updatePointerCursor(_ wantsPointer: Bool) {
-        if wantsPointer, !isPointerHandPushed {
-            NSCursor.pointingHand.push()
-            isPointerHandPushed = true
-        } else if !wantsPointer, isPointerHandPushed {
+        if wantsPointer {
+            if !isPointerHandPushed {
+                NSCursor.pointingHand.push()
+                isPointerHandPushed = true
+            }
+            // Re-assert on every tick: the nonactivating panel can have its
+            // cursor reset by AppKit cursor rects while the pointer moves.
+            NSCursor.pointingHand.set()
+        } else if isPointerHandPushed {
             NSCursor.pop()
             isPointerHandPushed = false
         }
