@@ -23,10 +23,20 @@ DMG="$DIST/HaoPaste-$VERSION.dmg"
 RW_DMG="$(mktemp "${TMPDIR:-/tmp}/haopaste-rw.XXXXXX.dmg")"
 STAGE="$(mktemp -d "${TMPDIR:-/tmp}/haopaste-dmg.XXXXXX")"
 MOUNT="/Volumes/$VOLUME_NAME"
+LAYOUT="${HAOPASTE_DMG_LAYOUT:-auto}"
+
+if [[ "$LAYOUT" == "auto" ]]; then
+    if [[ "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
+        LAYOUT="0"
+    else
+        LAYOUT="1"
+    fi
+fi
 
 cleanup() {
     hdiutil detach "$MOUNT" -force >/dev/null 2>&1 || true
-    rm -rf "$STAGE" "$RW_DMG"
+    rm -rf "$STAGE"
+    [[ -n "${RW_DMG:-}" ]] && rm -f "$RW_DMG"
 }
 trap cleanup EXIT
 
@@ -38,11 +48,26 @@ ditto "$APP" "$STAGE/HaoPaste.app"
 ln -s /Applications "$STAGE/Applications"
 
 # Finder window background with the install steps and the ad-hoc signing note.
-if [[ -f "$BACKGROUND" ]]; then
+# CI runs without a Finder session, so fall back to a plain DMG with a
+# readable install note instead of hanging on AppleScript.
+if [[ "$LAYOUT" == "1" && -f "$BACKGROUND" ]]; then
     mkdir -p "$STAGE/.background"
     cp "$BACKGROUND" "$STAGE/.background/background.png"
     chflags hidden "$STAGE/.background" 2>/dev/null || true
     SetFile -a V "$STAGE/.background" 2>/dev/null || true
+else
+    cat > "$STAGE/安装说明.txt" <<'EOF'
+HaoPaste 安装说明
+
+1. 将 HaoPaste 拖入 Applications / 应用程序文件夹。
+2. 从应用程序或 Spotlight 启动 HaoPaste。
+3. HaoPaste 是菜单栏应用，不会显示 Dock 图标。
+
+首次打开如提示「无法验证开发者」：
+在 Finder 中右键 HaoPaste → 打开，或在「系统设置 → 隐私与安全性」中允许打开。
+
+系统要求：macOS 14 或更高版本。
+EOF
 fi
 
 # Strip development attributes and make sure the copy is validly signed.
@@ -51,23 +76,30 @@ if ! codesign --verify --deep --strict "$STAGE/HaoPaste.app" >/dev/null 2>&1; th
     codesign --force --deep --sign - "$STAGE/HaoPaste.app"
 fi
 
-# Build a read-write image first so Finder can store the window layout.
-hdiutil create \
-    -volname "$VOLUME_NAME" \
-    -srcfolder "$STAGE" \
-    -fs HFS+ \
-    -format UDRW \
-    -ov \
-    "$RW_DMG" >/dev/null
+if [[ "$LAYOUT" == "0" ]]; then
+    hdiutil create \
+        -volname "$VOLUME_NAME" \
+        -srcfolder "$STAGE" \
+        -fs HFS+ \
+        -format UDZO \
+        -imagekey zlib-level=9 \
+        -ov \
+        "$DMG" >/dev/null
+else
+    # Build a read-write image first so Finder can store the window layout.
+    hdiutil create \
+        -volname "$VOLUME_NAME" \
+        -srcfolder "$STAGE" \
+        -fs HFS+ \
+        -format UDRW \
+        -ov \
+        "$RW_DMG" >/dev/null
 
-hdiutil detach "$MOUNT" -force >/dev/null 2>&1 || true
-hdiutil attach "$RW_DMG" -nobrowse -readwrite >/dev/null
-open "$MOUNT"
-sleep 0.5
+    hdiutil detach "$MOUNT" -force >/dev/null 2>&1 || true
+    hdiutil attach "$RW_DMG" -nobrowse -readwrite >/dev/null
+    open "$MOUNT"
+    sleep 0.5
 
-# Best effort: Finder may refuse Apple events in a headless build. The DMG is
-# still usable if the layout cannot be applied.
-if [[ -f "$BACKGROUND" ]]; then
     osascript <<APPLESCRIPT >/dev/null 2>&1 || true
 tell application "Finder"
     tell disk "$VOLUME_NAME"
@@ -92,12 +124,11 @@ tell application "Finder"
     end tell
 end tell
 APPLESCRIPT
+
+    sync
+    hdiutil detach "$MOUNT" >/dev/null 2>&1 || hdiutil detach "$MOUNT" -force >/dev/null 2>&1 || true
+    hdiutil convert "$RW_DMG" -format UDZO -imagekey zlib-level=9 -o "$DMG" >/dev/null
 fi
-
-sync
-hdiutil detach "$MOUNT" >/dev/null 2>&1 || hdiutil detach "$MOUNT" -force >/dev/null 2>&1 || true
-
-hdiutil convert "$RW_DMG" -format UDZO -imagekey zlib-level=9 -o "$DMG" >/dev/null
 
 (
     cd "$DIST"

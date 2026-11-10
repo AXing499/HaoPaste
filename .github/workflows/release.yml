@@ -1,0 +1,127 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-release:
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          PROJECT_VERSION=$(sed -n 's/.*MARKETING_VERSION: "\([^"]*\)".*/\1/p' project.yml | head -n1)
+          if [[ -z "$PROJECT_VERSION" || "$VERSION" != "$PROJECT_VERSION" ]]; then
+            echo "Tag ${TAG} does not match project.yml MARKETING_VERSION (${PROJECT_VERSION:-missing})" >&2
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Run unit tests
+        run: |
+          xcodebuild \
+            -project HaoPaste.xcodeproj \
+            -scheme HaoPaste \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath .build/ci \
+            test -quiet
+
+      - name: Build Release app
+        run: |
+          xcodebuild \
+            -project HaoPaste.xcodeproj \
+            -scheme HaoPaste \
+            -configuration Release \
+            -derivedDataPath .build/release \
+            build -quiet
+
+      - name: Build DMG
+        env:
+          HAOPASTE_DMG_LAYOUT: "0"
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          APP=".build/release/Build/Products/Release/HaoPaste.app"
+          APP_VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")
+          if [[ "$APP_VERSION" != "$VERSION" ]]; then
+            echo "Built app version ${APP_VERSION} does not match tag ${VERSION}" >&2
+            exit 1
+          fi
+          Scripts/package-dmg.sh "$APP"
+          test -f "dist/HaoPaste-${VERSION}.dmg"
+          test -f "dist/HaoPaste-${VERSION}.dmg.sha256"
+
+      - name: Write release notes
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.version.outputs.tag }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v "^${TAG}$" | head -n1 || true)
+          if [[ -n "$PREVIOUS_TAG" ]]; then
+            CHANGES=$(git log --pretty=format:'- %s' "${PREVIOUS_TAG}..${TAG}")
+          else
+            CHANGES=$(git log --pretty=format:'- %s' "${TAG}")
+          fi
+
+          cat > "$RUNNER_TEMP/release-notes.md" <<EOF
+          HaoPaste ${VERSION}
+
+          ## 安装
+          1. 下载 \`HaoPaste-${VERSION}.dmg\`
+          2. 打开 DMG，将 HaoPaste 拖入 Applications / 应用程序
+          3. 当前版本未使用 Apple Developer ID 公证；首次打开如提示「无法验证开发者」，请在 Finder 中右键 HaoPaste → 打开，或在「系统设置 → 隐私与安全性」中允许打开。
+
+          系统要求：macOS 14 或更高版本。
+
+          SHA-256 校验文件已一并上传。
+
+          ## 本次变更
+          ${CHANGES:-没有新的提交记录}
+          EOF
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          DMG="dist/HaoPaste-${VERSION}.dmg"
+          SHA="${DMG}.sha256"
+          TITLE="HaoPaste ${VERSION}"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --title "$TITLE" \
+              --notes-file "$RUNNER_TEMP/release-notes.md" \
+              --latest
+            gh release upload "$TAG" "$DMG" "$SHA" --clobber
+          else
+            gh release create "$TAG" "$DMG" "$SHA" \
+              --title "$TITLE" \
+              --notes-file "$RUNNER_TEMP/release-notes.md" \
+              --latest
+          fi
+
+          gh release view "$TAG" --json url,name,tagName,assets

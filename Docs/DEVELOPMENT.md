@@ -343,3 +343,28 @@ defaults delete com.hao.HaoPaste 2>/dev/null || true
 - 提交信息建议使用 `feat: ...`、`fix: ...`、`docs: ...`、`chore: ...`
 - 发布产物、DerivedData、用户数据和签名材料不提交
 - 功能变更请同步更新 `Docs/` 中相关章节与 `ROADMAP.md` 状态
+
+
+### GitHub Actions 发布
+
+推送 `v*` tag 会触发 `.github/workflows/release.yml`：
+
+1. 校验 tag 与 `project.yml` 的 `MARKETING_VERSION` 一致
+2. 运行 XCTest
+3. 构建 Release `.app` 和无 Finder 依赖的 DMG
+4. 生成 Release 说明（上一 tag 到当前 tag 的提交）
+5. 创建或更新 GitHub Release，并上传 DMG 与 SHA-256
+
+发布步骤：
+
+```bash
+# 先修改 project.yml 的 MARKETING_VERSION / CURRENT_PROJECT_VERSION
+xcodegen generate
+git add .
+git commit -m "release: vX.Y.Z"
+git tag vX.Y.Z
+git push origin main
+git push origin vX.Y.Z
+```
+
+CI 使用 `HAOPASTE_DMG_LAYOUT=0` 跳过 Finder 窗口布局，改为在 DMG 中放入 `安装说明.txt`；本机 `make dmg` 仍会使用 Finder 背景和安装提示。
