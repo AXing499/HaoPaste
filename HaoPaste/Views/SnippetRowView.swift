@@ -60,8 +60,8 @@ struct SnippetRowView: View {
 
                 VStack(alignment: .trailing, spacing: 4) {
                     HStack(spacing: 4) {
-                        badge("片段")
-                        badge("\(snippet.characterCount) 字符")
+                        badge(L("片段条目"))
+                        badge(L("%d 字符", snippet.characterCount))
                     }
 
                     Text(RelativeTime.string(from: snippet.updatedAt))
@@ -107,17 +107,23 @@ struct SnippetRowView: View {
         .animation(reduceMotion ? nil : Theme.spring, value: isHovering)
         .animation(reduceMotion ? nil : Theme.spring, value: isSelected)
         .contextMenu {
-            Button("复制片段", action: onCopy)
+            Button(L("复制片段"), action: onCopy)
 
             Divider()
 
-            Button("编辑片段…", action: onEdit)
-            Button("删除片段…", role: .destructive, action: onDelete)
+            Button(L("编辑片段…"), action: onEdit)
+            Button(L("删除片段…"), role: .destructive, action: onDelete)
         }
-        .help("点击复制片段")
+        .help(L("点击复制片段"))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("片段，\(snippet.title)，\(snippet.characterCount) 字符")
-        .accessibilityHint("复制片段内容到剪贴板")
+        .accessibilityLabel(
+            L(
+                "片段，%@，%d 字符",
+                snippet.title,
+                snippet.characterCount
+            )
+        )
+        .accessibilityHint(L("复制片段内容到剪贴板"))
     }
 
     private func badge(_ text: String) -> some View {

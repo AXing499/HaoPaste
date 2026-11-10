@@ -52,11 +52,11 @@ enum UpdateChecker {
         var errorDescription: String? {
             switch self {
             case .invalidResponse:
-                return "更新服务器返回了无效响应。"
+                return L("更新服务器返回了无效响应。")
             case .invalidFeed:
-                return "更新清单格式不正确。"
+                return L("更新清单格式不正确。")
             case .noReleases:
-                return "这个仓库还没有发布版本。"
+                return L("这个仓库还没有发布版本。")
             }
         }
     }
@@ -139,17 +139,17 @@ enum UpdateChecker {
     ) {
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = "发现新版本 \(manifest.version)"
+        alert.messageText = L("发现新版本 %@", manifest.version)
         alert.informativeText = [
-            "当前版本：\(currentVersion)",
+            L("当前版本：%@", currentVersion),
             manifest.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
         ]
         .compactMap { $0 }
         .filter { !$0.isEmpty }
         .joined(separator: "\n\n")
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "下载更新")
-        alert.addButton(withTitle: "稍后")
+        alert.addButton(withTitle: L("下载更新"))
+        alert.addButton(withTitle: L("稍后"))
 
         if alert.runModal() == .alertFirstButtonReturn {
             NSWorkspace.shared.open(manifest.downloadURL)
@@ -160,10 +160,10 @@ enum UpdateChecker {
     static func presentNoUpdate(currentVersion: String) {
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = "已是最新版本"
-        alert.informativeText = "当前版本：\(currentVersion)"
+        alert.messageText = L("已是最新版本")
+        alert.informativeText = L("当前版本：%@", currentVersion)
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "好")
+        alert.addButton(withTitle: L("好"))
         alert.runModal()
     }
 
@@ -171,10 +171,10 @@ enum UpdateChecker {
     static func presentError(_ error: Error) {
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = "检查更新失败"
+        alert.messageText = L("检查更新失败")
         alert.informativeText = error.localizedDescription
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "好")
+        alert.addButton(withTitle: L("好"))
         alert.runModal()
     }
 }

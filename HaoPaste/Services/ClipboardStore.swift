@@ -17,9 +17,9 @@ final class ClipboardStore {
         var errorDescription: String? {
             switch self {
             case .invalidImage:
-                return "无法读取这张图片。"
+                return L("无法读取这张图片。")
             case .couldNotEncode:
-                return "无法编码剪贴板数据。"
+                return L("无法编码剪贴板数据。")
             }
         }
     }
@@ -343,7 +343,9 @@ final class ClipboardStore {
                 id: newID,
                 type: .image,
                 content: newFileName,
-                plainText: item.plainText.isEmpty ? "图片 \(dimensions.displayText)" : item.plainText,
+                plainText: item.plainText.isEmpty
+                    ? L("图片 %@", dimensions.displayText)
+                    : item.plainText,
                 isPinned: item.isPinned,
                 createdAt: item.createdAt,
                 sourceApp: item.sourceApp,

@@ -20,12 +20,12 @@ enum ClipboardItemType: String, Codable, CaseIterable, Hashable, Sendable {
     /// Human readable name used in badges and accessibility labels.
     var displayName: String {
         switch self {
-        case .text: return "文本"
-        case .image: return "图片"
-        case .file: return "文件"
-        case .colorHex: return "颜色"
-        case .url: return "链接"
-        case .code: return "代码"
+        case .text: return L("文本")
+        case .image: return L("图片")
+        case .file: return L("文件")
+        case .colorHex: return L("颜色")
+        case .url: return L("链接")
+        case .code: return L("代码")
         }
     }
 
@@ -124,16 +124,20 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
     var displayTitle: String {
         switch type {
         case .image:
-            return "图片"
+            return L("图片")
 
         case .file:
             let names = (filePaths ?? [])
                 .map { URL(fileURLWithPath: $0).lastPathComponent }
                 .filter { !$0.isEmpty }
-            guard !names.isEmpty else { return "文件" }
+            guard !names.isEmpty else { return L("文件") }
             if names.count == 1 { return names[0] }
-            if names.count == 2 { return "\(names[0])、\(names[1])" }
-            return "\(names[0]) 等 \(names.count) 个文件"
+            if names.count == 2 { return L("%@、%@", names[0], names[1]) }
+            return L(
+                "%@ 等另外 %d 个文件",
+                names[0],
+                names.count - 1
+            )
 
         case .colorHex:
             return content.uppercased()
@@ -158,7 +162,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
                 .map { $0.trimmingCharacters(in: .whitespaces) }
                 .first { !$0.isEmpty }
 
-            guard let firstLine, !firstLine.isEmpty else { return "空白内容" }
+            guard let firstLine, !firstLine.isEmpty else { return L("空白内容") }
             return firstLine
         }
     }
@@ -166,15 +170,15 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
     /// Format badge shown on the trailing edge of a row.
     var formatBadge: String {
         switch type {
-        case .text: return "文本"
-        case .image: return "图片"
-        case .file: return "文件"
-        case .colorHex: return "颜色"
-        case .url: return "链接"
+        case .text: return L("文本")
+        case .image: return L("图片")
+        case .file: return L("文件")
+        case .colorHex: return L("颜色")
+        case .url: return L("链接")
         case .code:
             let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
             let looksLikeJSON = trimmed.hasPrefix("{") || trimmed.hasPrefix("[")
-            return looksLikeJSON ? "JSON" : "代码"
+            return looksLikeJSON ? "JSON" : L("代码")
         }
     }
 
@@ -182,17 +186,17 @@ struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
     var detailBadge: String {
         switch type {
         case .image:
-            return imageDimensions?.displayText ?? "图片"
+            return imageDimensions?.displayText ?? L("图片")
         case .file:
             let count = filePaths?.count ?? 0
-            guard count > 0 else { return "文件" }
-            if !hasAvailableFiles { return "文件已丢失" }
-            return count == 1 ? "1 个文件" : "\(count) 个文件"
+            guard count > 0 else { return L("文件") }
+            if !hasAvailableFiles { return L("文件已丢失") }
+            return count == 1 ? L("1 个文件") : L("%d 个文件", count)
         case .colorHex:
             return "HEX"
         case .text, .code, .url:
-            let base = "\(plainText.count) 字符"
-            return hasRichText ? "富文本 · \(base)" : base
+            let base = L("%d 字符", plainText.count)
+            return hasRichText ? L("富文本 · %@", base) : base
         }
     }
 
@@ -291,14 +295,14 @@ enum ClipboardFilter: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .all: return "全部"
-        case .text: return "文本"
-        case .code: return "代码"
-        case .image: return "图片"
-        case .file: return "文件"
-        case .url: return "链接"
-        case .snippets: return "片段"
-        case .trash: return "最近删除"
+        case .all: return L("全部")
+        case .text: return L("文本")
+        case .code: return L("代码")
+        case .image: return L("图片")
+        case .file: return L("文件")
+        case .url: return L("链接")
+        case .snippets: return L("片段列表")
+        case .trash: return L("最近删除")
         }
     }
 

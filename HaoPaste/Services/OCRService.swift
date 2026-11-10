@@ -317,8 +317,8 @@ final class OCRService {
         guard !trimmed.isEmpty else { return }
 
         let title = sourceTitle.isEmpty
-            ? "图片文字"
-            : "图片文字 · \(sourceTitle)"
+            ? L("图片文字")
+            : L("图片文字 · %@", sourceTitle)
         DispatchQueue.main.async { [weak self] in
             self?.onAutoTranslate?(trimmed, title)
         }
@@ -459,7 +459,7 @@ enum OCRError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidImage:
-            return "无法读取这张图片。"
+            return L("无法读取这张图片。")
         }
     }
 }

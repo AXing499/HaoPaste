@@ -735,7 +735,7 @@ final class PanelController: NSObject, NSWindowDelegate {
 
         translationService.present(
             text: text,
-            title: "图片文字 · \(ocrService.sourceTitle)"
+            title: L("图片文字 · %@", ocrService.sourceTitle)
         )
     }
 

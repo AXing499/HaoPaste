@@ -17,18 +17,18 @@ final class GlobalHotKey {
         var errorDescription: String? {
             switch self {
             case .eventHandler:
-                return "无法安装全局快捷键事件处理器。"
+                return L("无法安装全局快捷键事件处理器。")
             case .registration:
-                return "这个快捷键可能已被其他应用占用，请换一个组合。"
+                return L("这个快捷键可能已被其他应用占用，请换一个组合。")
             }
         }
 
         var failureReason: String? {
             switch self {
             case let .eventHandler(status):
-                return "InstallEventHandler 返回错误码 \(status)。"
+                return L("InstallEventHandler 返回错误码 %d。", status)
             case let .registration(status):
-                return "RegisterEventHotKey 返回错误码 \(status)。"
+                return L("RegisterEventHotKey 返回错误码 %d。", status)
             }
         }
     }

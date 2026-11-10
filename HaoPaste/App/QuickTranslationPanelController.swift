@@ -92,7 +92,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         if panel.isVisible {
             show(
                 text: text,
-                title: "剪贴板翻译",
+                title: L("剪贴板翻译"),
                 anchor: nil,
                 edge: nil,
                 source: .hotKey,
@@ -101,7 +101,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         } else {
             show(
                 text: text,
-                title: "剪贴板翻译",
+                title: L("剪贴板翻译"),
                 anchor: nil,
                 edge: nil,
                 source: .hotKey,
@@ -304,7 +304,11 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
             return
         }
 
-        let text = "原文：\n\(service.sourceText)\n\n译文：\n\(service.resultText)"
+        let text = L(
+            "原文：\n%@\n\n译文：\n%@",
+            service.sourceText,
+            service.resultText
+        )
         guard manager.copyTextToPasteboard(text) else { return }
         hide()
     }
@@ -319,7 +323,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
             ? String(service.sourceTitle.prefix(20)) + "…"
             : service.sourceTitle
         _ = snippetManager.create(
-            title: "翻译 · \(title)",
+            title: L("翻译 · %@", title),
             content: service.resultText
         )
     }

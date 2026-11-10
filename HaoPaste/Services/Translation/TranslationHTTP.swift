@@ -18,10 +18,10 @@ enum TranslationHTTP {
         } catch let error as TranslationError {
             throw error
         } catch is CancellationError {
-            throw TranslationError.service("翻译已取消。")
+            throw TranslationError.service(L("翻译已取消。"))
         } catch let error as URLError {
             if error.code == .cancelled {
-                throw TranslationError.service("翻译已取消。")
+                throw TranslationError.service(L("翻译已取消。"))
             }
             throw TranslationError.network(error.localizedDescription)
         } catch {

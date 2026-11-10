@@ -22,23 +22,23 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .general: return "通用"
-        case .history: return "历史"
-        case .snippets: return "片段"
-        case .intelligence: return "智能"
-        case .privacy: return "隐私"
-        case .about: return "关于"
+        case .general: return L("通用")
+        case .history: return L("历史")
+        case .snippets: return L("片段列表")
+        case .intelligence: return L("智能")
+        case .privacy: return L("隐私")
+        case .about: return L("关于")
         }
     }
 
     var subtitle: String {
         switch self {
-        case .general: return "启动、快捷键与监听"
-        case .history: return "记录容量、存储位置与清理"
-        case .snippets: return "常用文本，一键复制"
-        case .intelligence: return "翻译引擎、语言与图片文字"
-        case .privacy: return "应用排除与内容类型"
-        case .about: return "版本与隐私信息"
+        case .general: return L("启动、快捷键与监听")
+        case .history: return L("记录容量、存储位置与清理")
+        case .snippets: return L("常用文本，一键复制")
+        case .intelligence: return L("翻译引擎、语言与图片文字")
+        case .privacy: return L("应用排除与内容类型")
+        case .about: return L("版本与隐私信息")
         }
     }
 
@@ -97,21 +97,21 @@ struct SettingsView: View {
         }
         .frame(width: 720, height: 480)
         .background(Color(nsColor: .windowBackgroundColor))
-        .alert("清空未置顶记录？", isPresented: $showClearUnpinnedAlert) {
-            Button("清空", role: .destructive) {
+        .alert(L("清空未置顶记录？"), isPresented: $showClearUnpinnedAlert) {
+            Button(L("清空"), role: .destructive) {
                 manager.clearUnpinnedItems()
             }
-            Button("取消", role: .cancel) {}
+            Button(L("取消"), role: .cancel) {}
         } message: {
-            Text("所有未置顶记录都会被删除，此操作无法撤销。置顶记录会保留。")
+            Text(L("所有未置顶记录都会被删除，此操作无法撤销。置顶记录会保留。"))
         }
-        .alert("清空全部记录？", isPresented: $showClearAllAlert) {
-            Button("清空全部", role: .destructive) {
+        .alert(L("清空全部记录？"), isPresented: $showClearAllAlert) {
+            Button(L("清空全部"), role: .destructive) {
                 manager.clearAllItems()
             }
-            Button("取消", role: .cancel) {}
+            Button(L("取消"), role: .cancel) {}
         } message: {
-            Text("包括置顶记录与图片缓存，此操作无法撤销。")
+            Text(L("包括置顶记录与图片缓存，此操作无法撤销。"))
         }
         .onAppear {
             settings.refreshLaunchAtLoginStatus()
@@ -182,8 +182,8 @@ struct SettingsView: View {
             Spacer()
 
             VStack(alignment: .leading, spacing: 4) {
-                Label("本地存储 · 翻译按需联网", systemImage: "lock.shield")
-                Text("呼出快捷键 \(settings.hotKey.displayString)")
+                Label(L("本地存储 · 翻译按需联网"), systemImage: "lock.shield")
+                Text(L("呼出快捷键 %@", settings.hotKey.displayString))
             }
             .font(.system(size: 10, design: .rounded))
             .foregroundStyle(.tertiary)
@@ -235,10 +235,10 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var generalPage: some View {
-        SettingsCard("启动") {
+        SettingsCard(L("启动")) {
             SettingsRow(
-                "登录时自动启动",
-                subtitle: "登录 Mac 后在菜单栏常驻，随时可用"
+                L("登录时自动启动"),
+                subtitle: L("登录 Mac 后在菜单栏常驻，随时可用")
             ) {
                 Toggle("", isOn: launchAtLoginBinding)
                     .labelsHidden()
@@ -256,7 +256,7 @@ struct SettingsView: View {
                         .fixedSize(horizontal: false, vertical: true)
 
                     if settings.launchAtLoginRequiresApproval {
-                        Button("打开系统登录项设置…") {
+                        Button(L("打开系统登录项设置…")) {
                             settings.openLoginItemsSettings()
                         }
                         .buttonStyle(.bordered)
@@ -268,10 +268,10 @@ struct SettingsView: View {
             }
         }
 
-        SettingsCard("全局快捷键") {
+        SettingsCard(L("全局快捷键")) {
             SettingsRow(
-                "呼出面板",
-                subtitle: "点击后按下新的组合键；至少包含 ⌘、⌥ 或 ⌃"
+                L("呼出面板"),
+                subtitle: L("点击后按下新的组合键；至少包含 ⌘、⌥ 或 ⌃")
             ) {
                 ShortcutRecorderView(
                     configuration: settings.hotKey,
@@ -286,10 +286,10 @@ struct SettingsView: View {
             }
         }
 
-        SettingsCard("剪贴板挂架") {
+        SettingsCard(L("剪贴板挂架")) {
             SettingsRow(
-                "启用挂架",
-                subtitle: "鼠标停在所选屏幕边缘的中间区域即可展开；点击卡片复制，鼠标离开后自动收起"
+                L("启用挂架"),
+                subtitle: L("鼠标停在所选屏幕边缘的中间区域即可展开；点击卡片复制，鼠标离开后自动收起")
             ) {
                 Toggle("", isOn: $settings.shelfEnabled)
                     .labelsHidden()
@@ -301,8 +301,8 @@ struct SettingsView: View {
             SettingsDivider()
 
             SettingsRow(
-                "显示位置",
-                subtitle: "顶部从菜单栏中间展开；左侧 / 右侧从屏幕边缘中间展开"
+                L("显示位置"),
+                subtitle: L("顶部从菜单栏中间展开；左侧 / 右侧从屏幕边缘中间展开")
             ) {
                 Picker("", selection: $settings.shelfEdge) {
                     ForEach(ClipboardShelfEdge.allCases) { edge in
@@ -318,13 +318,13 @@ struct SettingsView: View {
             SettingsDivider()
 
             SettingsRow(
-                "加载数量",
-                subtitle: "最多加载的卡片数量；超出屏幕后可用触控板或滚轮滑动查看，也可选择「不限」"
+                L("加载数量"),
+                subtitle: L("最多加载的卡片数量；超出屏幕后可用触控板或滚轮滑动查看，也可选择「不限」")
             ) {
                 Picker("", selection: $settings.shelfItemLimit) {
                     ForEach(AppSettings.shelfItemLimitOptions, id: \.self) { limit in
                         Text(
-                            limit < 0 ? "不限" : "\(limit) 条"
+                            limit < 0 ? L("不限") : L("%d 条", limit)
                         )
                         .tag(limit)
                     }
@@ -338,8 +338,8 @@ struct SettingsView: View {
             SettingsDivider()
 
             SettingsRow(
-                "卡片下落时间",
-                subtitle: "点击夹子删除卡片时的下落动画时长；夹子会单独松开和掉落"
+                L("卡片下落时间"),
+                subtitle: L("点击夹子删除卡片时的下落动画时长；夹子会单独松开和掉落")
             ) {
                 Picker("", selection: $settings.shelfCardFallDuration) {
                     ForEach(AppSettings.shelfCardFallDurationOptions, id: \.self) { duration in
@@ -354,10 +354,10 @@ struct SettingsView: View {
             }
         }
 
-        SettingsCard("复制行为") {
+        SettingsCard(L("复制行为")) {
             SettingsRow(
-                "挂架复制后",
-                subtitle: "点击卡片复制后，挂架保持展开、立即收起或延迟收起"
+                L("挂架复制后"),
+                subtitle: L("点击卡片复制后，挂架保持展开、立即收起或延迟收起")
             ) {
                 Picker("", selection: $settings.shelfCopyBehavior) {
                     ForEach(ShelfCopyBehavior.allCases) { behavior in
@@ -366,14 +366,14 @@ struct SettingsView: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
-                .frame(width: 160)
+                .frame(width: 200)
             }
 
             SettingsDivider()
 
             SettingsRow(
-                "富文本只复制纯文本",
-                subtitle: "复制富文本条目时只写入纯文本，不带 RTF / HTML 格式"
+                L("富文本只复制纯文本"),
+                subtitle: L("复制富文本条目时只写入纯文本，不带 RTF / HTML 格式")
             ) {
                 Toggle("", isOn: $settings.copyPlainTextOnly)
                     .labelsHidden()
@@ -383,10 +383,10 @@ struct SettingsView: View {
             }
         }
 
-        SettingsCard("翻译") {
+        SettingsCard(L("翻译")) {
             SettingsRow(
-                "快捷翻译剪贴板",
-                subtitle: "在任意应用复制文本后按下快捷键，直接打开翻译卡片"
+                L("快捷翻译剪贴板"),
+                subtitle: L("在任意应用复制文本后按下快捷键，直接打开翻译卡片")
             ) {
                 ShortcutRecorderView(
                     configuration: settings.translationHotKey,
@@ -404,8 +404,8 @@ struct SettingsView: View {
             SettingsDivider()
 
             SettingsRow(
-                "打开面板时翻译最新记录",
-                subtitle: "默认关闭；仅对与目标语言不同的最新文本自动执行；每条记录只自动翻译一次，图片不会自动翻译"
+                L("打开面板时翻译最新记录"),
+                subtitle: L("默认关闭；仅对与目标语言不同的最新文本自动执行；每条记录只自动翻译一次，图片不会自动翻译")
             ) {
                 Toggle("", isOn: $settings.autoTranslateLatestOnOpen)
                     .labelsHidden()
@@ -415,10 +415,10 @@ struct SettingsView: View {
             }
         }
 
-        SettingsCard("监听") {
+        SettingsCard(L("监听")) {
             SettingsRow(
-                "监听剪贴板",
-                subtitle: "暂停后不会读取或记录新的剪贴板内容"
+                L("监听剪贴板"),
+                subtitle: L("暂停后不会读取或记录新的剪贴板内容")
             ) {
                 Toggle("", isOn: monitoringBinding)
                     .labelsHidden()
@@ -431,14 +431,14 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var historyPage: some View {
-        SettingsCard("记录上限") {
+        SettingsCard(L("记录上限")) {
             SettingsRow(
-                "未置顶记录上限",
-                subtitle: "置顶记录不计入上限，也不会被自动清理"
+                L("未置顶记录上限"),
+                subtitle: L("置顶记录不计入上限，也不会被自动清理")
             ) {
                 Picker("", selection: $settings.maxUnpinnedItems) {
                     ForEach(AppSettings.historyLimitOptions, id: \.self) { limit in
-                        Text("\(limit) 条").tag(limit)
+                        Text(L("%d 条", limit)).tag(limit)
                     }
                 }
                 .labelsHidden()
@@ -449,23 +449,29 @@ struct SettingsView: View {
             SettingsDivider()
 
             SettingsRow(
-                "当前历史",
-                subtitle: "包含文本、代码、链接、颜色、图片与文件"
+                L("当前历史"),
+                subtitle: L("包含文本、代码、链接、颜色、图片与文件")
             ) {
-                Text("\(manager.items.count) 条 · \(manager.pinnedCount) 条置顶")
+                Text(
+                    L(
+                        "历史：%d 条 · 置顶：%d 条",
+                        manager.items.count,
+                        manager.pinnedCount
+                    )
+                )
                     .font(.system(size: 11, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
             }
         }
 
-        SettingsCard("最近删除") {
+        SettingsCard(L("最近删除")) {
             SettingsRow(
-                "保留时间",
-                subtitle: "删除的记录会在这里保留一段时间，到期后自动清除"
+                L("保留时间"),
+                subtitle: L("删除的记录会在这里保留一段时间，到期后自动清除")
             ) {
                 Picker("", selection: $settings.trashRetentionDays) {
                     ForEach(AppSettings.trashRetentionOptions, id: \.self) { days in
-                        Text("\(days) 天").tag(days)
+                        Text(L("%d 天", days)).tag(days)
                     }
                 }
                 .labelsHidden()
@@ -477,16 +483,21 @@ struct SettingsView: View {
 
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("最近删除")
+                    Text(L("最近删除"))
                         .font(.system(.body, design: .rounded))
-                    Text("当前保留 \(manager.trashedItems.count) 条记录")
+                    Text(
+                        L(
+                            "当前保留 %d 条记录",
+                            manager.trashedItems.count
+                        )
+                    )
                         .font(.system(size: 10.5, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer(minLength: 10)
 
-                Button("清空最近删除…") {
+                Button(L("清空最近删除…")) {
                     confirmEmptyTrash()
                 }
                 .buttonStyle(.bordered)
@@ -496,10 +507,10 @@ struct SettingsView: View {
             .padding(14)
         }
 
-        SettingsCard("存储") {
+        SettingsCard(L("存储")) {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("数据目录")
+                    Text(L("数据目录"))
                         .font(.system(.body, design: .rounded))
                     Text(manager.storageDirectoryURL.path)
                         .font(.system(size: 10, design: .monospaced))
@@ -511,7 +522,7 @@ struct SettingsView: View {
 
                 Spacer(minLength: 10)
 
-                Button("在 Finder 中显示") {
+                Button(L("在 Finder 中显示")) {
                     NSWorkspace.shared.activateFileViewerSelecting([
                         manager.storageDirectoryURL
                     ])
@@ -522,11 +533,11 @@ struct SettingsView: View {
             .padding(14)
         }
 
-        SettingsCard("备份与迁移") {
+        SettingsCard(L("备份与迁移")) {
             actionRow(
-                title: "导出历史",
-                subtitle: "将记录与图片打包为未加密的 .zip，可用于备份或迁移到另一台 Mac",
-                buttonTitle: "导出…",
+                title: L("导出历史"),
+                subtitle: L("将记录与图片打包为未加密的 .zip，可用于备份或迁移到另一台 Mac"),
+                buttonTitle: L("导出…"),
                 systemImage: "square.and.arrow.up",
                 isEnabled: !manager.items.isEmpty
             ) {
@@ -536,9 +547,9 @@ struct SettingsView: View {
             SettingsDivider()
 
             actionRow(
-                title: "导入历史",
-                subtitle: "合并到现有历史；重复内容会自动跳过，置顶状态会保留",
-                buttonTitle: "导入…",
+                title: L("导入历史"),
+                subtitle: L("合并到现有历史；重复内容会自动跳过，置顶状态会保留"),
+                buttonTitle: L("导入…"),
                 systemImage: "square.and.arrow.down",
                 isEnabled: true
             ) {
@@ -546,11 +557,11 @@ struct SettingsView: View {
             }
         }
 
-        SettingsCard("清理") {
+        SettingsCard(L("清理")) {
             destructiveRow(
-                title: "清空未置顶记录",
-                subtitle: "保留置顶记录，删除其余历史与图片缓存",
-                buttonTitle: "清空…",
+                title: L("清空未置顶记录"),
+                subtitle: L("保留置顶记录，删除其余历史与图片缓存"),
+                buttonTitle: L("清空…"),
                 isEnabled: manager.hasUnpinnedItems
             ) {
                 showClearUnpinnedAlert = true
@@ -559,9 +570,9 @@ struct SettingsView: View {
             SettingsDivider()
 
             destructiveRow(
-                title: "清空全部记录",
-                subtitle: "删除所有历史记录，包括置顶内容",
-                buttonTitle: "清空全部…",
+                title: L("清空全部记录"),
+                subtitle: L("删除所有历史记录，包括置顶内容"),
+                buttonTitle: L("清空全部…"),
                 isEnabled: !manager.items.isEmpty
             ) {
                 showClearAllAlert = true
@@ -571,12 +582,12 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var snippetsPage: some View {
-        SettingsCard("片段") {
+        SettingsCard(L("片段列表")) {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("常用文本与模板")
+                    Text(L("常用文本与模板"))
                         .font(.system(.body, design: .rounded))
-                    Text("在面板的「片段」标签中一键复制；片段不会写入剪贴板历史。")
+                    Text(L("在面板的「片段」标签中一键复制；片段不会写入剪贴板历史。"))
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -587,7 +598,7 @@ struct SettingsView: View {
                 Button {
                     snippetEditor = SnippetEditorContext(snippet: nil)
                 } label: {
-                    Label("新建片段…", systemImage: "plus")
+                    Label(L("新建片段…"), systemImage: "plus")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -601,7 +612,7 @@ struct SettingsView: View {
                     Image(systemName: "text.quote")
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.secondary)
-                    Text("还没有片段。创建后可在面板中快速复制。")
+                    Text(L("还没有片段。创建后可在面板中快速复制。"))
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -636,20 +647,20 @@ struct SettingsView: View {
 
                         Spacer(minLength: 8)
 
-                        Text("\(snippet.characterCount) 字符")
+                        Text(L("%d 字符", snippet.characterCount))
                             .font(.system(size: 10, design: .rounded))
                             .foregroundStyle(.tertiary)
 
                         RoundIconButton(
                             symbolName: "pencil",
-                            help: "编辑片段"
+                            help: L("编辑片段")
                         ) {
                             snippetEditor = SnippetEditorContext(snippet: snippet)
                         }
 
                         RoundIconButton(
                             symbolName: "trash",
-                            help: "删除片段"
+                            help: L("删除片段")
                         ) {
                             confirmDeleteSnippet(snippet)
                         }
@@ -661,17 +672,17 @@ struct SettingsView: View {
 
             SettingsDivider()
 
-            Text("复制片段后会关闭面板并返回之前的应用，不会创建新的历史记录。")
+            Text(L("复制片段后会关闭面板并返回之前的应用，不会创建新的历史记录。"))
                 .font(.system(size: 10.5, design: .rounded))
                 .foregroundStyle(.tertiary)
                 .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
 
-        SettingsCard("使用提示") {
+        SettingsCard(L("使用提示")) {
             SettingsRow(
-                "面板快速访问",
-                subtitle: "按 ⌥⌘V 打开面板，切换到「片段」标签，用方向键选择后按 ↵ 复制。"
+                L("面板快速访问"),
+                subtitle: L("按 ⌥⌘V 打开面板，切换到「片段」标签，用方向键选择后按 ↵ 复制。")
             ) {
                 Image(systemName: "keyboard")
                     .symbolRenderingMode(.hierarchical)
@@ -685,10 +696,10 @@ struct SettingsView: View {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !raw.isEmpty, let url = URL(string: raw) else {
             let alert = NSAlert()
-            alert.messageText = "还没有更新源"
-            alert.informativeText = "请先在「更新清单地址」中填写返回版本信息的 JSON 地址。"
+            alert.messageText = L("还没有更新源")
+            alert.informativeText = L("请先在「更新清单地址」中填写返回版本信息的 JSON 地址。")
             alert.alertStyle = .informational
-            alert.addButton(withTitle: "好")
+            alert.addButton(withTitle: L("好"))
             alert.runModal()
             return
         }
@@ -725,18 +736,18 @@ struct SettingsView: View {
         if value.hasSuffix(".") {
             value.removeLast()
         }
-        return "\(value) 秒"
+        return L("%@ 秒", value)
     }
 
     private func confirmEmptyTrash() {
         guard !manager.trashedItems.isEmpty else { return }
 
         let alert = NSAlert()
-        alert.messageText = "清空最近删除？"
-        alert.informativeText = "所有最近删除的记录将被永久删除，此操作无法撤销。"
+        alert.messageText = L("清空最近删除？")
+        alert.informativeText = L("所有最近删除的记录将被永久删除，此操作无法撤销。")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "清空")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: L("清空"))
+        alert.addButton(withTitle: L("取消"))
 
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         manager.emptyTrash()
@@ -744,11 +755,11 @@ struct SettingsView: View {
 
     private func confirmDeleteSnippet(_ snippet: Snippet) {
         let alert = NSAlert()
-        alert.messageText = "删除片段「\(snippet.title)」？"
-        alert.informativeText = "此操作无法撤销。"
+        alert.messageText = L("删除片段「%@」？", snippet.title)
+        alert.informativeText = L("此操作无法撤销。")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "删除")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: L("删除"))
+        alert.addButton(withTitle: L("取消"))
 
         if alert.runModal() == .alertFirstButtonReturn {
             snippetManager.delete(snippet)
@@ -757,10 +768,10 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var privacyPage: some View {
-        SettingsCard("内容") {
+        SettingsCard(L("内容")) {
             SettingsRow(
-                "记录图片",
-                subtitle: "关闭后，新复制的图片不会加入历史或生成缓存；已有图片不受影响"
+                L("记录图片"),
+                subtitle: L("关闭后，新复制的图片不会加入历史或生成缓存；已有图片不受影响")
             ) {
                 Toggle("", isOn: $settings.capturesImages)
                     .labelsHidden()
@@ -770,12 +781,12 @@ struct SettingsView: View {
             }
         }
 
-        SettingsCard("排除的应用") {
+        SettingsCard(L("排除的应用")) {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("来自这些应用的复制内容不会写入历史")
+                    Text(L("来自这些应用的复制内容不会写入历史"))
                         .font(.system(.body, design: .rounded))
-                    Text("只影响新的剪贴板内容；已记录的历史不会自动删除。")
+                    Text(L("只影响新的剪贴板内容；已记录的历史不会自动删除。"))
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
@@ -785,7 +796,7 @@ struct SettingsView: View {
                 Button {
                     chooseExcludedApplications()
                 } label: {
-                    Label("添加应用…", systemImage: "plus")
+                    Label(L("添加应用…"), systemImage: "plus")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -799,7 +810,7 @@ struct SettingsView: View {
                     Image(systemName: "checkmark.shield")
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.secondary)
-                    Text("尚未排除任何应用")
+                    Text(L("尚未排除任何应用"))
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -825,7 +836,7 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(application.name)
                                 .font(.system(.body, design: .rounded))
-                            Text(application.bundleIdentifier ?? "按应用名称匹配")
+                            Text(application.bundleIdentifier ?? L("按应用名称匹配"))
                                 .font(.system(size: 9.5, design: .monospaced))
                                 .foregroundStyle(.tertiary)
                                 .lineLimit(1)
@@ -845,7 +856,7 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.plain)
                         .focusable(false)
-                        .help("从排除列表移除")
+                        .help(L("从排除列表移除"))
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 9)
@@ -854,7 +865,7 @@ struct SettingsView: View {
 
             SettingsDivider()
 
-            Text("隐藏类型、临时类型和常见密码管理器的过滤始终开启。")
+            Text(L("隐藏类型、临时类型和常见密码管理器的过滤始终开启。"))
                 .font(.system(size: 10.5, design: .rounded))
                 .foregroundStyle(.tertiary)
                 .padding(14)
@@ -875,22 +886,22 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("HaoPaste")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                Text("版本 \(appVersion)（\(appBuild)）")
+                Text(L("版本 %@（%@）", appVersion, appBuild))
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.secondary)
-                Text("快速、原生、键盘优先的剪贴板管理器。")
+                Text(L("快速、原生、键盘优先的剪贴板管理器。"))
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 4)
 
-        SettingsCard("更新") {
+        SettingsCard(L("更新")) {
             SettingsRow(
-                "检查更新",
-                subtitle: "只检查新版本并打开下载链接，不会自动安装"
+                L("检查更新"),
+                subtitle: L("只检查新版本并打开下载链接，不会自动安装")
             ) {
-                Button(isCheckingForUpdates ? "检查中…" : "检查更新…") {
+                Button(isCheckingForUpdates ? L("检查中…") : L("检查更新…")) {
                     checkForUpdates()
                 }
                 .buttonStyle(.bordered)
@@ -901,8 +912,8 @@ struct SettingsView: View {
             SettingsDivider()
 
             SettingsRow(
-                "更新清单地址",
-                subtitle: "默认使用 GitHub Releases；清空地址可关闭自动检查"
+                L("更新清单地址"),
+                subtitle: L("默认使用 GitHub Releases；清空地址可关闭自动检查")
             ) {
                 TextField(
                     "https://example.com/hao-paste/latest.json",
@@ -914,8 +925,8 @@ struct SettingsView: View {
             }
         }
 
-        SettingsCard("快捷键") {
-            SettingsRow("呼出面板", subtitle: "在任意应用上方打开 HaoPaste") {
+        SettingsCard(L("快捷键")) {
+            SettingsRow(L("呼出面板"), subtitle: L("在任意应用上方打开 HaoPaste")) {
                 Text(settings.hotKey.displayString)
                     .font(.system(.body, design: .rounded).weight(.medium))
                     .foregroundStyle(Color.accentColor)
@@ -923,15 +934,15 @@ struct SettingsView: View {
 
             SettingsDivider()
 
-            SettingsRow("快速复制", subtitle: "使用当前结果中的前九条") {
+            SettingsRow(L("快速复制"), subtitle: L("使用当前结果中的前九条")) {
                 Text("⌘1 – ⌘9")
                     .font(.system(size: 11, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
             }
         }
 
-        SettingsCard("隐私") {
-            SettingsRow("数据存储", subtitle: "历史与图片仅保存在本机") {
+        SettingsCard(L("隐私")) {
+            SettingsRow(L("数据存储"), subtitle: L("历史与图片仅保存在本机")) {
                 Image(systemName: "internaldrive")
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.secondary)
@@ -939,7 +950,7 @@ struct SettingsView: View {
 
             SettingsDivider()
 
-            SettingsRow("网络访问", subtitle: "默认不联网；仅在线翻译时发送当前文本") {
+            SettingsRow(L("网络访问"), subtitle: L("默认不联网；仅在线翻译时发送当前文本")) {
                 Image(systemName: "network")
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.secondary)
@@ -947,7 +958,7 @@ struct SettingsView: View {
 
             SettingsDivider()
 
-            SettingsRow("辅助功能权限", subtitle: "复制后需要手动按 ⌘V，因此不申请额外权限") {
+            SettingsRow(L("辅助功能权限"), subtitle: L("复制后需要手动按 ⌘V，因此不申请额外权限")) {
                 Image(systemName: "checkmark.shield")
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.secondary)
@@ -959,7 +970,7 @@ struct SettingsView: View {
                 .font(.system(size: 10, design: .rounded))
                 .foregroundStyle(.tertiary)
             Spacer()
-            Button("查看首次引导") {
+            Button(L("查看首次引导")) {
                 NotificationCenter.default.post(
                     name: .haopasteShowOnboarding,
                     object: nil
@@ -967,7 +978,7 @@ struct SettingsView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
-            Button("退出 HaoPaste") {
+            Button(L("退出 HaoPaste")) {
                 NSApp.terminate(nil)
             }
             .buttonStyle(.bordered)
@@ -980,9 +991,9 @@ struct SettingsView: View {
 
     private func chooseExcludedApplications() {
         let panel = NSOpenPanel()
-        panel.title = "排除应用"
-        panel.message = "选择不希望记录剪贴板内容的应用，可多选。"
-        panel.prompt = "排除"
+        panel.title = L("排除应用")
+        panel.message = L("选择不希望记录剪贴板内容的应用，可多选。")
+        panel.prompt = L("排除")
         panel.allowedContentTypes = [.application]
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
@@ -1008,13 +1019,16 @@ struct SettingsView: View {
 
     private func exportHistory() {
         let panel = NSSavePanel()
-        panel.title = "导出历史"
-        panel.message = "备份包含历史记录、置顶状态和图片，可迁移到另一台 Mac。"
-        panel.prompt = "导出"
+        panel.title = L("导出历史")
+        panel.message = L("备份包含历史记录、置顶状态和图片，可迁移到另一台 Mac。")
+        panel.prompt = L("导出")
         panel.allowedContentTypes = [.zip]
         panel.canCreateDirectories = true
         panel.isExtensionHidden = false
-        panel.nameFieldStringValue = "HaoPaste-历史-\(archiveDateStamp()).zip"
+        panel.nameFieldStringValue = L(
+            "HaoPaste-历史-%@.zip",
+            archiveDateStamp()
+        )
 
         guard panel.runModal() == .OK, let url = panel.url else { return }
 
@@ -1024,13 +1038,19 @@ struct SettingsView: View {
                 snippets: snippetManager.snippets
             )
             showArchiveAlert(
-                title: "导出完成",
-                message: "已导出 \(summary.itemCount) 条记录、\(summary.imageCount) 张图片、\(summary.snippetCount) 个片段。\n\n\(url.path)",
+                title: L("导出完成"),
+                message: L(
+                    "已导出 %d 条记录、%d 张图片、%d 个片段。\n\n%@",
+                    summary.itemCount,
+                    summary.imageCount,
+                    summary.snippetCount,
+                    url.path
+                ),
                 style: .informational
             )
         } catch {
             showArchiveAlert(
-                title: "导出失败",
+                title: L("导出失败"),
                 message: error.localizedDescription,
                 style: .warning
             )
@@ -1039,9 +1059,9 @@ struct SettingsView: View {
 
     private func importHistory() {
         let panel = NSOpenPanel()
-        panel.title = "导入历史"
-        panel.message = "选择由 HaoPaste 导出的 .zip 备份文件。导入会合并到当前历史。"
-        panel.prompt = "导入"
+        panel.title = L("导入历史")
+        panel.message = L("选择由 HaoPaste 导出的 .zip 备份文件。导入会合并到当前历史。")
+        panel.prompt = L("导入")
         panel.allowedContentTypes = [.zip]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
@@ -1052,22 +1072,34 @@ struct SettingsView: View {
             let summary = try manager.importHistory(from: url)
             let snippetMerge = snippetManager.mergeImported(summary.snippets)
 
-            var message = "新增 \(summary.importedCount) 条，合并 \(summary.mergedPinnedCount) 条置顶，跳过 \(summary.skippedCount) 条重复或不可用内容。"
+            var message = L(
+                "新增 %d 条，合并 %d 条置顶，跳过 %d 条重复或不可用内容。",
+                summary.importedCount,
+                summary.mergedPinnedCount,
+                summary.skippedCount
+            )
             if summary.trimmedCount > 0 {
-                message += " 受当前历史上限影响，清理了 \(summary.trimmedCount) 条最早记录。"
+                message += L(
+                    " 受当前历史上限影响，清理了 %d 条最早记录。",
+                    summary.trimmedCount
+                )
             }
             if snippetMerge.added > 0 || snippetMerge.updated > 0 {
-                message += " 片段新增 \(snippetMerge.added) 个，更新 \(snippetMerge.updated) 个。"
+                message += L(
+                    " 片段新增 %d 个，更新 %d 个。",
+                    snippetMerge.added,
+                    snippetMerge.updated
+                )
             }
 
             showArchiveAlert(
-                title: "导入完成",
+                title: L("导入完成"),
                 message: message,
                 style: .informational
             )
         } catch {
             showArchiveAlert(
-                title: "导入失败",
+                title: L("导入失败"),
                 message: error.localizedDescription,
                 style: .warning
             )
@@ -1083,7 +1115,7 @@ struct SettingsView: View {
         alert.messageText = title
         alert.informativeText = message
         alert.alertStyle = style
-        alert.addButton(withTitle: "好")
+        alert.addButton(withTitle: L("好"))
         alert.runModal()
     }
 
@@ -1343,22 +1375,22 @@ struct SnippetEditorSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(isEditing ? "编辑片段" : "新建片段")
+            Text(isEditing ? L("编辑片段") : L("新建片段"))
                 .font(.system(size: 18, weight: .semibold, design: .rounded))
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("名称")
+                Text(L("名称"))
                     .font(.system(size: 11, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
 
-                TextField("例如：工作邮箱", text: $title)
+                TextField(L("例如：工作邮箱"), text: $title)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(.body, design: .rounded))
                     .focused($titleFocused)
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("内容")
+                Text(L("内容"))
                     .font(.system(size: 11, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
 
@@ -1380,10 +1412,10 @@ struct SnippetEditorSheet: View {
             HStack {
                 Spacer()
 
-                Button("取消", action: onCancel)
+                Button(L("取消"), action: onCancel)
                     .keyboardShortcut(.cancelAction)
 
-                Button(isEditing ? "保存" : "创建") {
+                Button(isEditing ? L("保存") : L("创建")) {
                     onSave(title, content)
                 }
                 .buttonStyle(.borderedProminent)

@@ -16,14 +16,14 @@ struct EmptyStateView: View {
     }
 
     private var title: String {
-        isFiltering ? "没有找到匹配内容" : "暂无剪切板记录"
+        isFiltering ? L("没有找到匹配内容") : L("暂无剪切板记录")
     }
 
     private var subtitle: String {
         if isFiltering {
-            return "换个关键词，或试试其他分类。"
+            return L("换个关键词，或试试其他分类。")
         }
-        return "复制任意文本、代码、链接、图片或文件，\n它们会安全地出现在这里。"
+        return L("复制任意文本、代码、链接、图片或文件，\n它们会安全地出现在这里。")
     }
 
     private var symbolName: String {
@@ -82,14 +82,14 @@ struct SnippetEmptyStateView: View {
             }
 
             VStack(spacing: 4) {
-                Text(isSearching ? "没有找到匹配片段" : "还没有片段")
+                Text(isSearching ? L("没有找到匹配片段") : L("还没有片段"))
                     .font(.system(.body, design: .rounded).weight(.semibold))
                     .foregroundStyle(.primary)
 
                 Text(
                     isSearching
-                        ? "换个关键词再试试。"
-                        : "在 设置 → 片段 中创建常用文本，\n之后可在这里一键复制。"
+                        ? L("换个关键词再试试。")
+                        : L("在 设置 → 片段 中创建常用文本，\n之后可在这里一键复制。")
                 )
                 .font(.system(.caption, design: .rounded))
                 .foregroundStyle(.secondary)
@@ -125,14 +125,17 @@ struct TrashEmptyStateView: View {
             }
 
             VStack(spacing: 4) {
-                Text(isSearching ? "没有找到匹配内容" : "最近删除为空")
+                Text(isSearching ? L("没有找到匹配内容") : L("最近删除为空"))
                     .font(.system(.body, design: .rounded).weight(.semibold))
                     .foregroundStyle(.primary)
 
                 Text(
                     isSearching
-                        ? "换个关键词试试。"
-                        : "删除的记录会在这里保留 \(retentionDays) 天，之后自动清除。"
+                        ? L("换个关键词试试。")
+                        : L(
+                            "删除的记录会在这里保留 %d 天，之后自动清除。",
+                            retentionDays
+                        )
                 )
                 .font(.system(.caption, design: .rounded))
                 .foregroundStyle(.secondary)

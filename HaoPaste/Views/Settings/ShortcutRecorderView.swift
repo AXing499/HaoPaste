@@ -34,7 +34,7 @@ struct ShortcutRecorderView: View {
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(isRecording ? Color.accentColor : .secondary)
 
-                    Text(isRecording ? "请按下新的快捷键…" : configuration.displayString)
+                    Text(isRecording ? L("请按下新的快捷键…") : configuration.displayString)
                         .font(.system(.body, design: .rounded).weight(.medium))
                         .foregroundStyle(isRecording ? Color.accentColor : .primary)
                         .monospacedDigit()
@@ -66,7 +66,7 @@ struct ShortcutRecorderView: View {
             }
             .buttonStyle(.plain)
             .focusable(false)
-            .help(isRecording ? "按下新的快捷键，按 esc 取消" : "点击后按下新的快捷键")
+            .help(isRecording ? L("按下新的快捷键，按 esc 取消") : L("点击后按下新的快捷键"))
 
             if let message = validationMessage ?? registrationError {
                 Text(message)
@@ -77,7 +77,13 @@ struct ShortcutRecorderView: View {
             }
 
             if configuration != resetConfiguration || registrationError != nil {
-                Button("恢复默认（\(resetConfiguration.displayString)）", action: onReset)
+                Button(
+                    L(
+                        "恢复默认（%@）",
+                        resetConfiguration.displayString
+                    ),
+                    action: onReset
+                )
                     .buttonStyle(.plain)
                     .font(.system(size: 10.5, design: .rounded))
                     .foregroundStyle(Color.accentColor)
@@ -109,7 +115,7 @@ struct ShortcutRecorderView: View {
             )
 
             guard candidate.hasPrimaryModifier else {
-                validationMessage = "请至少按下 ⌘、⌥ 或 ⌃ 中的一个。"
+                validationMessage = L("请至少按下 ⌘、⌥ 或 ⌃ 中的一个。")
                 return nil
             }
 

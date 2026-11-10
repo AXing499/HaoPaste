@@ -21,17 +21,20 @@ final class HistoryArchiveService {
         var errorDescription: String? {
             switch self {
             case .temporaryDirectory:
-                return "无法创建临时目录。"
+                return L("无法创建临时目录。")
             case let .compressionFailed(message):
-                return "导出压缩失败：\(message)"
+                return L("导出压缩失败：%@", message)
             case let .extractionFailed(message):
-                return "无法解压备份文件：\(message)"
+                return L("无法解压备份文件：%@", message)
             case .missingHistory:
-                return "备份文件中没有找到 history.json。"
+                return L("备份文件中没有找到 history.json。")
             case let .unsupportedVersion(version):
-                return "备份格式版本 \(version) 高于当前应用支持的版本。"
+                return L(
+                    "备份格式版本 %d 高于当前应用支持的版本。",
+                    version
+                )
             case let .writeFailed(message):
-                return "写入备份失败：\(message)"
+                return L("写入备份失败：%@", message)
             }
         }
     }
@@ -324,7 +327,11 @@ final class HistoryArchiveService {
             let data = errorPipe.fileHandleForReading.readDataToEndOfFile()
             let message = String(data: data, encoding: .utf8)?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
-            throw failure(message?.isEmpty == false ? message! : "ditto 退出码 \(process.terminationStatus)")
+            throw failure(
+                message?.isEmpty == false
+                    ? message!
+                    : L("ditto 退出码 %d", process.terminationStatus)
+            )
         }
     }
 

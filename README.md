@@ -1,6 +1,8 @@
 # HaoPaste
 
-当前版本：**v0.13.19**
+简体中文 | [English](README.en.md)
+
+当前版本：**v0.13.20**
 
 一款原生、轻快、键盘优先的 macOS 剪切板管理器。用 `⌥⌘V` 从任何应用呼出无标题栏悬浮面板，搜索、选择、复制，一气呵成。
 
@@ -21,19 +23,25 @@
    ```bash
    make dmg
    # 输出：
-   # dist/HaoPaste-0.13.19.dmg
-   # dist/HaoPaste-0.13.19.dmg.sha256
+   # dist/HaoPaste-0.13.20.dmg
+   # dist/HaoPaste-0.13.20.dmg.sha256
    ```
 
-2. 双击打开 `dist/HaoPaste-0.13.19.dmg`，窗口内会显示安装提示；将 **HaoPaste** 拖入 **Applications / 应用程序**。
+2. 双击打开 `dist/HaoPaste-0.13.20.dmg`，窗口内会显示安装提示；将 **HaoPaste** 拖入 **Applications / 应用程序**。
 3. 首次打开如提示“无法验证开发者”：
    - 打开「系统设置 → 隐私与安全性」
    - 在「安全性」中找到 HaoPaste，点击「仍要打开」
    - 也可以在 Finder 中右键 HaoPaste → 打开
-3. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
-4. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
+4. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
+5. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
 
 HaoPaste 是 `LSUIElement` 菜单栏应用，**不会出现在 Dock**；启动后请查看菜单栏图标。
+
+### 界面语言
+
+- 跟随系统语言：中文环境使用简体中文，英文环境使用英文，其他语言环境默认英文。
+- 本地化资源位于 `HaoPaste/en.lproj` 与 `HaoPaste/zh-Hans.lproj`；源代码中的中文是稳定 key，通过 `L()` 查表。
+- 英文 README 见 [README.en.md](README.en.md)。
 
 也可以直接安装到本机并启动：
 
@@ -41,7 +49,7 @@ HaoPaste 是 `LSUIElement` 菜单栏应用，**不会出现在 Dock**；启动�
 make install     # 安装到 /Applications（不可写时回退 ~/Applications）
 ```
 
-DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请在 Finder 中右键应用 → **打开**。
+DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请按上面的「隐私与安全性 → 仍要打开」操作，或在 Finder 中右键应用 → **打开**。
 
 详细的安装、退出、卸载和 FAQ 见 [用户指南](Docs/USER_GUIDE.md)。
 
@@ -226,7 +234,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 # 开发调试
 make run       # Debug 构建并打开
 make demo      # 用可复现的示例数据启动，便于查看界面
-make test      # 运行 113 个 XCTest（自动化测试）
+make test      # 运行 116 个 XCTest（自动化测试）
 
 # 日常使用 / 发布
 make release   # Release 构建
@@ -240,7 +248,7 @@ make install   # 安装到 /Applications 并启动
 
 ## 质量与测试
 
-- **113 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、多选 / 合并、翻译引擎 / 回退 / 授权、快捷翻译 / 自动翻译策略、剪贴板挂架布局 / 滚动 / 筛选 / 点击命中 / 操作条、OCR / 批量识别 / 缓存、去重/裁剪、存储读写、备份导入导出。
+- **116 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、多选 / 合并、翻译引擎 / 回退 / 授权、快捷翻译 / 自动翻译策略、剪贴板挂架布局 / 滚动 / 筛选 / 点击命中 / 操作条、OCR / 批量识别 / 缓存、去重/裁剪、存储读写、备份导入导出。
 - 测试宿主会自动跳过菜单栏、剪贴板轮询和全局快捷键注册，不影响正常使用。
 - GitHub Actions 工作流：`.github/workflows/ci.yml` 在 macOS 上执行测试并构建 Release；`.github/workflows/release.yml` 在推送 `v*` tag 时自动测试、构建 DMG、创建 GitHub Release 并上传资产。
 - 运行：`make test`。

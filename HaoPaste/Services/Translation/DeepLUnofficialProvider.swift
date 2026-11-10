@@ -93,7 +93,7 @@ struct DeepLUnofficialProvider: TranslationProvider {
             || translated.contains("旧版本")
             || translated.contains("ältere Version") {
             throw TranslationError.service(
-                "DeepL 非官方接口要求更新客户端，当前不可用；请在设置中改用 DeepL API。"
+                L("DeepL 非官方接口要求更新客户端，当前不可用；请在设置中改用 DeepL API。")
             )
         }
 

@@ -13,11 +13,11 @@ enum ImageSavePanel {
     @discardableResult
     static func present(
         imageURL: URL,
-        suggestedName: String = "HaoPaste-图片.png"
+        suggestedName: String = L("HaoPaste-图片.png")
     ) -> Bool {
         let panel = NSSavePanel()
-        panel.title = "保存图片"
-        panel.prompt = "保存"
+        panel.title = L("保存图片")
+        panel.prompt = L("保存")
         panel.allowedContentTypes = [.png]
         panel.canCreateDirectories = true
         panel.nameFieldStringValue = suggestedName
@@ -34,10 +34,10 @@ enum ImageSavePanel {
             return true
         } catch {
             let alert = NSAlert()
-            alert.messageText = "无法保存图片"
+            alert.messageText = L("无法保存图片")
             alert.informativeText = error.localizedDescription
             alert.alertStyle = .warning
-            alert.addButton(withTitle: "好")
+            alert.addButton(withTitle: L("好"))
             alert.runModal()
             return false
         }

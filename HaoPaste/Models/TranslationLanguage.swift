@@ -19,7 +19,7 @@ struct TranslationLanguage: Identifiable, Hashable, Sendable {
 
     static let simplifiedChinese = TranslationLanguage(
         id: "zh-Hans",
-        name: "中文（简体）",
+        name: L("中文（简体）"),
         googleCode: "zh-CN",
         bingCode: "zh-Hans",
         deeplCode: "ZH",
@@ -29,7 +29,7 @@ struct TranslationLanguage: Identifiable, Hashable, Sendable {
 
     static let traditionalChinese = TranslationLanguage(
         id: "zh-Hant",
-        name: "中文（繁体）",
+        name: L("中文（繁体）"),
         googleCode: "zh-TW",
         bingCode: "zh-Hant",
         deeplCode: "ZH-HANT",
@@ -39,7 +39,7 @@ struct TranslationLanguage: Identifiable, Hashable, Sendable {
 
     static let english = TranslationLanguage(
         id: "en",
-        name: "英语",
+        name: L("英语"),
         googleCode: "en",
         bingCode: "en",
         deeplCode: "EN",
@@ -52,82 +52,82 @@ struct TranslationLanguage: Identifiable, Hashable, Sendable {
         traditionalChinese,
         english,
         TranslationLanguage(
-            id: "ja", name: "日语",
+            id: "ja", name: L("日语"),
             googleCode: "ja", bingCode: "ja", deeplCode: "JA",
             baiduCode: "jp", googleCloudCode: "ja"
         ),
         TranslationLanguage(
-            id: "ko", name: "韩语",
+            id: "ko", name: L("韩语"),
             googleCode: "ko", bingCode: "ko", deeplCode: "KO",
             baiduCode: "kor", googleCloudCode: "ko"
         ),
         TranslationLanguage(
-            id: "fr", name: "法语",
+            id: "fr", name: L("法语"),
             googleCode: "fr", bingCode: "fr", deeplCode: "FR",
             baiduCode: "fra", googleCloudCode: "fr"
         ),
         TranslationLanguage(
-            id: "de", name: "德语",
+            id: "de", name: L("德语"),
             googleCode: "de", bingCode: "de", deeplCode: "DE",
             baiduCode: "de", googleCloudCode: "de"
         ),
         TranslationLanguage(
-            id: "es", name: "西班牙语",
+            id: "es", name: L("西班牙语"),
             googleCode: "es", bingCode: "es", deeplCode: "ES",
             baiduCode: "spa", googleCloudCode: "es"
         ),
         TranslationLanguage(
-            id: "ru", name: "俄语",
+            id: "ru", name: L("俄语"),
             googleCode: "ru", bingCode: "ru", deeplCode: "RU",
             baiduCode: "ru", googleCloudCode: "ru"
         ),
         TranslationLanguage(
-            id: "pt", name: "葡萄牙语",
+            id: "pt", name: L("葡萄牙语"),
             googleCode: "pt", bingCode: "pt", deeplCode: "PT",
             baiduCode: "pt", googleCloudCode: "pt"
         ),
         TranslationLanguage(
-            id: "it", name: "意大利语",
+            id: "it", name: L("意大利语"),
             googleCode: "it", bingCode: "it", deeplCode: "IT",
             baiduCode: "it", googleCloudCode: "it"
         ),
         TranslationLanguage(
-            id: "ar", name: "阿拉伯语",
+            id: "ar", name: L("阿拉伯语"),
             googleCode: "ar", bingCode: "ar", deeplCode: "AR",
             baiduCode: "ara", googleCloudCode: "ar"
         ),
         TranslationLanguage(
-            id: "th", name: "泰语",
+            id: "th", name: L("泰语"),
             googleCode: "th", bingCode: "th", deeplCode: "TH",
             baiduCode: "th", googleCloudCode: "th"
         ),
         TranslationLanguage(
-            id: "vi", name: "越南语",
+            id: "vi", name: L("越南语"),
             googleCode: "vi", bingCode: "vi", deeplCode: "VI",
             baiduCode: "vie", googleCloudCode: "vi"
         ),
         TranslationLanguage(
-            id: "id", name: "印尼语",
+            id: "id", name: L("印尼语"),
             googleCode: "id", bingCode: "id", deeplCode: "ID",
             baiduCode: "id", googleCloudCode: "id"
         ),
         TranslationLanguage(
-            id: "tr", name: "土耳其语",
+            id: "tr", name: L("土耳其语"),
             googleCode: "tr", bingCode: "tr", deeplCode: "TR",
             baiduCode: "tr", googleCloudCode: "tr"
         ),
         TranslationLanguage(
-            id: "nl", name: "荷兰语",
+            id: "nl", name: L("荷兰语"),
             googleCode: "nl", bingCode: "nl", deeplCode: "NL",
             baiduCode: "nl", googleCloudCode: "nl"
         ),
         TranslationLanguage(
-            id: "pl", name: "波兰语",
+            id: "pl", name: L("波兰语"),
             googleCode: "pl", bingCode: "pl", deeplCode: "PL",
             baiduCode: "pl", googleCloudCode: "pl"
         ),
         TranslationLanguage(
-            id: "uk", name: "乌克兰语",
+            id: "uk", name: L("乌克兰语"),
             googleCode: "uk", bingCode: "uk", deeplCode: "UK",
             baiduCode: "uk", googleCloudCode: "uk"
         )

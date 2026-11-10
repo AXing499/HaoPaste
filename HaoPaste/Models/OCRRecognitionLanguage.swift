@@ -16,11 +16,11 @@ enum OCRRecognitionLanguage: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .automatic: return "自动检测"
-        case .simplifiedChinese: return "中文（简体）"
-        case .traditionalChinese: return "中文（繁体）"
-        case .english: return "英语"
-        case .japanese: return "日语"
+        case .automatic: return L("自动检测")
+        case .simplifiedChinese: return L("中文（简体）")
+        case .traditionalChinese: return L("中文（繁体）")
+        case .english: return L("英语")
+        case .japanese: return L("日语")
         }
     }
 

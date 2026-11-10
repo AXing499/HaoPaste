@@ -142,7 +142,7 @@ struct PreviewOverlayView: View {
             }
             .buttonStyle(.plain)
             .focusable(false)
-            .help("关闭预览（esc）")
+            .help(L("关闭预览（esc）"))
         }
         .padding(.horizontal, 16)
         .frame(height: 52)
@@ -176,7 +176,7 @@ struct PreviewOverlayView: View {
                 richText: richText
             )
         }
-        .help("拖拽图片到其他应用")
+        .help(L("拖拽图片到其他应用"))
     }
 
     private var textPreview: some View {
@@ -199,7 +199,12 @@ struct PreviewOverlayView: View {
         }
         .overlay(alignment: .bottomTrailing) {
             if preview.isTruncated {
-                Text("仅显示前 \(ItemPreviewBuilder.maxPreviewCharacters.formatted()) 个字符")
+                Text(
+                    L(
+                        "仅显示前 %@ 个字符",
+                        ItemPreviewBuilder.maxPreviewCharacters.formatted()
+                    )
+                )
                     .font(.system(size: 9.5, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 8)
@@ -276,7 +281,7 @@ struct PreviewOverlayView: View {
                 .onTapGesture(count: 2) {
                     NSWorkspace.shared.activateFileViewerSelecting([url])
                 }
-                .help("拖拽到其他应用，双击在 Finder 中显示")
+                .help(L("拖拽到其他应用，双击在 Finder 中显示"))
         }
     }
 
@@ -309,7 +314,7 @@ struct PreviewOverlayView: View {
 
             Spacer(minLength: 8)
 
-            Text(isMissing ? "已丢失" : "拖拽")
+            Text(isMissing ? L("已丢失") : L("拖拽"))
                 .font(.system(size: 9.5, weight: .semibold, design: .rounded))
                 .foregroundStyle(isMissing ? Color.orange : Color.secondary)
                 .padding(.horizontal, 6)
@@ -352,24 +357,24 @@ struct PreviewOverlayView: View {
 
             HStack(spacing: 7) {
                 if item.isTranslatable {
-                    secondaryButton("翻译", systemImage: "character.bubble") {
+                    secondaryButton(L("翻译"), systemImage: "character.bubble") {
                         onTranslate()
                     }
                 }
 
                 if item.type == .image, imageURL != nil {
                     secondaryButton(
-                        "提取文字",
+                        L("提取文字"),
                         systemImage: "text.viewfinder",
                         action: onExtractText
                     )
                     secondaryButton(
-                        "识图并翻译",
+                        L("识图并翻译"),
                         systemImage: "character.bubble",
                         action: onExtractAndTranslate
                     )
                     secondaryButton(
-                        "保存…",
+                        L("保存…"),
                         systemImage: "square.and.arrow.down",
                         action: onSaveImage
                     )
@@ -377,7 +382,7 @@ struct PreviewOverlayView: View {
 
                 if item.type == .file {
                     secondaryButton(
-                        "打开",
+                        L("打开"),
                         systemImage: "arrow.up.forward.app",
                         isEnabled: !item.availableFileURLs.isEmpty,
                         action: onOpenFiles
@@ -391,13 +396,13 @@ struct PreviewOverlayView: View {
                 }
 
                 if item.type == .url, let url = URL(string: item.content) {
-                    secondaryButton("打开", systemImage: "safari") {
+                    secondaryButton(L("打开"), systemImage: "safari") {
                         onOpenURL(url)
                     }
                 }
 
                 if item.hasRichText {
-                    secondaryButton("纯文本", systemImage: "doc.plaintext") {
+                    secondaryButton(L("纯文本"), systemImage: "doc.plaintext") {
                         onCopyText(item.content)
                     }
                 }
@@ -413,7 +418,7 @@ struct PreviewOverlayView: View {
         var parts: [String] = []
 
         if let sourceApp = item.sourceApp, !sourceApp.name.isEmpty {
-            parts.append("来自 \(sourceApp.name)")
+            parts.append(L("来自 %@", sourceApp.name))
         }
         parts.append(RelativeTime.string(from: item.createdAt))
 
@@ -425,7 +430,7 @@ struct PreviewOverlayView: View {
             HStack(spacing: 5) {
                 Image(systemName: "doc.on.doc")
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
-                Text("复制")
+                Text(L("复制"))
                     .font(.system(size: 11.5, weight: .semibold, design: .rounded))
             }
             .foregroundStyle(Color.white)
@@ -439,7 +444,7 @@ struct PreviewOverlayView: View {
         }
         .buttonStyle(.plain)
         .focusable(false)
-        .help("复制并关闭（↵）")
+        .help(L("复制并关闭（↵）"))
     }
 
     private func secondaryButton(
@@ -497,7 +502,7 @@ private struct PreviewImageView: View {
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.secondary)
 
-                    Text("无法读取图片")
+                    Text(L("无法读取图片"))
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                         .foregroundStyle(.secondary)
                 }

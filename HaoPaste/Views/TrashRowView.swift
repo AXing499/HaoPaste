@@ -49,7 +49,12 @@ struct TrashRowView: View {
             Spacer(minLength: 10)
 
             VStack(alignment: .trailing, spacing: 4) {
-                Text("\(RelativeTime.string(from: entry.deletedAt))删除")
+                Text(
+                    L(
+                        "%@删除",
+                        RelativeTime.string(from: entry.deletedAt)
+                    )
+                )
                     .font(.system(size: 10, weight: .regular, design: .rounded))
                     .foregroundStyle(.tertiary)
 
@@ -62,7 +67,7 @@ struct TrashRowView: View {
             Button {
                 onRestore()
             } label: {
-                Text("恢复")
+                Text(L("恢复"))
                     .font(.system(size: 10.5, weight: .semibold, design: .rounded))
                     .foregroundStyle(Color.accentColor)
                     .padding(.horizontal, 10)
@@ -74,7 +79,7 @@ struct TrashRowView: View {
             }
             .buttonStyle(.plain)
             .pointingHandCursor()
-            .help("恢复到剪贴板历史")
+            .help(L("恢复到剪贴板历史"))
 
             Button {
                 onDelete()
@@ -87,7 +92,7 @@ struct TrashRowView: View {
             }
             .buttonStyle(.plain)
             .pointingHandCursor()
-            .help("彻底删除")
+            .help(L("彻底删除"))
         }
         .padding(.leading, 10)
         .padding(.trailing, 8)
@@ -108,12 +113,16 @@ struct TrashRowView: View {
         }
         .animation(reduceMotion ? nil : Theme.spring, value: isHovering)
         .contextMenu {
-            Button("恢复", action: onRestore)
-            Button("彻底删除…", role: .destructive, action: onDelete)
+            Button(L("恢复"), action: onRestore)
+            Button(L("彻底删除…"), role: .destructive, action: onDelete)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
-            "最近删除，\(entry.item.displayTitle)，\(expiryText)"
+            L(
+                "最近删除，%@，%@",
+                entry.item.displayTitle,
+                expiryText
+            )
         )
     }
 
@@ -128,8 +137,8 @@ struct TrashRowView: View {
             Double(max(1, retentionDays)) * 24 * 60 * 60
         )
         let seconds = expiry.timeIntervalSinceNow
-        guard seconds > 0 else { return "即将自动清除" }
+        guard seconds > 0 else { return L("即将自动清除") }
         let days = max(1, Int(ceil(seconds / (24 * 60 * 60))))
-        return "\(days) 天后清除"
+        return L("%d 天后清除", days)
     }
 }

@@ -37,7 +37,7 @@ struct FilterTabsView: View {
         }
         .fixedSize()
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("剪切板分类")
+        .accessibilityLabel(L("剪切板分类"))
     }
 }
 

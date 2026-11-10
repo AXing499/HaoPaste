@@ -32,7 +32,7 @@ struct Snippet: Identifiable, Codable, Hashable, Sendable {
         content
             .components(separatedBy: .newlines)
             .map { $0.trimmingCharacters(in: .whitespaces) }
-            .first { !$0.isEmpty } ?? "空白片段"
+            .first { !$0.isEmpty } ?? L("空白片段")
     }
 
     var characterCount: Int {

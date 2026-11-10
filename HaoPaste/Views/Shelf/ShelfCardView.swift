@@ -111,33 +111,33 @@ struct ShelfCardView: View {
             alignment: .top
         )
         .allowsHitTesting(!isFalling && !isClipDropping)
-        .help("点击复制")
+        .help(L("点击复制"))
         .accessibilityLabel("\(item.formatBadge)，\(item.displayTitle)")
-        .accessibilityHint("复制到剪贴板")
+        .accessibilityHint(L("复制到剪贴板"))
         .contextMenu {
             Button {
                 onPreview()
             } label: {
-                Label("预览", systemImage: "eye")
+                Label(L("预览"), systemImage: "eye")
             }
 
             Button {
                 onCopy()
             } label: {
-                Label("复制", systemImage: "doc.on.doc")
+                Label(L("复制"), systemImage: "doc.on.doc")
             }
 
             if item.isTranslatable {
                 Button {
                     onTranslate()
                 } label: {
-                    Label("翻译…", systemImage: "translate")
+                    Label(L("翻译…"), systemImage: "translate")
                 }
             } else if item.type == .image, imageURL != nil {
                 Button {
                     onTranslate()
                 } label: {
-                    Label("提取文字…", systemImage: "text.viewfinder")
+                    Label(L("提取文字…"), systemImage: "text.viewfinder")
                 }
             }
 
@@ -145,7 +145,7 @@ struct ShelfCardView: View {
                 onTogglePin()
             } label: {
                 Label(
-                    item.isPinned ? "取消置顶" : "置顶",
+                    item.isPinned ? L("取消置顶") : L("置顶"),
                     systemImage: item.isPinned ? "pin.slash" : "pin"
                 )
             }
@@ -157,7 +157,7 @@ struct ShelfCardView: View {
                 Button {
                     onCopyPlainText()
                 } label: {
-                    Label("复制为纯文本", systemImage: "textformat")
+                    Label(L("复制为纯文本"), systemImage: "textformat")
                 }
             }
 
@@ -167,14 +167,14 @@ struct ShelfCardView: View {
                 Button {
                     NSWorkspace.shared.open(url)
                 } label: {
-                    Label("打开链接", systemImage: "safari")
+                    Label(L("打开链接"), systemImage: "safari")
                 }
 
                 Button {
                     let title = url.host ?? item.displayTitle
                     onCopyText("[\(title)](\(item.content))")
                 } label: {
-                    Label("复制为 Markdown 链接", systemImage: "doc.on.doc")
+                    Label(L("复制为 Markdown 链接"), systemImage: "doc.on.doc")
                 }
             }
 
@@ -186,7 +186,7 @@ struct ShelfCardView: View {
                         NSWorkspace.shared.open(url)
                     }
                 } label: {
-                    Label("打开文件", systemImage: "arrow.up.forward.app")
+                    Label(L("打开文件"), systemImage: "arrow.up.forward.app")
                 }
                 .disabled(item.availableFileURLs.isEmpty)
 
@@ -195,7 +195,7 @@ struct ShelfCardView: View {
                         item.availableFileURLs
                     )
                 } label: {
-                    Label("在 Finder 中显示", systemImage: "folder")
+                    Label(L("在 Finder 中显示"), systemImage: "folder")
                 }
                 .disabled(item.availableFileURLs.isEmpty)
             }
@@ -208,7 +208,7 @@ struct ShelfCardView: View {
                         ImageSavePanel.present(imageURL: imageURL)
                     }
                 } label: {
-                    Label("保存图片…", systemImage: "square.and.arrow.down")
+                    Label(L("保存图片…"), systemImage: "square.and.arrow.down")
                 }
             }
 
@@ -218,19 +218,28 @@ struct ShelfCardView: View {
                 Button {
                     onCopyText(color.normalizedHex)
                 } label: {
-                    Label("复制 HEX（\(color.normalizedHex)）", systemImage: "paintpalette")
+                    Label(
+                        L("复制 HEX（%@）", color.normalizedHex),
+                        systemImage: "paintpalette"
+                    )
                 }
 
                 Button {
                     onCopyText(color.rgbString)
                 } label: {
-                    Label("复制 RGB（\(color.rgbString)）", systemImage: "paintpalette")
+                    Label(
+                        L("复制 RGB（%@）", color.rgbString),
+                        systemImage: "paintpalette"
+                    )
                 }
 
                 Button {
                     onCopyText(color.hslString)
                 } label: {
-                    Label("复制 HSL（\(color.hslString)）", systemImage: "paintpalette")
+                    Label(
+                        L("复制 HSL（%@）", color.hslString),
+                        systemImage: "paintpalette"
+                    )
                 }
             }
 
@@ -239,7 +248,7 @@ struct ShelfCardView: View {
             Button(role: .destructive) {
                 release()
             } label: {
-                Label("删除", systemImage: "trash")
+                Label(L("删除"), systemImage: "trash")
             }
         }
     }
@@ -262,7 +271,7 @@ struct ShelfCardView: View {
             ShelfActionButton(
                 symbol: "eye",
                 tint: Color.secondary,
-                label: "预览",
+                label: L("预览"),
                 action: onPreview
             )
 
@@ -270,14 +279,14 @@ struct ShelfCardView: View {
                 ShelfActionButton(
                     symbol: "translate",
                     tint: Color.accentColor,
-                    label: "翻译",
+                    label: L("翻译"),
                     action: onTranslate
                 )
             } else if item.type == .image, imageURL != nil {
                 ShelfActionButton(
                     symbol: "text.viewfinder",
                     tint: Color.accentColor,
-                    label: "提取文字",
+                    label: L("提取文字"),
                     action: onTranslate
                 )
             }
@@ -285,7 +294,7 @@ struct ShelfCardView: View {
             ShelfActionButton(
                 symbol: item.isPinned ? "pin.slash" : "pin",
                 tint: item.isPinned ? Color.accentColor : Color.secondary,
-                label: item.isPinned ? "取消置顶" : "置顶",
+                label: item.isPinned ? L("取消置顶") : L("置顶"),
                 action: onTogglePin
             )
 
@@ -337,7 +346,7 @@ struct ShelfCardView: View {
                         .font(.system(size: 22, weight: .semibold, design: .rounded))
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(Color.accentColor)
-                    Text("已复制")
+                    Text(L("已复制"))
                         .font(.system(size: 10.5, weight: .semibold, design: .rounded))
                         .foregroundStyle(Color.accentColor)
                 }
@@ -403,7 +412,7 @@ struct ShelfCardView: View {
             )
 
             HStack(spacing: 5) {
-                Text(item.imageDimensions?.displayText ?? "图片")
+                Text(item.imageDimensions?.displayText ?? L("图片"))
                     .lineLimit(1)
                 Spacer(minLength: 2)
                 Text(RelativeTime.string(from: item.createdAt))
@@ -506,7 +515,7 @@ struct ShelfCardView: View {
                         .foregroundStyle(Color.accentColor)
                 }
 
-                Text(item.sourceApp?.name ?? "剪切板")
+                Text(item.sourceApp?.name ?? L("剪切板"))
                     .lineLimit(1)
                     .truncationMode(.tail)
 
@@ -524,11 +533,13 @@ struct ShelfCardView: View {
     private var detailLabel: String {
         switch item.type {
         case .file:
-            return item.fileCount > 0 ? "\(item.fileCount) 个文件" : "文件"
+            return item.fileCount > 0
+                ? L("%d 个文件", item.fileCount)
+                : L("文件")
         case .code, .url, .text, .colorHex:
-            return "\(item.plainText.count) 字符"
+            return L("%d 字符", item.plainText.count)
         case .image:
-            return item.imageDimensions?.displayText ?? "图片"
+            return item.imageDimensions?.displayText ?? L("图片")
         }
     }
 
@@ -685,9 +696,9 @@ private struct ShelfClipView: View {
         .allowsHitTesting(!isDropping)
         .shelfHitArea(.cardClip(itemID))
         .onTapGesture(perform: unclip)
-        .help("点击松开夹子并删除")
+        .help(L("点击松开夹子并删除"))
         .accessibilityElement()
-        .accessibilityLabel("松开夹子并删除")
+        .accessibilityLabel(L("松开夹子并删除"))
         .accessibilityAddTraits(.isButton)
         .accessibilityAction {
             unclip()

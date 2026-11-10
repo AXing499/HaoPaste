@@ -57,20 +57,28 @@ if [[ "$LAYOUT" == "1" && -f "$BACKGROUND" ]]; then
     SetFile -a V "$STAGE/.background" 2>/dev/null || true
 else
     cat > "$STAGE/安装说明.txt" <<'EOF'
-HaoPaste 安装说明
+HaoPaste 安装说明 / Installation
 
 1. 将 HaoPaste 拖入 Applications / 应用程序文件夹。
+   Drag HaoPaste into Applications.
 2. 从应用程序或 Spotlight 启动 HaoPaste。
+   Launch HaoPaste from Applications or Spotlight.
 3. HaoPaste 是菜单栏应用，不会显示 Dock 图标。
+   HaoPaste is a menu bar app; it does not appear in the Dock.
 
-首次打开如提示「无法验证开发者」：
+首次打开如提示「无法验证开发者」/ If the developer cannot be verified:
 1. 打开「系统设置 → 隐私与安全性」
+   Open System Settings → Privacy & Security.
 2. 在「安全性」中找到 HaoPaste
+   Under Security, find HaoPaste.
 3. 点击「仍要打开」
+   Click Open Anyway.
 
 也可以在 Finder 中右键 HaoPaste → 打开。
+Or right-click HaoPaste in Finder and choose Open.
 
 系统要求：macOS 14 或更高版本。
+Requires macOS 14 or later.
 EOF
 fi
 

@@ -34,7 +34,7 @@ final class SettingsWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "HaoPaste 设置"
+        window.title = L("HaoPaste 设置")
         window.contentViewController = hostingController
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed

@@ -391,12 +391,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         shelfOCRController.onSaveSnippet = { [weak self] text in
             guard let self, !text.isEmpty else { return }
             let source = self.shelfOCRService.sourceTitle
-            let rawTitle = source.isEmpty ? "图片文字" : source
+            let rawTitle = source.isEmpty ? L("图片文字") : source
             let title = rawTitle.count > 20
                 ? String(rawTitle.prefix(20)) + "…"
                 : rawTitle
             _ = self.snippetManager.create(
-                title: "识图 · \(title)",
+                title: L("识图 · %@", title),
                 content: text
             )
         }
@@ -454,17 +454,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             activeHotKeyConfiguration = configuration
             settings.setHotKeyRegistrationError(nil)
         } catch {
-            var message = "无法注册 \(configuration.displayString)：\(error.localizedDescription)"
+            var message = L(
+                "无法注册 %@：%@",
+                configuration.displayString,
+                error.localizedDescription
+            )
 
             if configuration != fallback {
                 do {
                     try installHotKey(fallback)
                     activeHotKeyConfiguration = fallback
                     settings.revertHotKey(to: fallback)
-                    message += " 已恢复为 \(fallback.displayString)。"
+                    message += L(" 已恢复为 %@。", fallback.displayString)
                 } catch {
                     activeHotKeyConfiguration = nil
-                    message += " 原快捷键也无法注册。"
+                    message += L(" 原快捷键也无法注册。")
                 }
             } else {
                 activeHotKeyConfiguration = nil
@@ -485,17 +489,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             activeTranslationHotKeyConfiguration = configuration
             settings.setTranslationHotKeyRegistrationError(nil)
         } catch {
-            var message = "无法注册翻译快捷键 \(configuration.displayString)：\(error.localizedDescription)"
+            var message = L(
+                "无法注册翻译快捷键 %@：%@",
+                configuration.displayString,
+                error.localizedDescription
+            )
 
             if configuration != fallback {
                 do {
                     try installTranslationHotKey(fallback)
                     activeTranslationHotKeyConfiguration = fallback
                     settings.revertTranslationHotKey(to: fallback)
-                    message += " 已恢复为 \(fallback.displayString)。"
+                    message += L(" 已恢复为 %@。", fallback.displayString)
                 } catch {
                     activeTranslationHotKeyConfiguration = nil
-                    message += " 原翻译快捷键也无法注册。"
+                    message += L(" 原翻译快捷键也无法注册。")
                 }
             } else {
                 activeTranslationHotKeyConfiguration = nil
@@ -699,14 +707,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appMenuItem.submenu = appMenu
 
         let aboutItem = appMenu.addItem(
-            withTitle: "关于 HaoPaste",
+            withTitle: L("关于 HaoPaste"),
             action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)),
             keyEquivalent: ""
         )
         aboutItem.target = NSApp
 
         let settingsItem = appMenu.addItem(
-            withTitle: "设置…",
+            withTitle: L("设置…"),
             action: #selector(openSettingsFromMenu),
             keyEquivalent: ","
         )
@@ -715,7 +723,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appMenu.addItem(.separator())
 
         let hideItem = appMenu.addItem(
-            withTitle: "隐藏 HaoPaste",
+            withTitle: L("隐藏 HaoPaste"),
             action: #selector(NSApplication.hide(_:)),
             keyEquivalent: "h"
         )
@@ -724,7 +732,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appMenu.addItem(.separator())
 
         let quitItem = appMenu.addItem(
-            withTitle: "退出 HaoPaste",
+            withTitle: L("退出 HaoPaste"),
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         )
@@ -733,37 +741,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let editMenuItem = NSMenuItem()
         mainMenu.addItem(editMenuItem)
 
-        let editMenu = NSMenu(title: "编辑")
+        let editMenu = NSMenu(title: L("编辑"))
         editMenuItem.submenu = editMenu
 
         editMenu.addItem(
-            withTitle: "撤销",
+            withTitle: L("撤销"),
             action: Selector(("undo:")),
             keyEquivalent: "z"
         )
         editMenu.addItem(
-            withTitle: "重做",
+            withTitle: L("重做"),
             action: Selector(("redo:")),
             keyEquivalent: "Z"
         )
         editMenu.addItem(.separator())
         editMenu.addItem(
-            withTitle: "剪切",
+            withTitle: L("剪切"),
             action: #selector(NSText.cut(_:)),
             keyEquivalent: "x"
         )
         editMenu.addItem(
-            withTitle: "复制",
+            withTitle: L("复制"),
             action: #selector(NSText.copy(_:)),
             keyEquivalent: "c"
         )
         editMenu.addItem(
-            withTitle: "粘贴",
+            withTitle: L("粘贴"),
             action: #selector(NSText.paste(_:)),
             keyEquivalent: "v"
         )
         editMenu.addItem(
-            withTitle: "全选",
+            withTitle: L("全选"),
             action: #selector(NSText.selectAll(_:)),
             keyEquivalent: "a"
         )
@@ -771,16 +779,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let windowMenuItem = NSMenuItem()
         mainMenu.addItem(windowMenuItem)
 
-        let windowMenu = NSMenu(title: "窗口")
+        let windowMenu = NSMenu(title: L("窗口"))
         windowMenuItem.submenu = windowMenu
 
         windowMenu.addItem(
-            withTitle: "关闭",
+            withTitle: L("关闭"),
             action: #selector(NSWindow.performClose(_:)),
             keyEquivalent: "w"
         )
         windowMenu.addItem(
-            withTitle: "最小化",
+            withTitle: L("最小化"),
             action: #selector(NSWindow.performMiniaturize(_:)),
             keyEquivalent: "m"
         )

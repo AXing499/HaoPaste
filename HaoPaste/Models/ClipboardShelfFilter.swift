@@ -14,9 +14,17 @@ enum ClipboardShelfFilter: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .all: return "全部"
-        case .text: return "文本"
-        case .image: return "图片"
+        case .all: return L("全部")
+        case .text: return L("文本")
+        case .image: return L("图片")
+        }
+    }
+
+    var emptyTitle: String {
+        switch self {
+        case .all: return L("暂无记录")
+        case .text: return L("暂无文本记录")
+        case .image: return L("暂无图片记录")
         }
     }
 

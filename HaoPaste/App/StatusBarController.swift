@@ -88,14 +88,17 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.autoenablesItems = false
         menu.delegate = self
 
-        showItem.title = "打开 HaoPaste（\(settings.hotKey.displayString)）"
+        showItem.title = L("打开 HaoPaste（%@）", settings.hotKey.displayString)
         showItem.action = #selector(showPanel)
         showItem.keyEquivalent = ""
         showItem.target = self
         showItem.image = symbolImage(named: "macwindow", pointSize: 13, weight: .regular)
         menu.addItem(showItem)
 
-        translateItem.title = "翻译剪贴板（\(settings.translationHotKey.displayString)）"
+        translateItem.title = L(
+            "翻译剪贴板（%@）",
+            settings.translationHotKey.displayString
+        )
         translateItem.action = #selector(translateClipboard)
         translateItem.keyEquivalent = ""
         translateItem.target = self
@@ -106,7 +109,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         )
         menu.addItem(translateItem)
 
-        shelfItem.title = "显示剪贴板挂架"
+        shelfItem.title = L("显示剪贴板挂架")
         shelfItem.action = #selector(toggleShelf)
         shelfItem.keyEquivalent = ""
         shelfItem.target = self
@@ -117,7 +120,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         )
         menu.addItem(shelfItem)
 
-        historyInfoItem.title = "暂无记录"
+        historyInfoItem.title = L("暂无记录")
         historyInfoItem.isEnabled = false
         historyInfoItem.image = symbolImage(named: "clock.arrow.circlepath", pointSize: 13, weight: .regular)
         menu.addItem(historyInfoItem)
@@ -128,7 +131,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         pauseItem.action = #selector(toggleMonitoring)
         menu.addItem(pauseItem)
 
-        clearItem.title = "清空未置顶记录"
+        clearItem.title = L("清空未置顶记录")
         clearItem.target = self
         clearItem.action = #selector(clearUnpinned)
         clearItem.image = symbolImage(named: "trash", pointSize: 13, weight: .regular)
@@ -137,7 +140,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(.separator())
 
         let settingsItem = NSMenuItem(
-            title: "设置…",
+            title: L("设置…"),
             action: #selector(openSettings),
             keyEquivalent: ""
         )
@@ -146,7 +149,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(settingsItem)
 
         let aboutItem = NSMenuItem(
-            title: "关于 HaoPaste",
+            title: L("关于 HaoPaste"),
             action: #selector(showAbout),
             keyEquivalent: ""
         )
@@ -155,7 +158,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(aboutItem)
 
         let quitItem = NSMenuItem(
-            title: "退出 HaoPaste",
+            title: L("退出 HaoPaste"),
             action: #selector(quit),
             keyEquivalent: "q"
         )
@@ -173,18 +176,25 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private func updatePresentation() {
-        showItem.title = "打开 HaoPaste（\(settings.hotKey.displayString)）"
-        translateItem.title = "翻译剪贴板（\(settings.translationHotKey.displayString)）"
+        showItem.title = L("打开 HaoPaste（%@）", settings.hotKey.displayString)
+        translateItem.title = L(
+            "翻译剪贴板（%@）",
+            settings.translationHotKey.displayString
+        )
         shelfItem.title = shelfController?.isShowing == true
-            ? "收起剪贴板挂架"
-            : "显示剪贴板挂架"
+            ? L("收起剪贴板挂架")
+            : L("显示剪贴板挂架")
         shelfItem.isEnabled = settings.shelfEnabled
 
         historyInfoItem.title = manager.items.isEmpty
-            ? "暂无记录"
-            : "\(manager.items.count) 条记录 · \(manager.pinnedCount) 条置顶"
+            ? L("暂无记录")
+            : L(
+                "历史：%d 条 · 置顶：%d 条",
+                manager.items.count,
+                manager.pinnedCount
+            )
 
-        pauseItem.title = manager.isMonitoringPaused ? "继续监听" : "暂停监听"
+        pauseItem.title = manager.isMonitoringPaused ? L("继续监听") : L("暂停监听")
         pauseItem.image = symbolImage(
             named: manager.isMonitoringPaused ? "play.circle" : "pause.circle",
             pointSize: 13,
@@ -195,7 +205,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         statusItem.button?.appearsDisabled = manager.isMonitoringPaused
         statusItem.button?.toolTip = manager.isMonitoringPaused
-            ? "HaoPaste · 监听已暂停"
+            ? L("HaoPaste · 监听已暂停")
             : "HaoPaste · \(settings.hotKey.displayString)"
     }
 
@@ -235,13 +245,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let previousApplication = NSWorkspace.shared.frontmostApplication
 
         let alert = NSAlert()
-        alert.messageText = "清空未置顶记录？"
+        alert.messageText = L("清空未置顶记录？")
         alert.informativeText = manager.pinnedCount > 0
-            ? "已置顶的 \(manager.pinnedCount) 条记录会保留。此操作无法撤销。"
-            : "所有历史记录都会被删除。此操作无法撤销。"
+            ? L(
+                "已置顶的 %d 条记录会保留。此操作无法撤销。",
+                manager.pinnedCount
+            )
+            : L("所有历史记录都会被删除。此操作无法撤销。")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "清空")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: L("清空"))
+        alert.addButton(withTitle: L("取消"))
 
         NSApp.activate()
         let response = alert.runModal()

@@ -83,7 +83,7 @@ struct BatchOCRPaneView: View {
                 }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("批量提取文字")
+                Text(L("批量提取文字"))
                     .font(.system(.body, design: .rounded).weight(.semibold))
                 Text(statusText)
                     .font(.system(size: 10.5, weight: .regular, design: .rounded))
@@ -113,7 +113,7 @@ struct BatchOCRPaneView: View {
             }
             .buttonStyle(.plain)
             .focusable(false)
-            .help("关闭识图（esc）")
+            .help(L("关闭识图（esc）"))
         }
         .padding(.horizontal, 16)
         .frame(height: 54)
@@ -123,9 +123,13 @@ struct BatchOCRPaneView: View {
         if let language = TranslationLanguage.detect(
             in: service.batchEntries.map(\.text).joined(separator: "\n")
         ) {
-            return "\(service.batchEntries.count) 张图片 · \(language.name)"
+            return L(
+                "%d 张图片 · %@",
+                service.batchEntries.count,
+                language.name
+            )
         }
-        return "\(service.batchEntries.count) 张图片"
+        return L("%d 张图片", service.batchEntries.count)
     }
 
     private var entryList: some View {
@@ -170,21 +174,21 @@ struct BatchOCRPaneView: View {
                     HStack(spacing: 6) {
                         ProgressView()
                             .controlSize(.small)
-                        Text("识别中…")
+                        Text(L("识别中…"))
                             .font(.system(size: 10.5, design: .rounded))
                             .foregroundStyle(.secondary)
                     }
                 case .failed:
-                    Text(entry.errorMessage ?? "识别失败")
+                    Text(entry.errorMessage ?? L("识别失败"))
                         .font(.system(size: 10.5, design: .rounded))
                         .foregroundStyle(.orange)
                         .lineLimit(2)
                 case .empty:
-                    Text("未识别到文字")
+                    Text(L("未识别到文字"))
                         .font(.system(size: 10.5, design: .rounded))
                         .foregroundStyle(.tertiary)
                 case .idle, .success:
-                    Text(entry.text.isEmpty ? "等待识别" : entry.text)
+                    Text(entry.text.isEmpty ? L("等待识别") : entry.text)
                         .font(.system(size: 11, weight: .regular, design: .rounded))
                         .foregroundStyle(.secondary)
                         .lineLimit(3)
@@ -195,14 +199,14 @@ struct BatchOCRPaneView: View {
             Spacer(minLength: 6)
 
             VStack(alignment: .trailing, spacing: 4) {
-                Button("编辑") {
+                Button(L("编辑")) {
                     service.openBatchEntry(id: entry.id)
                 }
                 .buttonStyle(.plain)
                 .font(.system(size: 9.5, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
 
-                Button("复制") {
+                Button(L("复制")) {
                     onCopyEntry(entry.text)
                 }
                 .buttonStyle(.plain)
@@ -210,7 +214,7 @@ struct BatchOCRPaneView: View {
                 .foregroundStyle(.secondary)
                 .disabled(entry.text.isEmpty)
 
-                Button("翻译") {
+                Button(L("翻译")) {
                     onTranslateEntry(entry.text, entry.title)
                 }
                 .buttonStyle(.plain)
@@ -218,7 +222,7 @@ struct BatchOCRPaneView: View {
                 .foregroundStyle(Color.accentColor)
                 .disabled(entry.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            .frame(width: 34, alignment: .trailing)
+            .fixedSize(horizontal: true, vertical: false)
         }
         .padding(10)
         .background {
@@ -235,15 +239,15 @@ struct BatchOCRPaneView: View {
         Group {
             switch entry.phase {
             case .success:
-                Text("\(entry.text.count) 字符")
+                Text(L("%d 字符", entry.text.count))
             case .recognizing:
-                Text("识别中")
+                Text(L("识别中"))
             case .empty:
-                Text("无文字")
+                Text(L("无文字"))
             case .failed:
-                Text("失败")
+                Text(L("失败"))
             case .idle:
-                Text("等待")
+                Text(L("等待"))
             }
         }
         .font(.system(size: 8.5, weight: .semibold, design: .rounded))
@@ -262,13 +266,13 @@ struct BatchOCRPaneView: View {
 
     private var footer: some View {
         HStack(spacing: 8) {
-            Label("本地识别 · 不上传图片", systemImage: "lock.shield")
+            Label(L("本地识别 · 不上传图片"), systemImage: "lock.shield")
                 .font(.system(size: 10.5, weight: .regular, design: .rounded))
                 .foregroundStyle(.secondary)
 
             Spacer(minLength: 10)
 
-            secondaryAction("重新识别", systemImage: "arrow.clockwise") {
+            secondaryAction(L("重新识别"), systemImage: "arrow.clockwise") {
                 service.recognizeBatch(force: true)
             }
             .disabled(
@@ -276,7 +280,7 @@ struct BatchOCRPaneView: View {
             )
 
             secondaryAction(
-                "保存为片段",
+                L("保存为片段"),
                 systemImage: "text.badge.plus",
                 isEnabled: !mergedText.isEmpty
             ) {
@@ -289,7 +293,7 @@ struct BatchOCRPaneView: View {
                 HStack(spacing: 5) {
                     Image(systemName: "doc.on.clipboard")
                         .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    Text("复制全部")
+                    Text(L("复制全部"))
                         .font(.system(size: 11.5, weight: .semibold, design: .rounded))
                 }
                 .foregroundStyle(Color.white)
@@ -305,7 +309,7 @@ struct BatchOCRPaneView: View {
             .focusable(false)
             .disabled(mergedText.isEmpty)
             .opacity(mergedText.isEmpty ? 0.45 : 1)
-            .help("复制全部识别文字并关闭")
+            .help(L("复制全部识别文字并关闭"))
         }
         .padding(.horizontal, 16)
         .frame(height: 54)

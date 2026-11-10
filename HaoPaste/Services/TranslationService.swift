@@ -160,7 +160,7 @@ final class TranslationService {
 
         let trimmed = sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            fail("没有可翻译的内容。")
+            fail(L("没有可翻译的内容。"))
             return
         }
 
@@ -168,7 +168,7 @@ final class TranslationService {
         let providerIDs = preferredProviderID.map { [$0] } ?? availableProviderIDs
 
         guard !providerIDs.isEmpty else {
-            fail("没有可用的翻译引擎，请先在设置中启用或配置一个引擎。")
+            fail(L("没有可用的翻译引擎，请先在设置中启用或配置一个引擎。"))
             return
         }
 
@@ -298,7 +298,7 @@ final class TranslationService {
         } else if let lastError {
             message = lastError.localizedDescription
         } else {
-            message = "所有翻译引擎均未返回结果。"
+            message = L("所有翻译引擎均未返回结果。")
         }
         fail(message)
     }
@@ -376,7 +376,7 @@ final class TranslationService {
     private func settingsProviderNames(
         for ids: [TranslationProviderID]
     ) -> String {
-        ids.map(\.descriptor.name).joined(separator: "、")
+        ids.map(\.descriptor.name).joined(separator: L("、"))
     }
 }
 

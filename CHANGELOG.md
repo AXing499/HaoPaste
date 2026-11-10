@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.13.20 — 2026-11-10
+
+### 中文
+
+- 新增完整英文界面：中文环境使用简体中文，英文环境使用英文，其他语言环境默认英文。
+- 新增英文 README；GitHub Release 说明继续使用中英双语。
+- DMG 安装背景与安装说明改为中英双语，保留「系统设置 → 隐私与安全性 → 安全性 → 仍要打开」的完整步骤。
+- 补齐动态数量、单复数、相对时间、菜单、弹窗与辅助功能文案的本地化。
+- 新增本地化回归测试，并修复格式化占位符与计数显示问题。
+
+### English
+
+- Added a complete English UI. Chinese systems use Simplified Chinese, English systems use English, and all other languages fall back to English.
+- Added an English README; GitHub Release notes remain bilingual.
+- Made the DMG background and installation notes bilingual, including the full System Settings → Privacy & Security → Security → Open Anyway steps.
+- Localized dynamic counts, plurals, relative times, menus, alerts, and accessibility labels.
+- Added localization regression tests and fixed format placeholder and count display issues.
+
 ## 0.13.19 — 2026-11-10
 
 ### 中文

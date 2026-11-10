@@ -108,7 +108,7 @@ struct OCRPaneView: View {
                 }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("提取文字")
+                Text(L("提取文字"))
                     .font(.system(.body, design: .rounded).weight(.semibold))
                 Text(service.sourceTitle)
                     .font(.system(size: 10.5, weight: .regular, design: .rounded))
@@ -144,7 +144,7 @@ struct OCRPaneView: View {
             }
             .buttonStyle(.plain)
             .focusable(false)
-            .help("关闭识图（esc）")
+            .help(L("关闭识图（esc）"))
         }
         .padding(.horizontal, 16)
         .frame(height: 54)
@@ -187,7 +187,7 @@ struct OCRPaneView: View {
                             HStack(spacing: 8) {
                                 ProgressView()
                                     .controlSize(.small)
-                                Text("正在识别图片文字…")
+                                Text(L("正在识别图片文字…"))
                                     .font(.system(size: 12, weight: .medium, design: .rounded))
                                     .foregroundStyle(.secondary)
                             }
@@ -217,10 +217,12 @@ struct OCRPaneView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(service.text.count) 字符 · 可编辑")
+                Text(
+                    L("%d 字符 · 可编辑", service.text.count)
+                )
                     .font(.system(size: 10.5, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
-                Text("识别结果缓存在本机，可在设置中清除")
+                Text(L("识别结果缓存在本机，可在设置中清除"))
                     .font(.system(size: 9.5, weight: .regular, design: .rounded))
                     .foregroundStyle(.tertiary)
             }
@@ -236,14 +238,14 @@ struct OCRPaneView: View {
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.secondary)
 
-            Text("未识别到文字")
+            Text(L("未识别到文字"))
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
 
-            Text("可以尝试更清晰、文字更大的图片，或重新识别。")
+            Text(L("可以尝试更清晰、文字更大的图片，或重新识别。"))
                 .font(.system(size: 11.5, weight: .regular, design: .rounded))
                 .foregroundStyle(.secondary)
 
-            Button("重新识别") {
+            Button(L("重新识别")) {
                 service.recognize(force: true)
             }
             .buttonStyle(.bordered)
@@ -260,16 +262,16 @@ struct OCRPaneView: View {
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.orange)
 
-            Text("识别失败")
+            Text(L("识别失败"))
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
 
-            Text(service.errorMessage ?? "请稍后重试。")
+            Text(service.errorMessage ?? L("请稍后重试。"))
                 .font(.system(size: 11.5, weight: .regular, design: .rounded))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Button("重试") {
+            Button(L("重试")) {
                 service.recognize(force: true)
             }
             .buttonStyle(.bordered)
@@ -283,30 +285,30 @@ struct OCRPaneView: View {
 
     private var footer: some View {
         HStack(spacing: 8) {
-            Label("本地识别 · 不上传图片", systemImage: "lock.shield")
+            Label(L("本地识别 · 不上传图片"), systemImage: "lock.shield")
                 .font(.system(size: 10.5, weight: .regular, design: .rounded))
                 .foregroundStyle(.secondary)
 
             Spacer(minLength: 10)
 
             if service.phase == .success {
-                secondaryAction("重新识别", systemImage: "arrow.clockwise") {
+                secondaryAction(L("重新识别"), systemImage: "arrow.clockwise") {
                     service.recognize(force: true)
                 }
 
-                secondaryAction("保存片段", systemImage: "text.badge.plus") {
+                secondaryAction(L("保存片段"), systemImage: "text.badge.plus") {
                     onSaveSnippet(service.text)
                 }
 
                 secondaryAction(
-                    "翻译",
+                    L("翻译"),
                     systemImage: "character.bubble",
                     isEnabled: !service.text.isEmpty
                 ) {
                     onTranslate(service.text)
                 }
             } else if service.phase != .recognizing {
-                secondaryAction("重新识别", systemImage: "arrow.clockwise") {
+                secondaryAction(L("重新识别"), systemImage: "arrow.clockwise") {
                     service.recognize(force: true)
                 }
             }
@@ -324,7 +326,7 @@ struct OCRPaneView: View {
             HStack(spacing: 5) {
                 Image(systemName: "doc.on.clipboard")
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
-                Text("复制文字")
+                Text(L("复制文字"))
                     .font(.system(size: 11.5, weight: .semibold, design: .rounded))
             }
             .foregroundStyle(Color.white)
@@ -340,7 +342,7 @@ struct OCRPaneView: View {
         .focusable(false)
         .disabled(service.text.isEmpty)
         .opacity(service.text.isEmpty ? 0.45 : 1)
-        .help("复制识别文字并关闭")
+        .help(L("复制识别文字并关闭"))
     }
 
     private func secondaryAction(

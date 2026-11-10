@@ -22,7 +22,7 @@ struct BaiduTranslateProvider: TranslationProvider {
         let appID = request.credentials.trimmed(for: .appID)
         let secretKey = request.credentials.trimmed(for: .secretKey)
         guard !appID.isEmpty, !secretKey.isEmpty else {
-            throw TranslationError.missingCredentials("百度翻译")
+            throw TranslationError.missingCredentials(L("百度翻译"))
         }
 
         let text = request.text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -71,8 +71,10 @@ struct BaiduTranslateProvider: TranslationProvider {
         }
 
         if let errorCode = decoded.error_code, errorCode != "0" {
+            let message = decoded.error_msg
+                ?? L("错误码 %@", errorCode)
             throw TranslationError.service(
-                "百度翻译：\(decoded.error_msg ?? "错误码 \(errorCode)")"
+                L("百度翻译：%@", message)
             )
         }
 

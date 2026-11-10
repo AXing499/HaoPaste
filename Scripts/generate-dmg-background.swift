@@ -36,16 +36,16 @@ func drawText(
 }
 
 drawText(
-    "安装 HaoPaste",
+    "安装 HaoPaste · Install HaoPaste",
     in: NSRect(x: 44, y: 346, width: 642, height: 42),
-    font: .systemFont(ofSize: 30, weight: .bold),
+    font: .systemFont(ofSize: 28, weight: .bold),
     color: NSColor(calibratedRed: 0.13, green: 0.17, blue: 0.24, alpha: 1)
 )
 
 drawText(
-    "将左侧的 HaoPaste 拖入右侧的「Applications / 应用程序」文件夹",
+    "将 HaoPaste 拖入 Applications 文件夹 / Drag HaoPaste into Applications",
     in: NSRect(x: 44, y: 312, width: 642, height: 28),
-    font: .systemFont(ofSize: 16, weight: .medium),
+    font: .systemFont(ofSize: 14.5, weight: .medium),
     color: secondary
 )
 
@@ -69,7 +69,7 @@ arrowHead.close()
 accent.withAlphaComponent(0.65).setFill()
 arrowHead.fill()
 
-let noteBox = NSRect(x: 44, y: 22, width: 642, height: 96)
+let noteBox = NSRect(x: 44, y: 14, width: 642, height: 128)
 let note = NSBezierPath(roundedRect: noteBox, xRadius: 12, yRadius: 12)
 NSColor.white.withAlphaComponent(0.55).setFill()
 note.fill()
@@ -78,21 +78,33 @@ note.lineWidth = 1
 note.stroke()
 
 drawText(
-    "首次打开如提示「无法验证开发者」",
-    in: NSRect(x: 62, y: 84, width: 606, height: 20),
-    font: .systemFont(ofSize: 13, weight: .semibold),
+    "首次打开如提示「无法验证开发者」 / If the developer cannot be verified",
+    in: NSRect(x: 62, y: 114, width: 606, height: 20),
+    font: .systemFont(ofSize: 12.5, weight: .semibold),
     color: NSColor(calibratedRed: 0.16, green: 0.20, blue: 0.28, alpha: 1)
 )
 drawText(
     "打开「系统设置 → 隐私与安全性」，在「安全性」中找到 HaoPaste，点击「仍要打开」。",
-    in: NSRect(x: 62, y: 60, width: 606, height: 20),
-    font: .systemFont(ofSize: 11.5, weight: .regular),
+    in: NSRect(x: 62, y: 90, width: 606, height: 20),
+    font: .systemFont(ofSize: 10.8, weight: .regular),
     color: secondary
 )
 drawText(
-    "也可以在 Finder 中右键 HaoPaste → 打开。",
-    in: NSRect(x: 62, y: 38, width: 606, height: 20),
-    font: .systemFont(ofSize: 11.5, weight: .regular),
+    "System Settings → Privacy & Security → Security → find HaoPaste → Open Anyway",
+    in: NSRect(x: 62, y: 68, width: 606, height: 20),
+    font: .systemFont(ofSize: 10.5, weight: .regular),
+    color: secondary
+)
+drawText(
+    "也可以右键 HaoPaste → 打开 / Or right-click HaoPaste in Finder → Open",
+    in: NSRect(x: 62, y: 46, width: 606, height: 20),
+    font: .systemFont(ofSize: 10.5, weight: .regular),
+    color: secondary
+)
+drawText(
+    "系统要求：macOS 14+ / Requires macOS 14 or later",
+    in: NSRect(x: 62, y: 24, width: 606, height: 20),
+    font: .systemFont(ofSize: 9.5, weight: .regular),
     color: secondary
 )
 

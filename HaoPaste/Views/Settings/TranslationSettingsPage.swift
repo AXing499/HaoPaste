@@ -21,10 +21,10 @@ struct TranslationSettingsPage: View {
     }
 
     var body: some View {
-        SettingsCard("语言") {
+        SettingsCard(L("语言")) {
             SettingsRow(
-                "默认目标语言",
-                subtitle: "新翻译默认使用此语言；原文已是该语言时会自动切换中英方向"
+                L("默认目标语言"),
+                subtitle: L("新翻译默认使用此语言；原文已是该语言时会自动切换中英方向")
             ) {
                 Picker("", selection: $settings.targetLanguageID) {
                     ForEach(TranslationLanguage.all) { language in
@@ -39,10 +39,10 @@ struct TranslationSettingsPage: View {
             SettingsDivider()
 
             SettingsRow(
-                "在线翻译授权",
+                L("在线翻译授权"),
                 subtitle: consentSubtitle
             ) {
-                Button("重新授权") {
+                Button(L("重新授权")) {
                     settings.resetConsent()
                 }
                 .buttonStyle(.bordered)
@@ -51,10 +51,10 @@ struct TranslationSettingsPage: View {
             }
         }
 
-        SettingsCard("识图") {
+        SettingsCard(L("识图")) {
             SettingsRow(
-                "识别语言",
-                subtitle: "自动检测适合混合语言截图；指定语言可提高特定语种准确率"
+                L("识别语言"),
+                subtitle: L("自动检测适合混合语言截图；指定语言可提高特定语种准确率")
             ) {
                 Picker(
                     "",
@@ -76,16 +76,16 @@ struct TranslationSettingsPage: View {
 
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("识图缓存")
+                    Text(L("识图缓存"))
                         .font(.system(.body, design: .rounded))
-                    Text("识别结果按图片与语言缓存在本机，不上传；清除后需要重新识别。")
+                    Text(L("识别结果按图片与语言缓存在本机，不上传；清除后需要重新识别。"))
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer(minLength: 10)
 
-                Button("清除识图缓存") {
+                Button(L("清除识图缓存")) {
                     showClearOCRCacheAlert = true
                 }
                 .buttonStyle(.bordered)
@@ -94,7 +94,7 @@ struct TranslationSettingsPage: View {
             .padding(14)
         }
 
-        SettingsCard("引擎优先级") {
+        SettingsCard(L("引擎优先级")) {
             ForEach(
                 Array(settings.providerOrder.enumerated()),
                 id: \.element
@@ -111,26 +111,26 @@ struct TranslationSettingsPage: View {
             }
         }
 
-        SettingsCard("说明") {
+        SettingsCard(L("说明")) {
             VStack(alignment: .leading, spacing: 8) {
                 Label(
-                    "只有点击翻译时才会把当前文本发送给启用的在线引擎。图片、历史和其他内容不会上传。",
+                    L("只有点击翻译时才会把当前文本发送给启用的在线引擎。图片、历史和其他内容不会上传。"),
                     systemImage: "lock.shield"
                 )
 
                 Label(
-                    "Google、Bing、DeepL 的非官方接口没有公开契约，可能限流、失效或违反服务条款；请勿翻译敏感内容。",
+                    L("Google、Bing、DeepL 的非官方接口没有公开契约，可能限流、失效或违反服务条款；请勿翻译敏感内容。"),
                     systemImage: "exclamationmark.triangle"
                 )
                 .foregroundStyle(.orange)
 
                 Label(
-                    "图片文字识别在本地使用 Vision 完成，识别结果缓存在本机、不会上传图片，可在上方清除。",
+                    L("图片文字识别在本地使用 Vision 完成，识别结果缓存在本机、不会上传图片，可在上方清除。"),
                     systemImage: "text.viewfinder"
                 )
 
                 Label(
-                    "官方 API 凭证保存在 macOS 钥匙串，不写入历史、日志或备份文件。",
+                    L("官方 API 凭证保存在 macOS 钥匙串，不写入历史、日志或备份文件。"),
                     systemImage: "key"
                 )
             }
@@ -146,13 +146,13 @@ struct TranslationSettingsPage: View {
                 providerID: id
             )
         }
-        .alert("清除识图缓存？", isPresented: $showClearOCRCacheAlert) {
-            Button("清除", role: .destructive) {
+        .alert(L("清除识图缓存？"), isPresented: $showClearOCRCacheAlert) {
+            Button(L("清除"), role: .destructive) {
                 ocrService.clearCache()
             }
-            Button("取消", role: .cancel) {}
+            Button(L("取消"), role: .cancel) {}
         } message: {
-            Text("已识别的图片文字缓存会被删除，下次识别需要重新运行 Vision。")
+            Text(L("已识别的图片文字缓存会被删除，下次识别需要重新运行 Vision。"))
         }
     }
 
@@ -227,7 +227,7 @@ struct TranslationSettingsPage: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(index == 0)
-                .help("提高优先级")
+                .help(L("提高优先级"))
 
                 Button {
                     settings.moveProvider(id, by: 1)
@@ -239,18 +239,18 @@ struct TranslationSettingsPage: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(index == count - 1)
-                .help("降低优先级")
+                .help(L("降低优先级"))
             }
             .foregroundStyle(.secondary)
 
             if descriptor.requiresConfiguration {
-                Button(isConfigured ? "修改…" : "配置…") {
+                Button(isConfigured ? L("修改…") : L("配置…")) {
                     configuringProvider = id
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
             } else {
-                Text("无需配置")
+                Text(L("无需配置"))
                     .font(.system(size: 9.5, weight: .regular, design: .rounded))
                     .foregroundStyle(.tertiary)
             }
@@ -290,19 +290,21 @@ struct TranslationSettingsPage: View {
         guard descriptor.requiresConfiguration else {
             return descriptor.subtitle
         }
-        return isConfigured ? "已配置 · \(descriptor.subtitle)" : descriptor.subtitle
+        return isConfigured
+            ? L("已配置 · %@", descriptor.subtitle)
+            : descriptor.subtitle
     }
 
     private var consentSubtitle: String {
         guard !settings.consentedProviderIDs.isEmpty else {
-            return "首次翻译时会询问一次；授权后不会再次打断"
+            return L("首次翻译时会询问一次；授权后不会再次打断")
         }
 
         let names = settings.providerOrder
             .filter { settings.consentedProviderIDs.contains($0) }
             .map(\.descriptor.name)
-            .joined(separator: "、")
-        return names.isEmpty ? "尚未授权" : "已授权：\(names)"
+            .joined(separator: L("、"))
+        return names.isEmpty ? L("尚未授权") : L("已授权：%@", names)
     }
 }
 
@@ -332,7 +334,7 @@ private struct TranslationProviderConfigSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("配置 \(descriptor.name)")
+                Text(L("配置 %@", descriptor.name))
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                 Text(descriptor.subtitle)
                     .font(.system(.caption, design: .rounded))
@@ -355,7 +357,7 @@ private struct TranslationProviderConfigSheet: View {
                 .fixedSize(horizontal: false, vertical: true)
             }
 
-            Text("凭证保存在 macOS 钥匙串，不会进入导出备份。测试会产生一次真实翻译请求。")
+            Text(L("凭证保存在 macOS 钥匙串，不会进入导出备份。测试会产生一次真实翻译请求。"))
                 .font(.system(size: 10, weight: .regular, design: .rounded))
                 .foregroundStyle(.tertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -370,7 +372,7 @@ private struct TranslationProviderConfigSheet: View {
                         ProgressView()
                             .controlSize(.small)
                     } else {
-                        Text("测试连接")
+                        Text(L("测试连接"))
                     }
                 }
                 .buttonStyle(.bordered)
@@ -378,7 +380,7 @@ private struct TranslationProviderConfigSheet: View {
                 .disabled(isTesting || !credentials.hasValues(for: descriptor))
 
                 if service.credentials.hasCredentials(for: providerID) {
-                    Button("清除凭证", role: .destructive) {
+                    Button(L("清除凭证"), role: .destructive) {
                         clearCredentials()
                     }
                     .buttonStyle(.borderless)
@@ -387,13 +389,13 @@ private struct TranslationProviderConfigSheet: View {
 
                 Spacer()
 
-                Button("取消") {
+                Button(L("取消")) {
                     dismiss()
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
 
-                Button("保存") {
+                Button(L("保存")) {
                     save()
                 }
                 .buttonStyle(.borderedProminent)
@@ -442,7 +444,7 @@ private struct TranslationProviderConfigSheet: View {
                     credentials: credentials
                 )
                 testSucceeded = true
-                testMessage = "连接成功，翻译接口可用。"
+                testMessage = L("连接成功，翻译接口可用。")
             } catch {
                 testSucceeded = false
                 testMessage = error.localizedDescription

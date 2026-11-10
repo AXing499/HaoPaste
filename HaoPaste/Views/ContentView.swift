@@ -103,10 +103,10 @@ struct ContentView: View {
         if case .unsupported = mergedSelection {
             if selectedHistoryItems.contains(where: { $0.type == .image }) {
                 return canBatchRecognizeImages
-                    ? "可批量识别图片文字"
-                    : "图片暂不支持合并"
+                    ? L("可批量识别图片文字")
+                    : L("图片暂不支持合并")
             }
-            return "没有可复制的内容"
+            return L("没有可复制的内容")
         }
 
         return nil
@@ -125,10 +125,10 @@ struct ContentView: View {
                             ? manager.trashedItems.count
                             : manager.items.count,
                     itemLabel: isSnippetMode
-                        ? "个片段"
+                        ? "%d 个片段"
                         : isTrashMode
-                            ? "条最近删除"
-                            : "条记录",
+                            ? "%d 条最近删除"
+                            : "%d 条记录",
                     isSearching: state.isSearching
                 )
             }
@@ -202,7 +202,10 @@ struct ContentView: View {
                             onSaveSnippet: { text in
                                 saveOCRSnippet(
                                     text,
-                                    title: "批量识图 · \(ocrService.batchEntries.count) 张"
+                                    title: L(
+                                        "批量识图 · %d 张",
+                                        ocrService.batchEntries.count
+                                    )
                                 )
                             },
                             onClose: {
@@ -217,7 +220,10 @@ struct ContentView: View {
                             onTranslate: { text in
                                 translationService.present(
                                     text: text,
-                                    title: "图片文字 · \(ocrService.sourceTitle)"
+                                    title: L(
+                                        "图片文字 · %@",
+                                        ocrService.sourceTitle
+                                    )
                                 )
                             },
                             onSaveSnippet: { text in
@@ -323,7 +329,7 @@ struct ContentView: View {
                     Button {
                         presentNewSnippet()
                     } label: {
-                        Label("新建片段", systemImage: "plus")
+                        Label(L("新建片段"), systemImage: "plus")
                             .font(.system(size: 10.5, weight: .semibold, design: .rounded))
                             .foregroundStyle(Color.accentColor)
                             .padding(.horizontal, 9)
@@ -335,14 +341,14 @@ struct ContentView: View {
                     }
                     .buttonStyle(.plain)
                     .pointingHandCursor()
-                    .help("新建片段")
+                    .help(L("新建片段"))
                 }
 
                 if isTrashMode {
                     Button {
                         confirmEmptyTrash()
                     } label: {
-                        Label("清空", systemImage: "trash")
+                        Label(L("清空"), systemImage: "trash")
                             .font(.system(size: 10.5, weight: .semibold, design: .rounded))
                             .foregroundStyle(Color.secondary)
                             .padding(.horizontal, 9)
@@ -355,15 +361,15 @@ struct ContentView: View {
                     .buttonStyle(.plain)
                     .pointingHandCursor()
                     .disabled(manager.trashedItems.isEmpty)
-                    .help("清空最近删除")
+                    .help(L("清空最近删除"))
                 }
 
                 Text(
                     isSnippetMode
-                        ? "\(visibleSnippets.count) 个片段"
+                        ? L("%d 个片段", visibleSnippets.count)
                         : isTrashMode
-                            ? "\(visibleTrash.count) 条最近删除"
-                            : "\(visibleItems.count) 条"
+                            ? L("%d 条最近删除", visibleTrash.count)
+                            : L("%d 条", visibleItems.count)
                 )
                 .font(.system(size: 10.5, weight: .medium, design: .rounded))
                 .foregroundStyle(.tertiary)
@@ -392,17 +398,17 @@ struct ContentView: View {
 
             TextField(
                 isSnippetMode
-                    ? "搜索片段…"
+                    ? L("搜索片段…")
                     : isTrashMode
-                        ? "搜索最近删除…"
-                        : "搜索剪切板历史…",
+                        ? L("搜索最近删除…")
+                        : L("搜索剪切板历史…"),
                 text: $state.searchText
             )
             .textFieldStyle(.plain)
             .font(.system(.body, design: .rounded))
             .focusEffectDisabled()
             .focused($isSearchFocused)
-            .help("支持中文、拼音缩写、来源应用与模糊匹配")
+            .help(L("支持中文、拼音缩写、来源应用与模糊匹配"))
             .onSubmit {
                 copySelectedEntry()
             }
@@ -422,7 +428,7 @@ struct ContentView: View {
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
-                .help("清除搜索")
+                .help(L("清除搜索"))
                 .transition(.scale(scale: 0.7).combined(with: .opacity))
             }
         }
@@ -733,11 +739,11 @@ struct ContentView: View {
 
     private func confirmDeleteTrash(_ entry: TrashedClipboardItem) {
         let alert = NSAlert()
-        alert.messageText = "彻底删除这条记录？"
-        alert.informativeText = "此操作无法撤销。"
+        alert.messageText = L("彻底删除这条记录？")
+        alert.informativeText = L("此操作无法撤销。")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "彻底删除")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: L("彻底删除"))
+        alert.addButton(withTitle: L("取消"))
 
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         withAnimation(reduceMotion ? nil : Theme.gentleSpring) {
@@ -749,11 +755,11 @@ struct ContentView: View {
         guard !manager.trashedItems.isEmpty else { return }
 
         let alert = NSAlert()
-        alert.messageText = "清空最近删除？"
-        alert.informativeText = "所有最近删除的记录将被永久删除，此操作无法撤销。"
+        alert.messageText = L("清空最近删除？")
+        alert.informativeText = L("所有最近删除的记录将被永久删除，此操作无法撤销。")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "清空")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: L("清空"))
+        alert.addButton(withTitle: L("取消"))
 
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         withAnimation(reduceMotion ? nil : Theme.gentleSpring) {
@@ -787,7 +793,7 @@ struct ContentView: View {
         let content = item.plainText.isEmpty ? item.content : item.plainText
         snippetEditor = SnippetEditorTarget(
             snippet: nil,
-            title: title.isEmpty ? "未命名片段" : String(title.prefix(40)),
+            title: title.isEmpty ? L("未命名片段") : String(title.prefix(40)),
             content: content
         )
         state.isEditingSnippet = true
@@ -820,11 +826,11 @@ struct ContentView: View {
 
     private func confirmDeleteSnippet(_ snippet: Snippet) {
         let alert = NSAlert()
-        alert.messageText = "删除片段「\(snippet.title)」？"
-        alert.informativeText = "此操作无法撤销。"
+        alert.messageText = L("删除片段「%@」？", snippet.title)
+        alert.informativeText = L("此操作无法撤销。")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "删除")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: L("删除"))
+        alert.addButton(withTitle: L("取消"))
 
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         snippetManager.delete(snippet)
@@ -840,7 +846,7 @@ struct ContentView: View {
             ? String(rawTitle.prefix(20)) + "…"
             : rawTitle
         _ = snippetManager.create(
-            title: "识图 · \(trimmedTitle)",
+            title: L("识图 · %@", trimmedTitle),
             content: text
         )
     }
@@ -853,7 +859,7 @@ struct ContentView: View {
             ? String(rawTitle.prefix(24)) + "…"
             : rawTitle
         _ = snippetManager.create(
-            title: "翻译 · \(title)",
+            title: L("翻译 · %@", title),
             content: text
         )
     }

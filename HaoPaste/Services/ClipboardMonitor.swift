@@ -139,7 +139,7 @@ final class ClipboardMonitor {
 
             return CapturedClipboard(
                 payload: .image(imageData, dimensions: dimensions),
-                plainText: "图片 \(dimensions.displayText)",
+                plainText: L("图片 %@", dimensions.displayText),
                 contentHash: ContentHasher.imageData(imageData),
                 sourceApp: sourceApp
             )
@@ -221,7 +221,7 @@ final class ClipboardMonitor {
 
         return SourceApplication(
             bundleIdentifier: app.bundleIdentifier,
-            name: app.localizedName ?? "未知应用"
+            name: app.localizedName ?? L("未知应用")
         )
     }
 }

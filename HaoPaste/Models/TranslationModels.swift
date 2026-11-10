@@ -26,7 +26,7 @@ enum TranslationProviderID: String, CaseIterable, Codable, Identifiable, Sendabl
             return TranslationProviderDescriptor(
                 id: self,
                 name: "Google",
-                subtitle: "非官方接口 · 无需配置 · 可能限流",
+                subtitle: L("非官方接口 · 无需配置 · 可能限流"),
                 kind: .unofficial,
                 requiredFields: []
             )
@@ -34,7 +34,7 @@ enum TranslationProviderID: String, CaseIterable, Codable, Identifiable, Sendabl
             return TranslationProviderDescriptor(
                 id: self,
                 name: "Bing",
-                subtitle: "非官方接口 · 无需配置 · 可能限流",
+                subtitle: L("非官方接口 · 无需配置 · 可能限流"),
                 kind: .unofficial,
                 requiredFields: []
             )
@@ -42,7 +42,7 @@ enum TranslationProviderID: String, CaseIterable, Codable, Identifiable, Sendabl
             return TranslationProviderDescriptor(
                 id: self,
                 name: "DeepL",
-                subtitle: "非官方接口 · 实验性，可能失效",
+                subtitle: L("非官方接口 · 实验性，可能失效"),
                 kind: .unofficial,
                 requiredFields: []
             )
@@ -50,7 +50,7 @@ enum TranslationProviderID: String, CaseIterable, Codable, Identifiable, Sendabl
             return TranslationProviderDescriptor(
                 id: self,
                 name: "Azure Translator",
-                subtitle: "官方 API · 订阅密钥 + 区域",
+                subtitle: L("官方 API · 订阅密钥 + 区域"),
                 kind: .official,
                 requiredFields: [.apiKey, .region]
             )
@@ -58,15 +58,15 @@ enum TranslationProviderID: String, CaseIterable, Codable, Identifiable, Sendabl
             return TranslationProviderDescriptor(
                 id: self,
                 name: "DeepL API",
-                subtitle: "官方 API · 自动识别 Free / Pro",
+                subtitle: L("官方 API · 自动识别 Free / Pro"),
                 kind: .official,
                 requiredFields: [.apiKey]
             )
         case .baidu:
             return TranslationProviderDescriptor(
                 id: self,
-                name: "百度翻译",
-                subtitle: "官方 API · AppID + 密钥",
+                name: L("百度翻译"),
+                subtitle: L("官方 API · AppID + 密钥"),
                 kind: .official,
                 requiredFields: [.appID, .secretKey]
             )
@@ -74,7 +74,7 @@ enum TranslationProviderID: String, CaseIterable, Codable, Identifiable, Sendabl
             return TranslationProviderDescriptor(
                 id: self,
                 name: "Google Cloud",
-                subtitle: "官方 API · API Key",
+                subtitle: L("官方 API · API Key"),
                 kind: .official,
                 requiredFields: [.apiKey]
             )
@@ -88,8 +88,8 @@ enum TranslationProviderKind: String, Sendable {
 
     var label: String {
         switch self {
-        case .unofficial: return "非官方"
-        case .official: return "官方"
+        case .unofficial: return L("非官方")
+        case .official: return L("官方")
         }
     }
 }
@@ -119,18 +119,18 @@ enum TranslationCredentialField: String, CaseIterable, Sendable {
     var title: String {
         switch self {
         case .apiKey: return "API Key"
-        case .region: return "区域（Region）"
+        case .region: return L("区域（Region）")
         case .appID: return "AppID"
-        case .secretKey: return "密钥（Secret Key）"
+        case .secretKey: return L("密钥（Secret Key）")
         }
     }
 
     var placeholder: String {
         switch self {
-        case .apiKey: return "粘贴 API Key"
-        case .region: return "例如 eastasia"
-        case .appID: return "百度翻译 AppID"
-        case .secretKey: return "百度翻译密钥"
+        case .apiKey: return L("粘贴 API Key")
+        case .region: return L("例如 eastasia")
+        case .appID: return L("百度翻译 AppID")
+        case .secretKey: return L("百度翻译密钥")
         }
     }
 
@@ -207,31 +207,31 @@ enum TranslationError: LocalizedError, Sendable {
     var errorDescription: String? {
         switch self {
         case .emptyText:
-            return "没有可翻译的内容。"
+            return L("没有可翻译的内容。")
         case let .missingCredentials(provider):
-            return "请先在设置中配置 \(provider) 的 API 凭证。"
+            return L("请先在设置中配置 %@ 的 API 凭证。", provider)
         case .unsupportedLanguage:
-            return "当前引擎不支持这个语言组合，请更换目标语言或引擎。"
+            return L("当前引擎不支持这个语言组合，请更换目标语言或引擎。")
         case .invalidResponse:
-            return "翻译服务返回了无法解析的数据。"
+            return L("翻译服务返回了无法解析的数据。")
         case let .requestFailed(status, message):
             if let message, !message.isEmpty {
-                return "请求失败（\(status)）：\(message)"
+                return L("请求失败（%d）：%@", status, message)
             }
             switch status {
             case 401, 403:
-                return "凭证无效或权限不足（\(status)）。"
+                return L("凭证无效或权限不足（%d）。", status)
             case 429:
-                return "请求过于频繁，请稍后再试（429）。"
+                return L("请求过于频繁，请稍后再试（429）。")
             case 500...599:
-                return "翻译服务暂时不可用（\(status)）。"
+                return L("翻译服务暂时不可用（%d）。", status)
             default:
-                return "请求失败（\(status)）。"
+                return L("请求失败（%d）。", status)
             }
         case let .service(message):
             return message
         case let .network(message):
-            return "网络请求失败：\(message)"
+            return L("网络请求失败：%@", message)
         }
     }
 }

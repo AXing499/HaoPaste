@@ -78,14 +78,14 @@ struct ItemRowView: View {
             Button {
                 onPreview()
             } label: {
-                Label("预览", systemImage: "eye")
+                Label(L("预览"), systemImage: "eye")
             }
 
             if item.isTranslatable {
                 Button {
                     onTranslate()
                 } label: {
-                    Label("翻译…", systemImage: "character.bubble")
+                    Label(L("翻译…"), systemImage: "character.bubble")
                 }
             }
 
@@ -96,7 +96,7 @@ struct ItemRowView: View {
                 Button {
                     onSaveSnippet()
                 } label: {
-                    Label("保存为片段…", systemImage: "text.quote")
+                    Label(L("保存为片段…"), systemImage: "text.quote")
                 }
             }
 
@@ -106,13 +106,13 @@ struct ItemRowView: View {
                 Button {
                     NSWorkspace.shared.open(url)
                 } label: {
-                    Label("打开链接", systemImage: "safari")
+                    Label(L("打开链接"), systemImage: "safari")
                 }
 
                 Button {
                     copyMarkdownLink(for: url)
                 } label: {
-                    Label("复制为 Markdown 链接", systemImage: "doc.on.doc")
+                    Label(L("复制为 Markdown 链接"), systemImage: "doc.on.doc")
                 }
 
                 Divider()
@@ -122,14 +122,14 @@ struct ItemRowView: View {
                 Button {
                     openFiles()
                 } label: {
-                    Label("打开", systemImage: "arrow.up.forward.app")
+                    Label(L("打开"), systemImage: "arrow.up.forward.app")
                 }
                 .disabled(item.availableFileURLs.isEmpty)
 
                 Button {
                     revealFiles()
                 } label: {
-                    Label("在 Finder 中显示", systemImage: "folder")
+                    Label(L("在 Finder 中显示"), systemImage: "folder")
                 }
                 .disabled(item.availableFileURLs.isEmpty)
 
@@ -140,19 +140,19 @@ struct ItemRowView: View {
                 Button {
                     onExtractText()
                 } label: {
-                    Label("提取文字…", systemImage: "text.viewfinder")
+                    Label(L("提取文字…"), systemImage: "text.viewfinder")
                 }
 
                 Button {
                     onExtractAndTranslate()
                 } label: {
-                    Label("识图并翻译…", systemImage: "character.bubble")
+                    Label(L("识图并翻译…"), systemImage: "character.bubble")
                 }
 
                 Button {
                     saveImage()
                 } label: {
-                    Label("保存图片…", systemImage: "square.and.arrow.down")
+                    Label(L("保存图片…"), systemImage: "square.and.arrow.down")
                 }
 
                 Divider()
@@ -162,19 +162,28 @@ struct ItemRowView: View {
                 Button {
                     onCopyText(color.normalizedHex)
                 } label: {
-                    Label("复制 HEX（\(color.normalizedHex)）", systemImage: "paintpalette")
+                    Label(
+                        L("复制 HEX（%@）", color.normalizedHex),
+                        systemImage: "paintpalette"
+                    )
                 }
 
                 Button {
                     onCopyText(color.rgbString)
                 } label: {
-                    Label("复制 RGB（\(color.rgbString)）", systemImage: "paintpalette")
+                    Label(
+                        L("复制 RGB（%@）", color.rgbString),
+                        systemImage: "paintpalette"
+                    )
                 }
 
                 Button {
                     onCopyText(color.hslString)
                 } label: {
-                    Label("复制 HSL（\(color.hslString)）", systemImage: "paintpalette")
+                    Label(
+                        L("复制 HSL（%@）", color.hslString),
+                        systemImage: "paintpalette"
+                    )
                 }
 
                 Divider()
@@ -187,19 +196,19 @@ struct ItemRowView: View {
                 Button {
                     onCopyPlainText()
                 } label: {
-                    Label("复制为纯文本", systemImage: "doc.plaintext")
+                    Label(L("复制为纯文本"), systemImage: "doc.plaintext")
                 }
 
                 Divider()
             }
 
-            Button("复制", action: onCopy)
+            Button(L("复制"), action: onCopy)
 
-            Button(item.isPinned ? "取消置顶" : "置顶", action: onTogglePin)
+            Button(item.isPinned ? L("取消置顶") : L("置顶"), action: onTogglePin)
 
             Divider()
 
-            Button("删除", role: .destructive, action: onDelete)
+            Button(L("删除"), role: .destructive, action: onDelete)
         }
         .accessibilityElement(children: .contain)
     }
@@ -225,9 +234,9 @@ struct ItemRowView: View {
         }
         .buttonStyle(.plain)
         .focusable(false)
-        .help("点击复制；按住 ⌘ 或 ⇧ 可多选")
+        .help(L("点击复制；按住 ⌘ 或 ⇧ 可多选"))
         .accessibilityLabel(accessibilityDescription)
-        .accessibilityHint("复制到剪切板；按住 Command 或 Shift 可多选")
+        .accessibilityHint(L("复制到剪切板；按住 Command 或 Shift 可多选"))
     }
 
     @ViewBuilder
@@ -297,8 +306,8 @@ struct ItemRowView: View {
                     .foregroundStyle(.orange)
                     .help(
                         item.hasAvailableFiles
-                            ? "部分文件已丢失，将复制可用文件"
-                            : "文件已丢失，无法复制"
+                            ? L("部分文件已丢失，将复制可用文件")
+                            : L("文件已丢失，无法复制")
                     )
             }
         }
@@ -313,9 +322,9 @@ struct ItemRowView: View {
 
     private var sourceLabel: String {
         if let sourceApp = item.sourceApp, !sourceApp.name.isEmpty {
-            return "来自 \(sourceApp.name)"
+            return L("来自 %@", sourceApp.name)
         }
-        return "剪切板"
+        return L("剪切板")
     }
 
     // MARK: - Trailing information
@@ -374,7 +383,7 @@ struct ItemRowView: View {
                 .buttonStyle(.plain)
                 .focusable(false)
                 .pointingHandCursor()
-                .help("快速复制")
+                .help(L("快速复制"))
                 .opacity(isHovering ? 0 : 1)
                 .scaleEffect(isHovering ? 0.92 : 1)
                 .allowsHitTesting(!isHovering)
@@ -391,19 +400,19 @@ struct ItemRowView: View {
 
                 RoundIconButton(
                     symbolName: "eye",
-                    help: "预览（⌘Y）",
+                    help: L("预览（⌘Y）"),
                     action: onPreview
                 )
 
                 RoundIconButton(
                     symbolName: item.isPinned ? "pin.slash" : "pin",
-                    help: item.isPinned ? "取消置顶" : "置顶",
+                    help: item.isPinned ? L("取消置顶") : L("置顶"),
                     action: onTogglePin
                 )
 
                 RoundIconButton(
                     symbolName: "trash",
-                    help: "删除",
+                    help: L("删除"),
                     action: onDelete
                 )
             }
@@ -425,10 +434,10 @@ struct ItemRowView: View {
         action: () -> Void
     )? {
         if item.isTranslatable {
-            return ("character.bubble", "翻译（⌘T）", onTranslate)
+            return ("character.bubble", L("翻译（⌘T）"), onTranslate)
         }
         if item.type == .image {
-            return ("character.bubble", "识图并翻译", onExtractAndTranslate)
+            return ("character.bubble", L("识图并翻译"), onExtractAndTranslate)
         }
         return nil
     }
@@ -487,18 +496,18 @@ struct ItemRowView: View {
     private var accessibilityDescription: String {
         var parts = [item.formatBadge, item.displayTitle]
         if item.isPinned {
-            parts.append("已置顶")
+            parts.append(L("已置顶"))
         }
         if item.hasRichText {
-            parts.append("富文本")
+            parts.append(L("富文本"))
         }
         if isMultiSelected {
-            parts.append("已多选")
+            parts.append(L("已多选"))
         }
         if let sourceApp = item.sourceApp {
-            parts.append("来自 \(sourceApp.name)")
+            parts.append(L("来自 %@", sourceApp.name))
         }
         parts.append(RelativeTime.string(from: item.createdAt))
-        return parts.joined(separator: "，")
+        return parts.joined(separator: L("，"))
     }
 }

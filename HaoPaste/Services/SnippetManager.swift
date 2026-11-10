@@ -144,7 +144,7 @@ final class SnippetManager {
             trimmedTitle = trimmedContent
                 .components(separatedBy: .newlines)
                 .map { $0.trimmingCharacters(in: .whitespaces) }
-                .first { !$0.isEmpty } ?? "未命名片段"
+                .first { !$0.isEmpty } ?? L("未命名片段")
         }
 
         return (trimmedTitle, trimmedContent)

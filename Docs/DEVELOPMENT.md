@@ -136,8 +136,8 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste-0.13.19.dmg                 # 安装包（app + Applications 快捷方式）
-dist/HaoPaste-0.13.19.dmg.sha256          # SHA-256 校验
+dist/HaoPaste-0.13.20.dmg                 # 安装包（app + Applications 快捷方式）
+dist/HaoPaste-0.13.20.dmg.sha256          # SHA-256 校验
 ```
 
 > `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
@@ -184,11 +184,11 @@ codesign --force --deep --options runtime --timestamp \
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash
-xcrun notarytool submit "dist/HaoPaste-0.13.19.dmg" \
+xcrun notarytool submit "dist/HaoPaste-0.13.20.dmg" \
   --keychain-profile "haopaste-notary" --wait
 
-xcrun stapler staple "dist/HaoPaste-0.13.19.dmg"
-xcrun stapler validate "dist/HaoPaste-0.13.19.dmg"
+xcrun stapler staple "dist/HaoPaste-0.13.20.dmg"
+xcrun stapler validate "dist/HaoPaste-0.13.20.dmg"
 ```
 
 也可以对 `.app` 先公证再打包（Apple 推荐流程根据分发方式调整）。需要 Apple Developer Program 账号。
@@ -198,8 +198,8 @@ xcrun stapler validate "dist/HaoPaste-0.13.19.dmg"
 版本号位于 `project.yml`：
 
 ```yaml
-MARKETING_VERSION: "0.13.19"
-CURRENT_PROJECT_VERSION: "42"
+MARKETING_VERSION: "0.13.20"
+CURRENT_PROJECT_VERSION: "43"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：
@@ -251,7 +251,7 @@ xcodebuild \
   test
 ```
 
-当前 113 个测试覆盖：
+当前 116 个测试覆盖：
 
 - 内容分类器：URL / HEX / JSON / 代码 / SQL / 普通文本边界。
 - `HotKeyConfiguration`：默认值、修饰符、显示顺序、校验。
@@ -269,8 +269,21 @@ xcodebuild \
 - 翻译设置：目标语言、启用状态、引擎顺序、授权与快捷翻译快捷键持久化。
 - 快捷翻译：自动翻译策略、剪贴板读取、翻译快捷键默认值。
 - OCR：成功 / 空结果 / 失败状态、编辑后缓存复用、批量识别与缓存复用、识别语言持久化，以及真实 Vision 中英文图片识别。
+- 本地化：`en` / `zh-Hans` 资源存在、核心英文文案与复数字典。
 
 测试宿主使用的是真实 app target，但 `AppDelegate` 会检测 XCTest 环境并跳过菜单栏、轮询和全局快捷键初始化。CI 工作流位于 `.github/workflows/ci.yml`，会运行测试并额外执行一次 Release 构建。
+
+### 本地化
+
+- 源代码中的中文是稳定 key，通过 `L()` 查表；`Localizable.strings` 存放普通文案，`Localizable.stringsdict` 存放英文单复数。
+- `AppLanguage` 在启动时根据 `Locale.preferredLanguages` 选择资源：任何中文语言使用 `zh-Hans`，其他语言使用 `en`；工程的 development language 固定为 `en`，因此不支持的语言会回退英文。
+- 新增文案时，要同时更新 `HaoPaste/en.lproj/Localizable.strings` 与 `HaoPaste/zh-Hans.lproj/Localizable.strings`；带 `%d` 的计数文案还要更新两边的 `.stringsdict`。
+- 验证英文/中文：
+
+```bash
+open -n .build/Build/Products/Debug/HaoPaste.app --args --show -AppleLanguages '(en)'
+open -n .build/Build/Products/Debug/HaoPaste.app --args --show -AppleLanguages '(zh-Hans)'
+```
 
 ### 手动回归
 
@@ -352,13 +365,14 @@ defaults delete com.hao.HaoPaste 2>/dev/null || true
 1. 校验 tag 与 `project.yml` 的 `MARKETING_VERSION` 一致
 2. 运行 XCTest
 3. 构建 Release `.app` 和无 Finder 依赖的 DMG
-4. 生成 Release 说明（上一 tag 到当前 tag 的提交）
+4. 从 `CHANGELOG.md` 读取当前版本的中英双语说明；缺少对应章节时直接失败
 5. 创建或更新 GitHub Release，并上传 DMG 与 SHA-256
 
 发布步骤：
 
 ```bash
-# 先修改 project.yml 的 MARKETING_VERSION / CURRENT_PROJECT_VERSION
+# 先在 CHANGELOG.md 添加与版本号一致的中英双语章节
+# 再修改 project.yml 的 MARKETING_VERSION / CURRENT_PROJECT_VERSION
 xcodegen generate
 git add .
 git commit -m "release: vX.Y.Z"

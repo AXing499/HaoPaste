@@ -22,12 +22,12 @@ struct MultiSelectionBar: View {
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(Color.accentColor)
 
-            Text("已选择 \(count) 条")
+            Text(L("已选择 %d 条", count))
                 .font(.system(size: 11.5, weight: .semibold, design: .rounded))
                 .foregroundStyle(.primary)
                 .contentTransition(.numericText())
 
-            Text(hint ?? "↵ 合并复制")
+            Text(hint ?? L("↵ 合并复制"))
                 .font(.system(size: 10.5, weight: .regular, design: .rounded))
                 .foregroundStyle(.tertiary)
                 .lineLimit(1)
@@ -39,7 +39,7 @@ struct MultiSelectionBar: View {
                     HStack(spacing: 4) {
                         Image(systemName: "text.viewfinder")
                             .font(.system(size: 9.5, weight: .semibold, design: .rounded))
-                        Text("识别文字")
+                        Text(L("识别文字"))
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
                     }
                     .foregroundStyle(Color.accentColor)
@@ -57,11 +57,11 @@ struct MultiSelectionBar: View {
                 }
                 .buttonStyle(.plain)
                 .focusable(false)
-                .help("批量识别选中图片中的文字")
+                .help(L("批量识别选中图片中的文字"))
             }
 
             Button(action: onClear) {
-                Text("取消")
+                Text(L("取消"))
                     .font(.system(size: 11, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 9)
@@ -74,14 +74,14 @@ struct MultiSelectionBar: View {
             }
             .buttonStyle(.plain)
             .focusable(false)
-            .help("取消多选（esc）")
+            .help(L("取消多选（esc）"))
 
             if onRecognizeText == nil {
                 Button(action: onMerge) {
                     HStack(spacing: 4) {
                         Image(systemName: "doc.on.doc")
                             .font(.system(size: 9.5, weight: .semibold, design: .rounded))
-                        Text("合并复制")
+                        Text(L("合并复制"))
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
                     }
                     .foregroundStyle(Color.white)
@@ -96,7 +96,7 @@ struct MultiSelectionBar: View {
                 .buttonStyle(.plain)
                 .focusable(false)
                 .disabled(!canMerge)
-                .help(canMerge ? "合并复制并关闭（↵）" : (hint ?? "当前选择无法合并"))
+                .help(canMerge ? L("合并复制并关闭（↵）") : (hint ?? L("当前选择无法合并")))
             }
         }
         .padding(.horizontal, 12)

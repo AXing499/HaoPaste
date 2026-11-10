@@ -400,7 +400,7 @@ struct ClipboardShelfView: View {
             Image(systemName: filter.symbolName)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .symbolRenderingMode(.hierarchical)
-            Text("暂无\(filter.title)记录")
+            Text(filter.emptyTitle)
                 .font(.system(size: 11, weight: .medium, design: .rounded))
         }
         .foregroundStyle(.secondary)
@@ -889,8 +889,8 @@ private struct ShelfFilterBar: View {
 
     private var countLabel: String {
         if totalCount > visibleCount {
-            return "\(visibleCount)/\(totalCount) 条"
+            return L("%d/%d 条", visibleCount, totalCount)
         }
-        return "\(totalCount) 条"
+        return L("%d 条", totalCount)
     }
 }

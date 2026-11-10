@@ -72,8 +72,8 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
                 guard let self, let anchor = self.anchor else { return }
                 let source = self.service.sourceTitle
                 let title = source.isEmpty
-                    ? "图片文字"
-                    : "图片文字 · \(source)"
+                    ? L("图片文字")
+                    : L("图片文字 · %@", source)
                 self.onTranslateText?(text, title, anchor, self.edge)
                 self.hide()
             },

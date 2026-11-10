@@ -6,10 +6,16 @@
 
 ### 方式 A：DMG（推荐给日常使用）
 
-1. 打开 `dist/HaoPaste-0.13.19.dmg`（仓库开发目录中，执行 `make dmg` 生成），按窗口中的安装提示将 HaoPaste 拖入 Applications。
+1. 打开 `dist/HaoPaste-0.13.20.dmg`（仓库开发目录中，执行 `make dmg` 生成），按窗口中的安装提示将 HaoPaste 拖入 Applications。
 2. 将左侧的 **HaoPaste** 拖入右侧的 **Applications / 应用程序** 文件夹。
 3. 从“应用程序”、Launchpad 或 Spotlight 启动 **HaoPaste**。
 4. 首次启动会自动展示一次面板；之后它会驻留在菜单栏。
+5. 首次打开如提示「无法验证开发者」：打开「系统设置 → 隐私与安全性」，在「安全性」中找到 HaoPaste，点击「仍要打开」；也可以在 Finder 中右键 HaoPaste → 打开。
+
+### 界面语言
+
+- 中文系统环境显示简体中文，英文系统环境显示英文，其他语言环境默认英文。
+- 应用不提供独立语言开关；切换系统语言后重新启动 HaoPaste 即可。
 
 ### 方式 B：命令行安装
 

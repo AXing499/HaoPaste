@@ -109,7 +109,7 @@ struct TranslationPaneView: View {
                 }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("翻译")
+                Text(L("翻译"))
                     .font(.system(.body, design: .rounded).weight(.semibold))
                 Text(service.sourceTitle)
                     .font(.system(size: 10.5, weight: .regular, design: .rounded))
@@ -120,7 +120,7 @@ struct TranslationPaneView: View {
 
             Spacer(minLength: 10)
 
-            Text("\(service.sourceText.count) 字符")
+            Text(L("%d 字符", service.sourceText.count))
                 .font(.system(size: 10, weight: .medium, design: .rounded))
                 .foregroundStyle(.tertiary)
 
@@ -137,7 +137,7 @@ struct TranslationPaneView: View {
             }
             .buttonStyle(.plain)
             .focusable(false)
-            .help("关闭翻译（esc）")
+            .help(L("关闭翻译（esc）"))
         }
         .padding(.horizontal, 16)
         .frame(height: 54)
@@ -148,7 +148,7 @@ struct TranslationPaneView: View {
     private var languageBar: some View {
         HStack(spacing: 8) {
             chip(
-                text: service.detectedLanguage?.name ?? "自动检测",
+                text: service.detectedLanguage?.name ?? L("自动检测"),
                 systemImage: "waveform"
             )
 
@@ -175,7 +175,7 @@ struct TranslationPaneView: View {
             Spacer(minLength: 8)
 
             Menu {
-                Button("自动选择") {
+                Button(L("自动选择")) {
                     service.setPreferredProvider(nil)
                 }
 
@@ -196,7 +196,7 @@ struct TranslationPaneView: View {
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
             .fixedSize()
-            .help("选择翻译引擎")
+            .help(L("选择翻译引擎"))
         }
     }
 
@@ -207,7 +207,7 @@ struct TranslationPaneView: View {
         if let preferred = service.preferredProviderID {
             return preferred.descriptor.name
         }
-        return "自动选择"
+        return L("自动选择")
     }
 
     private func chip(text: String, systemImage: String) -> some View {
@@ -270,13 +270,13 @@ struct TranslationPaneView: View {
     private var translationView: some View {
         VStack(alignment: .leading, spacing: 10) {
             textSection(
-                title: "原文",
+                title: L("原文"),
                 text: displayText(service.sourceText),
                 isOriginal: true
             )
 
             HStack(spacing: 6) {
-                Text("译文")
+                Text(L("译文"))
                     .font(.system(size: 10.5, weight: .semibold, design: .rounded))
                     .foregroundStyle(.secondary)
 
@@ -303,13 +303,13 @@ struct TranslationPaneView: View {
                     HStack(spacing: 8) {
                         ProgressView()
                             .controlSize(.small)
-                        Text("正在翻译…")
+                        Text(L("正在翻译…"))
                             .font(.system(size: 12, weight: .medium, design: .rounded))
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if service.resultText.isEmpty {
-                    Text("等待翻译")
+                    Text(L("等待翻译"))
                         .font(.system(size: 12, weight: .medium, design: .rounded))
                         .foregroundStyle(.tertiary)
                         .padding(14)
@@ -387,10 +387,15 @@ struct TranslationPaneView: View {
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(Color.accentColor)
 
-            Text("允许在线翻译？")
+            Text(L("允许在线翻译？"))
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
 
-            Text("本次将把当前文本发送给 \(service.consentProviderNames)。")
+            Text(
+                L(
+                    "本次将把当前文本发送给 %@。",
+                    service.consentProviderNames
+                )
+            )
                 .font(.system(size: 11.5, weight: .regular, design: .rounded))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -400,7 +405,7 @@ struct TranslationPaneView: View {
                 $0.descriptor.kind == .unofficial
             }) {
                 Label(
-                    "其中包含非官方接口，可能违反服务条款或随时失效，请勿翻译敏感内容。",
+                    L("其中包含非官方接口，可能违反服务条款或随时失效，请勿翻译敏感内容。"),
                     systemImage: "exclamationmark.triangle"
                 )
                 .font(.system(size: 10.5, weight: .regular, design: .rounded))
@@ -410,13 +415,13 @@ struct TranslationPaneView: View {
             }
 
             HStack(spacing: 8) {
-                Button("取消") {
+                Button(L("取消")) {
                     onClose()
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
 
-                Button("允许并翻译") {
+                Button(L("允许并翻译")) {
                     service.grantConsentAndTranslate()
                 }
                 .buttonStyle(.borderedProminent)
@@ -436,23 +441,23 @@ struct TranslationPaneView: View {
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.orange)
 
-            Text("翻译失败")
+            Text(L("翻译失败"))
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
 
-            Text(service.errorMessage ?? "请稍后重试。")
+            Text(service.errorMessage ?? L("请稍后重试。"))
                 .font(.system(size: 11.5, weight: .regular, design: .rounded))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Button("重试") {
+            Button(L("重试")) {
                 service.retry()
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
 
             if service.availableProviderIDs.isEmpty {
-                Button("打开翻译设置…") {
+                Button(L("打开翻译设置…")) {
                     if let onOpenSettings {
                         onOpenSettings()
                     } else {
@@ -488,11 +493,11 @@ struct TranslationPaneView: View {
                         : Color.secondary
                 )
             } else if let detected = service.detectedLanguage {
-                Text("检测到\(detected.name)")
+                Text(L("检测到%@", detected.name))
                     .font(.system(size: 10.5, weight: .regular, design: .rounded))
                     .foregroundStyle(.secondary)
             } else {
-                Text("在线翻译")
+                Text(L("在线翻译"))
                     .font(.system(size: 10.5, weight: .regular, design: .rounded))
                     .foregroundStyle(.secondary)
             }
@@ -501,7 +506,7 @@ struct TranslationPaneView: View {
 
             if service.phase == .success || (service.phase == .failed && !service.resultText.isEmpty) {
                 secondaryAction(
-                    "保存片段",
+                    L("保存片段"),
                     systemImage: "text.badge.plus"
                 ) {
                     onSaveSnippet(service.resultText)
@@ -509,7 +514,7 @@ struct TranslationPaneView: View {
             }
 
             secondaryAction(
-                "复制双语",
+                L("复制双语"),
                 systemImage: "doc.on.doc",
                 isEnabled: !service.resultText.isEmpty
             ) {
@@ -529,7 +534,7 @@ struct TranslationPaneView: View {
             HStack(spacing: 5) {
                 Image(systemName: "doc.on.clipboard")
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
-                Text("复制译文")
+                Text(L("复制译文"))
                     .font(.system(size: 11.5, weight: .semibold, design: .rounded))
             }
             .foregroundStyle(Color.white)
@@ -545,7 +550,7 @@ struct TranslationPaneView: View {
         .focusable(false)
         .disabled(service.resultText.isEmpty)
         .opacity(service.resultText.isEmpty ? 0.45 : 1)
-        .help("复制译文并关闭（↵）")
+        .help(L("复制译文并关闭（↵）"))
     }
 
     private func secondaryAction(
@@ -583,7 +588,11 @@ struct TranslationPaneView: View {
     // MARK: - Helpers
 
     private var bilingualText: String {
-        "原文：\n\(service.sourceText)\n\n译文：\n\(service.resultText)"
+        L(
+            "原文：\n%@\n\n译文：\n%@",
+            service.sourceText,
+            service.resultText
+        )
     }
 
     private func displayText(_ text: String) -> String {

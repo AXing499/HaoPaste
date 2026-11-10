@@ -16,9 +16,9 @@ enum ClipboardShelfEdge: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .top: return "顶部"
-        case .left: return "左侧"
-        case .right: return "右侧"
+        case .top: return L("顶部")
+        case .left: return L("左侧")
+        case .right: return L("右侧")
         }
     }
 

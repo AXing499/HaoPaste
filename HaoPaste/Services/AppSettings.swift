@@ -18,9 +18,9 @@ enum ShelfCopyBehavior: String, CaseIterable, Identifiable, Codable, Sendable {
 
     var title: String {
         switch self {
-        case .stayOpen: return "保持展开"
-        case .hideImmediately: return "立即收起"
-        case .hideAfterDelay: return "延迟 0.6 秒收起"
+        case .stayOpen: return L("保持展开")
+        case .hideImmediately: return L("立即收起")
+        case .hideAfterDelay: return L("延迟 0.6 秒收起")
         }
     }
 }
@@ -404,13 +404,16 @@ final class AppSettings {
                 try service.unregister()
             }
         } catch {
-            launchAtLoginError = "无法更新登录项：\(error.localizedDescription)"
+            launchAtLoginError = L(
+                "无法更新登录项：%@",
+                error.localizedDescription
+            )
         }
 
         refreshLaunchAtLoginStatus()
 
         if enabled, service.status == .requiresApproval {
-            launchAtLoginError = "请在“系统设置 → 通用 → 登录项”中允许 HaoPaste 在登录时打开。"
+            launchAtLoginError = L("请在“系统设置 → 通用 → 登录项”中允许 HaoPaste 在登录时打开。")
         }
     }
 

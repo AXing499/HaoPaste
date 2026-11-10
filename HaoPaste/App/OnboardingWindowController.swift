@@ -21,7 +21,7 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "欢迎使用 HaoPaste"
+        window.title = L("欢迎使用 HaoPaste")
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed
 
@@ -70,9 +70,9 @@ private struct OnboardingView: View {
                     .shadow(color: .black.opacity(0.16), radius: 12, y: 5)
 
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("欢迎使用 HaoPaste")
+                    Text(L("欢迎使用 HaoPaste"))
                         .font(.system(size: 26, weight: .bold, design: .rounded))
-                    Text("菜单栏里的剪贴板历史，随时呼出、随手复制。")
+                    Text(L("菜单栏里的剪贴板历史，随时呼出、随手复制。"))
                         .font(.system(.body, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
@@ -82,36 +82,36 @@ private struct OnboardingView: View {
             VStack(spacing: 14) {
                 OnboardingRow(
                     symbol: "menubar.rectangle",
-                    title: "菜单栏常驻",
-                    text: "HaoPaste 不会出现在 Dock；请在菜单栏找到剪贴板图标。"
+                    title: L("菜单栏常驻"),
+                    text: L("HaoPaste 不会出现在 Dock；请在菜单栏找到剪贴板图标。")
                 )
                 OnboardingRow(
                     symbol: "keyboard",
-                    title: "随时呼出",
-                    text: "按 ⌥⌘V 打开面板，也可以点击菜单栏图标。"
+                    title: L("随时呼出"),
+                    text: L("按 ⌥⌘V 打开面板，也可以点击菜单栏图标。")
                 )
                 OnboardingRow(
                     symbol: "rectangle.topthird.inset.filled",
-                    title: "边缘挂架",
-                    text: "把鼠标移到屏幕顶部 / 左侧 / 右侧中间，挂架会自动展开。"
+                    title: L("边缘挂架"),
+                    text: L("把鼠标移到屏幕顶部 / 左侧 / 右侧中间，挂架会自动展开。")
                 )
                 OnboardingRow(
                     symbol: "cursorarrow.click.2",
-                    title: "卡片操作",
-                    text: "点击卡片复制；悬停可预览、翻译或提取文字；点击夹子删除。"
+                    title: L("卡片操作"),
+                    text: L("点击卡片复制；悬停可预览、翻译或提取文字；点击夹子删除。")
                 )
             }
 
             Spacer(minLength: 18)
 
             HStack {
-                Text("以后可以在设置 → 关于中再次查看")
+                Text(L("以后可以在设置 → 关于中再次查看"))
                     .font(.system(size: 10.5, design: .rounded))
                     .foregroundStyle(.tertiary)
 
                 Spacer()
 
-                Button("开始使用") {
+                Button(L("开始使用")) {
                     onFinish()
                 }
                 .buttonStyle(.borderedProminent)
