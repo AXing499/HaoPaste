@@ -1,6 +1,6 @@
 # HaoPaste
 
-当前版本：**v0.13.15**
+当前版本：**v0.13.16**
 
 一款原生、轻快、键盘优先的 macOS 剪切板管理器。用 `⌥⌘V` 从任何应用呼出无标题栏悬浮面板，搜索、选择、复制，一气呵成。
 
@@ -21,11 +21,12 @@
    ```bash
    make dmg
    # 输出：
-   # dist/HaoPaste-0.13.15.dmg
-   # dist/HaoPaste-0.13.15.dmg.sha256
+   # dist/HaoPaste-0.13.16.dmg
+   # dist/HaoPaste-0.13.16.dmg.sha256
    ```
 
-2. 双击打开 `dist/HaoPaste-0.13.15.dmg`，将 **HaoPaste** 拖入 **Applications / 应用程序**。
+2. 双击打开 `dist/HaoPaste-0.13.16.dmg`，窗口内会显示安装提示；将 **HaoPaste** 拖入 **Applications / 应用程序**。
+3. 首次打开如提示“无法验证开发者”，在 Finder 中右键 HaoPaste → 打开。
 3. 从“应用程序”或 Spotlight 启动。首次启动会自动展示一次面板。
 4. 之后随时按 `⌥⌘V`，或点击菜单栏的剪贴板图标呼出；右键菜单栏图标可暂停监听、清空记录或退出。
 
