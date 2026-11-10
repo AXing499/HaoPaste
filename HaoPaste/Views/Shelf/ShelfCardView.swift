@@ -23,6 +23,7 @@ struct ShelfCardView: View {
     let dragProvider: () -> NSItemProvider
     let onCopy: () -> Void
     let onCopyText: (String) -> Void
+    let onCopyPlainText: () -> Void
     let onTogglePin: () -> Void
     let onDelete: () -> Void
     let onPreview: () -> Void
@@ -149,11 +150,14 @@ struct ShelfCardView: View {
                 )
             }
 
-            if item.hasRichText {
+            if item.type == .text
+                || item.type == .code
+                || item.type == .url
+                || item.type == .colorHex {
                 Button {
-                    onCopyText(item.plainText)
+                    onCopyPlainText()
                 } label: {
-                    Label("复制纯文本", systemImage: "textformat")
+                    Label("复制为纯文本", systemImage: "textformat")
                 }
             }
 

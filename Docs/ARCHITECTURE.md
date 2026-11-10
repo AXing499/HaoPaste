@@ -314,7 +314,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 卡片高度由内容决定：图片按 `imageDimensions` 的真实宽高比计算，文本 / 代码 / 链接使用展示片段的行数估算；顶部与侧边分别有最大高度，超出时在卡片内截断。侧边卡片间距加大到 20pt，为回形夹线环和卡片夹口留出空间。
 - 滚动位置保存在 `ShelfInteractionState.scrollOffset`，视图上报最大滚动距离；控制器在 `ShelfHostingView.scrollWheel(with:)` 中接管滚轮事件并夹紧边界。顶部同时支持横向滑动与鼠标滚轮，侧边使用纵向滑动。
 - 滚动时挂架保持固定：顶部绳子不动，卡片沿绳滑动；侧边竖轨固定在屏幕边缘，每张卡片通过一条短臂连到夹子线环，卡片挂在短臂内侧。滚动指示器只在滚动后短暂显示，避免与挂架线条混淆。
-- 卡片点击调用 `ClipboardManager.copyToPasteboard`，同步 `changeCount`，不会生成新历史；复制成功后挂架保持展开并显示短暂「已复制」反馈。应用内生成的文本（识图、翻译、片段、Markdown / 颜色格式等）通过 `copyTextToPasteboard` 写入粘贴板后，会用 `handleCapture` 同步进入历史并按内容哈希去重。
+- 卡片点击调用 `ClipboardManager.copyToPasteboard`，同步 `changeCount`，不会生成新历史；复制成功后挂架根据 `settings.shelfCopyBehavior` 保持展开、立即收起或延迟 0.6 秒收起，并显示短暂「已复制」反馈。应用内生成的文本（识图、翻译、片段、Markdown / 颜色格式等）通过 `copyTextToPasteboard` 写入粘贴板后，会用 `handleCapture` 同步进入历史并按内容哈希去重。`copyPlainTextToPasteboard` 只写纯文本、不生成历史，供「复制为纯文本」和「富文本只复制纯文本」使用。
 - 悬停状态由控制器根据同一套命中矩形计算并写入 `ShelfInteractionState`，不依赖 SwiftUI `onHover`，因此卡片之间的点击穿透切换不会留下错位或卡住的高亮。
 - 悬停卡片底部显示操作条：预览、翻译 / 识图并翻译、置顶、删除；预览与翻译会收起挂架并打开主面板，翻译复用 `TranslationService`，图片走 `OCRService` 的识图并翻译流程。
 - 筛选栏使用点击手势而非 `Button`，并把材质背景与描边设为不参与命中测试；这是非激活面板中稳定响应点击的关键。
@@ -401,7 +401,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-112 个 XCTest 由 app target 作为测试宿主运行：
+113 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。

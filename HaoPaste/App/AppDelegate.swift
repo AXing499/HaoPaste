@@ -61,6 +61,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         manager.isImageCaptureEnabled = { [weak settings] in
             settings?.capturesImages ?? true
         }
+        manager.copyPlainTextOnly = { [weak settings] in
+            settings?.copyPlainTextOnly ?? false
+        }
         manager.trashRetentionDays = settings.trashRetentionDays
         manager.start()
         settings.onTrashRetentionChange = { [weak self] days in

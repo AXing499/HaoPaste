@@ -32,6 +32,7 @@ final class ClipboardManager {
     /// again before saving, so excluded sources never enter history.
     @ObservationIgnored var isSourceExcluded: ((SourceApplication) -> Bool)?
     @ObservationIgnored var isImageCaptureEnabled: (() -> Bool)?
+    @ObservationIgnored var copyPlainTextOnly: (() -> Bool)?
 
     /// Pinned items are never removed automatically. The limit is mirrored from
     /// user settings; 200 is the default for a fresh install.
@@ -129,7 +130,9 @@ final class ClipboardManager {
 
         case .text, .code, .url, .colorHex:
             didWrite = pasteboard.setString(item.content, forType: .string)
-            if item.hasRichText, let richText = store.loadRichText(for: item) {
+            if item.hasRichText,
+               copyPlainTextOnly?() != true,
+               let richText = store.loadRichText(for: item) {
                 if let rtfData = richText.rtfData {
                     pasteboard.setData(rtfData, forType: .rtf)
                 }
@@ -154,6 +157,22 @@ final class ClipboardManager {
         }
 
         return true
+    }
+
+    /// Writes only plain text without adding a duplicate history entry. Used
+    /// by the explicit "copy as plain text" action and when the user asks all
+    /// rich-text copies to be plain.
+    @discardableResult
+    func copyPlainTextToPasteboard(_ text: String) -> Bool {
+        let pasteboard = monitor.pasteboard
+        pasteboard.clearContents()
+        let didWrite = pasteboard.setString(text, forType: .string)
+        monitor.synchronizeChangeCount()
+
+        if !didWrite {
+            NSSound.beep()
+        }
+        return didWrite
     }
 
     /// Writes text produced inside HaoPaste (OCR, translation, snippets and

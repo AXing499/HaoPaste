@@ -148,6 +148,7 @@ enum DebugRenderer {
                 onCopy: { _ in },
                 onCopyMerged: { _ in },
                 onCopyText: { _ in },
+                onCopyPlainText: { _ in },
                 onCopySnippet: { _ in }
             )
             .environment(manager)
@@ -214,7 +215,8 @@ enum DebugRenderer {
                 onHitTargetsChanged: { _ in },
                 onPreviewItem: { _ in },
                 onTranslateItem: { _ in },
-                onMaxScrollOffsetChanged: { _ in }
+                onMaxScrollOffsetChanged: { _ in },
+                onHideShelf: {}
             )
         }
         .frame(width: size.width, height: size.height)

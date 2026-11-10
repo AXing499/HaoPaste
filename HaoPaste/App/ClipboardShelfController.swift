@@ -91,6 +91,9 @@ final class ClipboardShelfController: NSObject {
             },
             onMaxScrollOffsetChanged: { maxOffset in
                 actionRelay.onMaxScrollOffset?(maxOffset)
+            },
+            onHideShelf: {
+                actionRelay.onHideShelf?()
             }
         )
         let hostingView = ShelfHostingView(rootView: rootView)
@@ -117,6 +120,9 @@ final class ClipboardShelfController: NSObject {
             if self.interaction.scrollOffset > maxOffset {
                 self.interaction.scrollOffset = maxOffset
             }
+        }
+        actionRelay.onHideShelf = { [weak self] in
+            self?.hide()
         }
         hostingView.onScrollWheel = { [weak self] event in
             self?.handleScrollWheel(event) ?? false
@@ -653,6 +659,7 @@ private final class ShelfActionRelay {
     var onPreview: ((ClipboardItem) -> Void)?
     var onTranslate: ((ClipboardItem) -> Void)?
     var onMaxScrollOffset: ((CGFloat) -> Void)?
+    var onHideShelf: (() -> Void)?
 }
 
 /// The shelf is shown while another app is active, so the first click must

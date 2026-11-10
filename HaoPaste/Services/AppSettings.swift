@@ -9,6 +9,22 @@ import Foundation
 import Observation
 import ServiceManagement
 
+enum ShelfCopyBehavior: String, CaseIterable, Identifiable, Codable, Sendable {
+    case stayOpen
+    case hideImmediately
+    case hideAfterDelay
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .stayOpen: return "保持展开"
+        case .hideImmediately: return "立即收起"
+        case .hideAfterDelay: return "延迟 0.6 秒收起"
+        }
+    }
+}
+
 @MainActor
 @Observable
 final class AppSettings {
@@ -40,6 +56,8 @@ final class AppSettings {
         static let trashRetentionDays = "settings.trashRetentionDays"
         static let shelfCardFallDuration = "settings.shelfCardFallDuration"
         static let updateFeedURL = "settings.updateFeedURL"
+        static let shelfCopyBehavior = "settings.shelfCopyBehavior"
+        static let copyPlainTextOnly = "settings.copyPlainTextOnly"
         static let shelfEnabled = "settings.shelfEnabled"
         static let shelfItemLimit = "settings.shelfItemLimit"
         static let shelfEdge = "settings.shelfEdge"
@@ -100,6 +118,26 @@ final class AppSettings {
             defaults.set(
                 autoTranslateLatestOnOpen,
                 forKey: Keys.autoTranslateLatestOnOpen
+            )
+        }
+    }
+
+    var shelfCopyBehavior: ShelfCopyBehavior {
+        didSet {
+            guard oldValue != shelfCopyBehavior else { return }
+            defaults.set(
+                shelfCopyBehavior.rawValue,
+                forKey: Keys.shelfCopyBehavior
+            )
+        }
+    }
+
+    var copyPlainTextOnly: Bool {
+        didSet {
+            guard oldValue != copyPlainTextOnly else { return }
+            defaults.set(
+                copyPlainTextOnly,
+                forKey: Keys.copyPlainTextOnly
             )
         }
     }
@@ -257,6 +295,14 @@ final class AppSettings {
         self.shelfCardFallDuration = Self.shelfCardFallDurationOptions.contains(storedFallDuration)
             ? storedFallDuration
             : Self.defaultShelfCardFallDuration
+
+        self.shelfCopyBehavior = defaults
+            .string(forKey: Keys.shelfCopyBehavior)
+            .flatMap(ShelfCopyBehavior.init(rawValue:))
+            ?? .stayOpen
+        self.copyPlainTextOnly = defaults.bool(
+            forKey: Keys.copyPlainTextOnly
+        )
 
         if defaults.object(forKey: Keys.updateFeedURL) != nil {
             self.updateFeedURL = defaults.string(

@@ -19,6 +19,7 @@ struct ItemRowView: View {
     let onRowClick: () -> Void
     let onCopy: () -> Void
     let onCopyText: (String) -> Void
+    let onCopyPlainText: () -> Void
     let onSaveSnippet: () -> Void
     let onPreview: () -> Void
     let onTranslate: () -> Void
@@ -179,9 +180,12 @@ struct ItemRowView: View {
                 Divider()
             }
 
-            if item.hasRichText {
+            if item.type == .text
+                || item.type == .code
+                || item.type == .url
+                || item.type == .colorHex {
                 Button {
-                    onCopyText(item.content)
+                    onCopyPlainText()
                 } label: {
                     Label("复制为纯文本", systemImage: "doc.plaintext")
                 }

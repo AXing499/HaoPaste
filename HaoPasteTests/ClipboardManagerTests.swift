@@ -127,6 +127,26 @@ final class ClipboardManagerTests: XCTestCase {
         )
     }
 
+    func testCopyPlainTextDoesNotAddHistory() throws {
+        let directory = try TestFixtures.temporaryDirectory()
+        defer { TestFixtures.remove(directory) }
+
+        let pasteboard = TestFixtures.makeCustomPasteboard()
+        let manager = ClipboardManager(
+            store: ClipboardStore(baseURL: directory),
+            monitor: ClipboardMonitor(pasteboard: pasteboard)
+        )
+        manager.start()
+        defer { manager.shutdown() }
+
+        XCTAssertTrue(manager.copyPlainTextToPasteboard("plain only"))
+        XCTAssertEqual(
+            pasteboard.string(forType: .string),
+            "plain only"
+        )
+        XCTAssertTrue(manager.items.isEmpty)
+    }
+
     func testCopiedGeneratedTextIsCapturedInHistory() throws {
         let directory = try TestFixtures.temporaryDirectory()
         defer { TestFixtures.remove(directory) }

@@ -54,6 +54,8 @@ final class AppSettingsTests: XCTestCase {
         settings.trashRetentionDays = 30
         settings.shelfCardFallDuration = 1.0
         settings.updateFeedURL = "https://example.com/hao-paste/latest.json"
+        settings.shelfCopyBehavior = .hideAfterDelay
+        settings.copyPlainTextOnly = true
 
         let reloaded = AppSettings(defaults: defaults)
         XCTAssertEqual(reloaded.maxUnpinnedItems, 500)
@@ -70,6 +72,8 @@ final class AppSettingsTests: XCTestCase {
             reloaded.updateFeedURL,
             "https://example.com/hao-paste/latest.json"
         )
+        XCTAssertEqual(reloaded.shelfCopyBehavior, .hideAfterDelay)
+        XCTAssertTrue(reloaded.copyPlainTextOnly)
     }
 
     func testShelfEdgeFallsBackToTop() throws {

@@ -62,6 +62,7 @@ struct ClipboardShelfView: View {
     let onPreviewItem: (ClipboardItem) -> Void
     let onTranslateItem: (ClipboardItem) -> Void
     let onMaxScrollOffsetChanged: (CGFloat) -> Void
+    let onHideShelf: () -> Void
 
     @State private var filter: ClipboardShelfFilter = .all
     @State private var copiedID: UUID?
@@ -272,6 +273,9 @@ struct ClipboardShelfView: View {
                         dragProvider: { dragProvider(for: item) },
                         onCopy: { copy(item) },
                         onCopyText: { text in copyText(text, for: item) },
+                        onCopyPlainText: {
+                            copyPlainText(item.plainText, for: item)
+                        },
                         onTogglePin: { togglePin(item) },
                         onDelete: { delete(item) },
                         onPreview: { onPreviewItem(item) },
@@ -415,11 +419,32 @@ struct ClipboardShelfView: View {
     private func copy(_ item: ClipboardItem) {
         guard manager.copyToPasteboard(item) else { return }
         flashCopied(item)
+        applyCopyBehavior()
     }
 
     private func copyText(_ text: String, for item: ClipboardItem) {
         guard manager.copyTextToPasteboard(text) else { return }
         flashCopied(item)
+        applyCopyBehavior()
+    }
+
+    private func copyPlainText(_ text: String, for item: ClipboardItem) {
+        guard manager.copyPlainTextToPasteboard(text) else { return }
+        flashCopied(item)
+        applyCopyBehavior()
+    }
+
+    private func applyCopyBehavior() {
+        switch settings.shelfCopyBehavior {
+        case .stayOpen:
+            break
+        case .hideImmediately:
+            onHideShelf()
+        case .hideAfterDelay:
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                onHideShelf()
+            }
+        }
     }
 
     private func togglePin(_ item: ClipboardItem) {

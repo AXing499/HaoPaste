@@ -19,6 +19,7 @@ struct ContentView: View {
     let onCopy: (ClipboardItem) -> Void
     let onCopyMerged: ([ClipboardItem]) -> Void
     let onCopyText: (String) -> Void
+    let onCopyPlainText: (String) -> Void
     let onCopySnippet: (Snippet) -> Void
 
     @FocusState private var isSearchFocused: Bool
@@ -502,6 +503,9 @@ struct ContentView: View {
                                 onCopy(item)
                             },
                             onCopyText: onCopyText,
+                            onCopyPlainText: {
+                                onCopyPlainText(item.plainText)
+                            },
                             onSaveSnippet: {
                                 presentSnippetEditor(for: item)
                             },
@@ -925,6 +929,7 @@ private struct SnippetEditorOverlay: View {
         onCopy: { _ in },
         onCopyMerged: { _ in },
         onCopyText: { _ in },
+        onCopyPlainText: { _ in },
         onCopySnippet: { _ in }
     )
     .environment(manager)

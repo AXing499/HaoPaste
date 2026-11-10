@@ -257,6 +257,11 @@ final class PanelController: NSObject, NSWindowDelegate {
         hide()
     }
 
+    func copyPlainTextAndHide(_ text: String) {
+        guard manager.copyPlainTextToPasteboard(text) else { return }
+        hide()
+    }
+
     func copyMergedAndHide(_ items: [ClipboardItem]) {
         guard manager.copyMergedToPasteboard(items) else { return }
         hide()
@@ -901,6 +906,9 @@ final class PanelController: NSObject, NSWindowDelegate {
             },
             onCopyText: { [weak self] text in
                 self?.copyTextAndHide(text)
+            },
+            onCopyPlainText: { [weak self] text in
+                self?.copyPlainTextAndHide(text)
             },
             onCopySnippet: { [weak self] snippet in
                 self?.copySnippetAndHide(snippet)

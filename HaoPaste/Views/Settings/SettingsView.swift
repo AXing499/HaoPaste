@@ -354,6 +354,35 @@ struct SettingsView: View {
             }
         }
 
+        SettingsCard("复制行为") {
+            SettingsRow(
+                "挂架复制后",
+                subtitle: "点击卡片复制后，挂架保持展开、立即收起或延迟收起"
+            ) {
+                Picker("", selection: $settings.shelfCopyBehavior) {
+                    ForEach(ShelfCopyBehavior.allCases) { behavior in
+                        Text(behavior.title).tag(behavior)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 160)
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                "富文本只复制纯文本",
+                subtitle: "复制富文本条目时只写入纯文本，不带 RTF / HTML 格式"
+            ) {
+                Toggle("", isOn: $settings.copyPlainTextOnly)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .tint(Color.accentColor)
+            }
+        }
+
         SettingsCard("翻译") {
             SettingsRow(
                 "快捷翻译剪贴板",
