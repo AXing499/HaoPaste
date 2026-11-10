@@ -21,13 +21,13 @@ final class ClipboardItemTests: XCTestCase {
             "struct Panel { }",
             type: .code
         )
-        XCTAssertEqual(item.formatBadge, "代码")
+        XCTAssertEqual(item.formatBadge, L("代码"))
         XCTAssertEqual(item.displayTitle, "struct Panel { }")
     }
 
     func testDetailBadges() {
         let text = TestFixtures.makeTextItem("hello")
-        XCTAssertEqual(text.detailBadge, "5 字符")
+        XCTAssertEqual(text.detailBadge, L("%d 字符", 5))
 
         let image = ClipboardItem(
             type: .image,
@@ -37,7 +37,7 @@ final class ClipboardItemTests: XCTestCase {
             imageFileName: "image.png",
             imageDimensions: ImageDimensions(width: 1_440, height: 900)
         )
-        XCTAssertEqual(image.formatBadge, "图片")
+        XCTAssertEqual(image.formatBadge, L("图片"))
         XCTAssertEqual(image.detailBadge, "1440 × 900")
     }
 
@@ -52,7 +52,7 @@ final class ClipboardItemTests: XCTestCase {
 
         XCTAssertTrue(item.matches("haopaste"))
         XCTAssertTrue(item.matches("safari"))
-        XCTAssertTrue(item.matches("文本"))
+        XCTAssertTrue(item.matches(L("文本")))
         XCTAssertFalse(item.matches("not-found"))
     }
 

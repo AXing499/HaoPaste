@@ -204,7 +204,10 @@ final class TranslationServiceTests: XCTestCase {
 
         XCTAssertEqual(service.phase, .failed)
         XCTAssertEqual(provider.callCount, 0)
-        XCTAssertTrue(service.errorMessage?.contains("没有可用") ?? false)
+        XCTAssertEqual(
+            service.errorMessage,
+            L("没有可用的翻译引擎，请先在设置中启用或配置一个引擎。")
+        )
     }
 
     func testSettingsPersistAndProviderOrderMoves() throws {

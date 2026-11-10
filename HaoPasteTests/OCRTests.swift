@@ -61,7 +61,10 @@ final class OCRTests: XCTestCase {
         )
         await failedService.waitForCurrentRecognition()
         XCTAssertEqual(failedService.phase, .failed)
-        XCTAssertEqual(failedService.errorMessage, "无法读取这张图片。")
+        XCTAssertEqual(
+            failedService.errorMessage,
+            L("无法读取这张图片。")
+        )
     }
 
     func testEditedTextIsReusedForSameItem() async throws {
@@ -143,7 +146,10 @@ final class OCRTests: XCTestCase {
         )
         service.onAutoTranslate = { text, title in
             XCTAssertEqual(text, "Hello from image")
-            XCTAssertEqual(title, "图片文字 · 图片")
+            XCTAssertEqual(
+                title,
+                L("图片文字 · %@", L("图片"))
+            )
             expectation.fulfill()
         }
 

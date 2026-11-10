@@ -27,9 +27,12 @@ final class FileClipboardTests: XCTestCase {
             filePaths: paths
         )
 
-        XCTAssertEqual(item.displayTitle, "first.txt、second.pdf")
-        XCTAssertEqual(item.formatBadge, "文件")
-        XCTAssertEqual(item.detailBadge, "2 个文件")
+        XCTAssertEqual(
+            item.displayTitle,
+            L("%@、%@", "first.txt", "second.pdf")
+        )
+        XCTAssertEqual(item.formatBadge, L("文件"))
+        XCTAssertEqual(item.detailBadge, L("%d 个文件", 2))
         XCTAssertTrue(item.hasAvailableFiles)
         XCTAssertFalse(item.hasMissingFiles)
         XCTAssertTrue(ClipboardFilter.file.matches(item))
@@ -53,7 +56,7 @@ final class FileClipboardTests: XCTestCase {
 
         XCTAssertFalse(item.hasAvailableFiles)
         XCTAssertTrue(item.hasMissingFiles)
-        XCTAssertEqual(item.detailBadge, "文件已丢失")
+        XCTAssertEqual(item.detailBadge, L("文件已丢失"))
     }
 
     func testCopyFileItemWritesFileURLs() throws {
