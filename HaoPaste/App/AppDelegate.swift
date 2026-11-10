@@ -9,6 +9,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private enum LaunchDefaults {
         static let hasCompletedFirstLaunch = "hasCompletedFirstLaunch"
+        static let hasCompletedOnboarding = "hasCompletedOnboarding"
     }
 
     private var manager: ClipboardManager!
@@ -25,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var shelfOCRController: ShelfOCRPanelController!
     private var ocrService: OCRService!
     private var settingsWindowController: SettingsWindowController?
+    private var onboardingWindowController: OnboardingWindowController?
 
     private var hotKey: GlobalHotKey?
     private var activeHotKeyConfiguration: HotKeyConfiguration?
@@ -210,6 +212,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        NotificationCenter.default.addObserver(
+            forName: .haopasteShowOnboarding,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in
+                (NSApp.delegate as? AppDelegate)?
+                    .showOnboarding(openPanelAfter: false)
+            }
+        }
+
         #if DEBUG
         if CommandLine.arguments.contains("--show-shelf") {
             manager.seedDemoDataIfNeeded()
@@ -236,6 +249,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             snippetManager.seedDemoSnippetsIfNeeded()
         }
 
+        if CommandLine.arguments.contains("--show-onboarding") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+                self?.showOnboarding()
+            }
+            return
+        }
+
         if CommandLine.arguments.contains("--show-settings") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
                 self?.showSettings()
@@ -244,7 +264,87 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         #endif
 
-        showPanelOnLaunchIfNeeded()
+        showLaunchExperienceIfNeeded()
+        scheduleAutomaticUpdateCheck()
+    }
+
+    private var currentVersion: String {
+        Bundle.main.object(
+            forInfoDictionaryKey: "CFBundleShortVersionString"
+        ) as? String ?? "0.0.0"
+    }
+
+    private func scheduleAutomaticUpdateCheck() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            self?.checkForUpdatesAutomaticallyIfNeeded()
+        }
+    }
+
+    private func checkForUpdatesAutomaticallyIfNeeded() {
+        guard onboardingWindowController == nil else { return }
+
+        let raw = settings.updateFeedURL
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty, let url = URL(string: raw) else { return }
+
+        let defaults = UserDefaults.standard
+        if let last = defaults.object(
+            forKey: "lastUpdateCheckDate"
+        ) as? Date,
+           Date().timeIntervalSince(last) < 24 * 60 * 60 {
+            return
+        }
+        defaults.set(Date(), forKey: "lastUpdateCheckDate")
+
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                let manifest = try await UpdateChecker.fetch(from: url)
+                guard UpdateChecker.isNewer(
+                    version: manifest.version,
+                    than: self.currentVersion
+                ) else {
+                    return
+                }
+                UpdateChecker.presentUpdate(
+                    manifest,
+                    currentVersion: self.currentVersion
+                )
+            } catch {
+                // Automatic checks are best effort and stay silent.
+            }
+        }
+    }
+
+    private func showLaunchExperienceIfNeeded() {
+        let arguments = CommandLine.arguments
+        if arguments.contains("--show") || arguments.contains("--demo") {
+            schedulePanelPresentation()
+            return
+        }
+
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: LaunchDefaults.hasCompletedOnboarding) else {
+            showPanelOnLaunchIfNeeded()
+            return
+        }
+
+        defaults.set(true, forKey: LaunchDefaults.hasCompletedOnboarding)
+        defaults.set(true, forKey: LaunchDefaults.hasCompletedFirstLaunch)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+            self?.showOnboarding()
+        }
+    }
+
+    func showOnboarding(openPanelAfter: Bool = true) {
+        onboardingWindowController = nil
+        onboardingWindowController = OnboardingWindowController { [weak self] in
+            self?.onboardingWindowController = nil
+            if openPanelAfter {
+                self?.panelController?.show()
+            }
+        }
+        onboardingWindowController?.show()
     }
 
     private func wireShelfDetailControllers() {
@@ -685,4 +785,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.windowsMenu = windowMenu
         NSApp.mainMenu = mainMenu
     }
+}
+
+
+extension Notification.Name {
+    static let haopasteShowOnboarding = Notification.Name(
+        "HaoPaste.ShowOnboarding"
+    )
 }

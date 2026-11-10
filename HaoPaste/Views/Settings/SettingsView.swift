@@ -65,6 +65,7 @@ struct SettingsView: View {
     @State private var showClearUnpinnedAlert = false
     @State private var showClearAllAlert = false
     @State private var snippetEditor: SnippetEditorContext?
+    @State private var isCheckingForUpdates = false
 
     init(
         settings: AppSettings,
@@ -650,6 +651,43 @@ struct SettingsView: View {
         }
     }
 
+    private func checkForUpdates() {
+        let raw = settings.updateFeedURL
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty, let url = URL(string: raw) else {
+            let alert = NSAlert()
+            alert.messageText = "还没有更新源"
+            alert.informativeText = "请先在「更新清单地址」中填写返回版本信息的 JSON 地址。"
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "好")
+            alert.runModal()
+            return
+        }
+
+        isCheckingForUpdates = true
+        Task { @MainActor in
+            defer { isCheckingForUpdates = false }
+            do {
+                let manifest = try await UpdateChecker.fetch(from: url)
+                if UpdateChecker.isNewer(
+                    version: manifest.version,
+                    than: appVersion
+                ) {
+                    UpdateChecker.presentUpdate(
+                        manifest,
+                        currentVersion: appVersion
+                    )
+                } else {
+                    UpdateChecker.presentNoUpdate(
+                        currentVersion: appVersion
+                    )
+                }
+            } catch {
+                UpdateChecker.presentError(error)
+            }
+        }
+    }
+
     private func fallDurationLabel(_ duration: Double) -> String {
         var value = String(format: "%.2f", duration)
         while value.hasSuffix("0") {
@@ -818,6 +856,35 @@ struct SettingsView: View {
         }
         .padding(.vertical, 4)
 
+        SettingsCard("更新") {
+            SettingsRow(
+                "检查更新",
+                subtitle: "只检查新版本并打开下载链接，不会自动安装"
+            ) {
+                Button(isCheckingForUpdates ? "检查中…" : "检查更新…") {
+                    checkForUpdates()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .disabled(isCheckingForUpdates)
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                "更新清单地址",
+                subtitle: "填写返回版本 JSON 的 https 地址；留空则关闭自动检查"
+            ) {
+                TextField(
+                    "https://example.com/hao-paste/latest.json",
+                    text: $settings.updateFeedURL
+                )
+                .textFieldStyle(.roundedBorder)
+                .font(.system(size: 11, design: .monospaced))
+                .frame(width: 280)
+            }
+        }
+
         SettingsCard("快捷键") {
             SettingsRow("呼出面板", subtitle: "在任意应用上方打开 HaoPaste") {
                 Text(settings.hotKey.displayString)
@@ -863,6 +930,14 @@ struct SettingsView: View {
                 .font(.system(size: 10, design: .rounded))
                 .foregroundStyle(.tertiary)
             Spacer()
+            Button("查看首次引导") {
+                NotificationCenter.default.post(
+                    name: .haopasteShowOnboarding,
+                    object: nil
+                )
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
             Button("退出 HaoPaste") {
                 NSApp.terminate(nil)
             }

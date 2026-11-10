@@ -37,6 +37,7 @@ final class AppSettings {
         static let autoTranslateDefaultOffMigrated = "settings.autoTranslateDefaultOffMigrated"
         static let trashRetentionDays = "settings.trashRetentionDays"
         static let shelfCardFallDuration = "settings.shelfCardFallDuration"
+        static let updateFeedURL = "settings.updateFeedURL"
         static let shelfEnabled = "settings.shelfEnabled"
         static let shelfItemLimit = "settings.shelfItemLimit"
         static let shelfEdge = "settings.shelfEdge"
@@ -98,6 +99,13 @@ final class AppSettings {
                 autoTranslateLatestOnOpen,
                 forKey: Keys.autoTranslateLatestOnOpen
             )
+        }
+    }
+
+    var updateFeedURL: String {
+        didSet {
+            guard oldValue != updateFeedURL else { return }
+            defaults.set(updateFeedURL, forKey: Keys.updateFeedURL)
         }
     }
 
@@ -247,6 +255,12 @@ final class AppSettings {
         self.shelfCardFallDuration = Self.shelfCardFallDurationOptions.contains(storedFallDuration)
             ? storedFallDuration
             : Self.defaultShelfCardFallDuration
+
+        self.updateFeedURL = defaults.string(forKey: Keys.updateFeedURL)
+            ?? (Bundle.main.object(
+                forInfoDictionaryKey: "HaoPasteUpdateFeedURL"
+            ) as? String)
+            ?? ""
 
         if defaults.object(forKey: Keys.shelfEnabled) == nil {
             self.shelfEnabled = true

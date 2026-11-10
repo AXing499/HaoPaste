@@ -23,6 +23,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.shelfItemLimit, 8)
         XCTAssertEqual(settings.trashRetentionDays, 7)
         XCTAssertEqual(settings.shelfCardFallDuration, 0.75)
+        XCTAssertTrue(settings.updateFeedURL.isEmpty)
         XCTAssertEqual(settings.shelfEdge, .top)
         XCTAssertTrue(settings.capturesImages)
         XCTAssertTrue(settings.excludedApplications.isEmpty)
@@ -52,6 +53,7 @@ final class AppSettingsTests: XCTestCase {
         settings.shelfEdge = .left
         settings.trashRetentionDays = 30
         settings.shelfCardFallDuration = 1.0
+        settings.updateFeedURL = "https://example.com/hao-paste/latest.json"
 
         let reloaded = AppSettings(defaults: defaults)
         XCTAssertEqual(reloaded.maxUnpinnedItems, 500)
@@ -64,6 +66,10 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(reloaded.shelfEdge, .left)
         XCTAssertEqual(reloaded.trashRetentionDays, 30)
         XCTAssertEqual(reloaded.shelfCardFallDuration, 1.0)
+        XCTAssertEqual(
+            reloaded.updateFeedURL,
+            "https://example.com/hao-paste/latest.json"
+        )
     }
 
     func testShelfEdgeFallsBackToTop() throws {
