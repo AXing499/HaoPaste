@@ -72,33 +72,47 @@ jobs:
           test -f "dist/HaoPaste-${VERSION}.dmg"
           test -f "dist/HaoPaste-${VERSION}.dmg.sha256"
 
+      - name: Read changelog
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          awk -v version="$VERSION" '
+            $0 ~ "^## " version "([[:space:]]|$)" { found=1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > "$RUNNER_TEMP/changelog.raw.md"
+          if [[ ! -s "$RUNNER_TEMP/changelog.raw.md" ]]; then
+            echo "No CHANGELOG.md entry for ${VERSION}; add one before tagging." >&2
+            exit 1
+          fi
+          sed '1d' "$RUNNER_TEMP/changelog.raw.md" > "$RUNNER_TEMP/changelog.md"
+
       - name: Write release notes
         run: |
           set -euo pipefail
-          TAG="${{ steps.version.outputs.tag }}"
           VERSION="${{ steps.version.outputs.version }}"
-          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v "^${TAG}$" | head -n1 || true)
-          if [[ -n "$PREVIOUS_TAG" ]]; then
-            CHANGES=$(git log --pretty=format:'- %s' "${PREVIOUS_TAG}..${TAG}")
-          else
-            CHANGES=$(git log --pretty=format:'- %s' "${TAG}")
-          fi
-
           cat > "$RUNNER_TEMP/release-notes.md" <<EOF
           HaoPaste ${VERSION}
 
-          ## 安装
+          ## 安装 / Installation
+
+          ### 中文
           1. 下载 \`HaoPaste-${VERSION}.dmg\`
           2. 打开 DMG，将 HaoPaste 拖入 Applications / 应用程序
-          3. 当前版本未使用 Apple Developer ID 公证；首次打开如提示「无法验证开发者」，请在 Finder 中右键 HaoPaste → 打开，或在「系统设置 → 隐私与安全性」中允许打开。
+          3. 首次打开如提示「无法验证开发者」：打开「系统设置 → 隐私与安全性」，在「安全性」中找到 HaoPaste，点击「仍要打开」；也可以在 Finder 中右键 HaoPaste → 打开。
 
-          系统要求：macOS 14 或更高版本。
+          系统要求：macOS 14 或更高版本。SHA-256 校验文件已一并上传。
 
-          SHA-256 校验文件已一并上传。
+          ### English
+          1. Download \`HaoPaste-${VERSION}.dmg\`
+          2. Open the DMG and drag HaoPaste into Applications.
+          3. If macOS says the developer cannot be verified: open System Settings → Privacy & Security → Security, find HaoPaste and click "Open Anyway". You can also right-click HaoPaste in Finder and choose Open.
 
-          ## 本次变更
-          ${CHANGES:-没有新的提交记录}
+          Requires macOS 14 or later. A SHA-256 checksum is attached.
+
+          ## 本次变更 / Changes
           EOF
+          cat "$RUNNER_TEMP/changelog.md" >> "$RUNNER_TEMP/release-notes.md"
 
       - name: Publish GitHub release
         env:

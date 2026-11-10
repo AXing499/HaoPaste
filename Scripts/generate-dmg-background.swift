@@ -69,7 +69,7 @@ arrowHead.close()
 accent.withAlphaComponent(0.65).setFill()
 arrowHead.fill()
 
-let noteBox = NSRect(x: 44, y: 42, width: 642, height: 76)
+let noteBox = NSRect(x: 44, y: 22, width: 642, height: 96)
 let note = NSBezierPath(roundedRect: noteBox, xRadius: 12, yRadius: 12)
 NSColor.white.withAlphaComponent(0.55).setFill()
 note.fill()
@@ -79,14 +79,20 @@ note.stroke()
 
 drawText(
     "首次打开如提示「无法验证开发者」",
-    in: NSRect(x: 62, y: 82, width: 606, height: 20),
+    in: NSRect(x: 62, y: 84, width: 606, height: 20),
     font: .systemFont(ofSize: 13, weight: .semibold),
     color: NSColor(calibratedRed: 0.16, green: 0.20, blue: 0.28, alpha: 1)
 )
 drawText(
-    "请在 Finder 中右键 HaoPaste → 打开；或在「系统设置 → 隐私与安全性」中允许打开。",
-    in: NSRect(x: 62, y: 58, width: 606, height: 20),
-    font: .systemFont(ofSize: 12, weight: .regular),
+    "打开「系统设置 → 隐私与安全性」，在「安全性」中找到 HaoPaste，点击「仍要打开」。",
+    in: NSRect(x: 62, y: 60, width: 606, height: 20),
+    font: .systemFont(ofSize: 11.5, weight: .regular),
+    color: secondary
+)
+drawText(
+    "也可以在 Finder 中右键 HaoPaste → 打开。",
+    in: NSRect(x: 62, y: 38, width: 606, height: 20),
+    font: .systemFont(ofSize: 11.5, weight: .regular),
     color: secondary
 )
 
