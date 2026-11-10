@@ -420,11 +420,9 @@ struct ItemRowView: View {
             .scaleEffect(isHovering ? 1 : 0.9)
             .allowsHitTesting(isHovering)
         }
-        .frame(
-            width: rowTranslateAction == nil ? 76 : 100,
-            height: 26,
-            alignment: .trailing
-        )
+        // Keep a constant action column so rows with and without the
+        // translate action share the same badge/time and icon alignment.
+        .frame(width: 100, height: 26, alignment: .trailing)
         .animation(reduceMotion ? nil : Theme.spring, value: isHovering)
     }
 

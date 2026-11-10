@@ -136,8 +136,8 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste-0.13.21.dmg                 # 安装包（app + Applications 快捷方式）
-dist/HaoPaste-0.13.21.dmg.sha256          # SHA-256 校验
+dist/HaoPaste-0.13.22.dmg                 # 安装包（app + Applications 快捷方式）
+dist/HaoPaste-0.13.22.dmg.sha256          # SHA-256 校验
 ```
 
 > `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
@@ -184,11 +184,11 @@ codesign --force --deep --options runtime --timestamp \
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash
-xcrun notarytool submit "dist/HaoPaste-0.13.21.dmg" \
+xcrun notarytool submit "dist/HaoPaste-0.13.22.dmg" \
   --keychain-profile "haopaste-notary" --wait
 
-xcrun stapler staple "dist/HaoPaste-0.13.21.dmg"
-xcrun stapler validate "dist/HaoPaste-0.13.21.dmg"
+xcrun stapler staple "dist/HaoPaste-0.13.22.dmg"
+xcrun stapler validate "dist/HaoPaste-0.13.22.dmg"
 ```
 
 也可以对 `.app` 先公证再打包（Apple 推荐流程根据分发方式调整）。需要 Apple Developer Program 账号。
@@ -198,8 +198,8 @@ xcrun stapler validate "dist/HaoPaste-0.13.21.dmg"
 版本号位于 `project.yml`：
 
 ```yaml
-MARKETING_VERSION: "0.13.21"
-CURRENT_PROJECT_VERSION: "44"
+MARKETING_VERSION: "0.13.22"
+CURRENT_PROJECT_VERSION: "45"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：

@@ -6,7 +6,7 @@
 
 ### 方式 A：DMG（推荐给日常使用）
 
-1. 打开 `dist/HaoPaste-0.13.21.dmg`（仓库开发目录中，执行 `make dmg` 生成），按窗口中的安装提示将 HaoPaste 拖入 Applications。
+1. 打开 `dist/HaoPaste-0.13.22.dmg`（仓库开发目录中，执行 `make dmg` 生成），按窗口中的安装提示将 HaoPaste 拖入 Applications。
 2. 将左侧的 **HaoPaste** 拖入右侧的 **Applications / 应用程序** 文件夹。
 3. 从“应用程序”、Launchpad 或 Spotlight 启动 **HaoPaste**。
 4. 首次启动会自动展示一次面板；之后它会驻留在菜单栏。

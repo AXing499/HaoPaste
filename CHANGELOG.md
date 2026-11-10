@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.13.22 — 2026-11-10
+
+### 中文
+
+- 修复主面板右侧信息与悬停操作图标在「无翻译按钮」条目上不对齐的问题，链接、文件等条目现在与文本条目使用同一操作列宽度。
+- 同步更新中英文界面截图。
+
+### English
+
+- Fixed the trailing metadata and hover action alignment for rows without a translate action. Links, files, and other items now use the same action column width as text rows.
+- Refreshed the Chinese and English screenshots.
+
+
 ## 0.13.21 — 2026-11-10
 
 ### 中文
