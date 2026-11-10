@@ -251,7 +251,7 @@ xcodebuild \
   test
 ```
 
-当前 116 个测试覆盖：
+当前 118 个测试覆盖：
 
 - 内容分类器：URL / HEX / JSON / 代码 / SQL / 普通文本边界。
 - `HotKeyConfiguration`：默认值、修饰符、显示顺序、校验。
@@ -270,6 +270,7 @@ xcodebuild \
 - 快捷翻译：自动翻译策略、剪贴板读取、翻译快捷键默认值。
 - OCR：成功 / 空结果 / 失败状态、编辑后缓存复用、批量识别与缓存复用、识别语言持久化，以及真实 Vision 中英文图片识别。
 - 本地化：`en` / `zh-Hans` 资源存在、核心英文文案与复数字典。
+- 更新检查：版本比较、GitHub / 自定义清单解析、双语发布说明摘要。
 
 测试宿主使用的是真实 app target，但 `AppDelegate` 会检测 XCTest 环境并跳过菜单栏、轮询和全局快捷键初始化。CI 工作流位于 `.github/workflows/ci.yml`，会运行测试并额外执行一次 Release 构建。
 

@@ -132,6 +132,82 @@ enum UpdateChecker {
         return value
     }
 
+    /// Turns the bilingual Markdown release body into a compact plain-text
+    /// summary for the user's language. Custom JSON feeds that already contain
+    /// plain text pass through unchanged.
+    static func releaseNotesSummary(
+        _ notes: String?,
+        preferChinese: Bool = AppLanguage.isChinese
+    ) -> String? {
+        guard
+            let raw = notes?.trimmingCharacters(in: .whitespacesAndNewlines),
+            !raw.isEmpty
+        else {
+            return nil
+        }
+
+        let section = localizedChanges(in: raw, preferChinese: preferChinese) ?? raw
+        let lines = plainText(from: section)
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+
+        var summary = lines.prefix(14).joined(separator: "\n")
+        if summary.count > 1_200 {
+            summary = String(summary.prefix(1_200)) + "…"
+        }
+        return summary.isEmpty ? nil : summary
+    }
+
+    private static func localizedChanges(
+        in notes: String,
+        preferChinese: Bool
+    ) -> String? {
+        let changesMarker = notes.range(of: "## 本次变更")
+            ?? notes.range(of: "## Changes")
+        guard let changesMarker else { return nil }
+
+        let changes = notes[changesMarker.lowerBound...]
+        let languageMarker = preferChinese ? "### 中文" : "### English"
+        guard let start = changes.range(of: languageMarker) else {
+            return nil
+        }
+
+        let remainder = changes[start.upperBound...]
+        let end = remainder.range(of: "### ")
+            ?? remainder.range(of: "## ")
+        return String(remainder[..<(end?.lowerBound ?? remainder.endIndex)])
+    }
+
+    private static func plainText(from markdown: String) -> String {
+        var text = markdown.replacingOccurrences(of: "\r\n", with: "\n")
+        for token in ["**", "__", "`"] {
+            text = text.replacingOccurrences(of: token, with: "")
+        }
+
+        let linkPattern = #"\[([^\]]+)\]\([^\)]+\)"#
+        if let regex = try? NSRegularExpression(pattern: linkPattern) {
+            let range = NSRange(text.startIndex..., in: text)
+            text = regex.stringByReplacingMatches(
+                in: text,
+                range: range,
+                withTemplate: "$1"
+            )
+        }
+
+        return text
+            .components(separatedBy: .newlines)
+            .map { line -> String in
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                if trimmed.hasPrefix("- ") {
+                    return "• " + trimmed.dropFirst(2)
+                }
+                return trimmed
+            }
+            .joined(separator: "\n")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     @MainActor
     static func presentUpdate(
         _ manifest: UpdateManifest,
@@ -142,7 +218,7 @@ enum UpdateChecker {
         alert.messageText = L("发现新版本 %@", manifest.version)
         alert.informativeText = [
             L("当前版本：%@", currentVersion),
-            manifest.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+            releaseNotesSummary(manifest.notes)
         ]
         .compactMap { $0 }
         .filter { !$0.isEmpty }

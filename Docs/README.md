@@ -26,6 +26,6 @@
 - 搜索：中文、拼音全拼 / 首字母缩写、模糊匹配、相关性排序
 - Snippets：常用文本片段，面板快速复制，随备份导出
 - 运行时依赖：无第三方库
-- 质量：116 个 XCTest + GitHub Actions CI
+- 质量：118 个 XCTest + GitHub Actions CI
 - 本地化：跟随系统语言的中文 / 英文界面，资源位于 `HaoPaste/en.lproj` 与 `HaoPaste/zh-Hans.lproj`
 - 英文 README：仓库根目录 `README.en.md`

@@ -234,7 +234,7 @@ DMG 使用本地 ad-hoc 签名。若首次打开时被 Gatekeeper 拦截，请�
 # 开发调试
 make run       # Debug 构建并打开
 make demo      # 用可复现的示例数据启动，便于查看界面
-make test      # 运行 116 个 XCTest（自动化测试）
+make test      # 运行 118 个 XCTest（自动化测试）
 
 # 日常使用 / 发布
 make release   # Release 构建
@@ -248,7 +248,7 @@ make install   # 安装到 /Applications 并启动
 
 ## 质量与测试
 
-- **116 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、多选 / 合并、翻译引擎 / 回退 / 授权、快捷翻译 / 自动翻译策略、剪贴板挂架布局 / 滚动 / 筛选 / 点击命中 / 操作条、OCR / 批量识别 / 缓存、去重/裁剪、存储读写、备份导入导出。
+- **118 个 XCTest** 覆盖内容分类、快捷键模型、历史模型、设置持久化、隐私排除、文件与富文本、颜色解析、拼音 / 模糊搜索、Snippets、预览 / 拖拽、多选 / 合并、翻译引擎 / 回退 / 授权、快捷翻译 / 自动翻译策略、剪贴板挂架布局 / 滚动 / 筛选 / 点击命中 / 操作条、OCR / 批量识别 / 缓存、去重/裁剪、存储读写、备份导入导出。
 - 测试宿主会自动跳过菜单栏、剪贴板轮询和全局快捷键注册，不影响正常使用。
 - GitHub Actions 工作流：`.github/workflows/ci.yml` 在 macOS 上执行测试并构建 Release；`.github/workflows/release.yml` 在推送 `v*` tag 时自动测试、构建 DMG、创建 GitHub Release 并上传资产。
 - 运行：`make test`。

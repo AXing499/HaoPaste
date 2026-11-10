@@ -9,6 +9,7 @@
 - DMG 安装背景与安装说明改为中英双语，保留「系统设置 → 隐私与安全性 → 安全性 → 仍要打开」的完整步骤。
 - 补齐动态数量、单复数、相对时间、菜单、弹窗与辅助功能文案的本地化。
 - 新增本地化回归测试，并修复格式化占位符与计数显示问题。
+- 优化更新提示：按当前语言提取发布说明摘要，去除 Markdown 标记并限制长度。
 
 ### English
 
@@ -17,6 +18,7 @@
 - Made the DMG background and installation notes bilingual, including the full System Settings → Privacy & Security → Security → Open Anyway steps.
 - Localized dynamic counts, plurals, relative times, menus, alerts, and accessibility labels.
 - Added localization regression tests and fixed format placeholder and count display issues.
+- Improved the update prompt with a localized plain-text summary of the release notes, without Markdown markers or excessive length.
 
 ## 0.13.19 — 2026-11-10
 

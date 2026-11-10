@@ -71,6 +71,45 @@ final class UpdateCheckerTests: XCTestCase {
         )
     }
 
+    func testReleaseNotesSummaryPicksTheCurrentLanguage() {
+        let notes = """
+        HaoPaste 0.14.0
+
+        ## 安装 / Installation
+
+        ### 中文
+        1. 下载 DMG
+        ### English
+        1. Download the DMG
+
+        ## 本次变更 / Changes
+
+        ### 中文
+        - 第一项
+        - **第二项**
+        ### English
+        - First
+        - **Second**
+        """
+
+        XCTAssertEqual(
+            UpdateChecker.releaseNotesSummary(notes, preferChinese: true),
+            "• 第一项\n• 第二项"
+        )
+        XCTAssertEqual(
+            UpdateChecker.releaseNotesSummary(notes, preferChinese: false),
+            "• First\n• Second"
+        )
+    }
+
+    func testReleaseNotesSummaryKeepsPlainCustomNotes() {
+        XCTAssertEqual(
+            UpdateChecker.releaseNotesSummary("最近删除与片段入口"),
+            "最近删除与片段入口"
+        )
+        XCTAssertNil(UpdateChecker.releaseNotesSummary("   "))
+    }
+
     func testManifestDecoding() throws {
         let data = Data(
             """
