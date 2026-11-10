@@ -32,6 +32,8 @@ make run       # Debug 构建 + open
 make demo      # 使用 /tmp/haopaste-demo 和示例数据启动
 make build     # 仅 Debug 构建
 make release   # Release 构建（用于日常使用）
+make screenshots        # 重新生成中英文 README 截图
+make verify-screenshots # 对比当前渲染结果与截图基线
 ```
 
 Debug 构建输出：
@@ -136,8 +138,8 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste-0.13.22.dmg                 # 安装包（app + Applications 快捷方式）
-dist/HaoPaste-0.13.22.dmg.sha256          # SHA-256 校验
+dist/HaoPaste-0.14.0.dmg                 # 安装包（app + Applications 快捷方式）
+dist/HaoPaste-0.14.0.dmg.sha256          # SHA-256 校验
 ```
 
 > `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
@@ -184,11 +186,11 @@ codesign --force --deep --options runtime --timestamp \
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash
-xcrun notarytool submit "dist/HaoPaste-0.13.22.dmg" \
+xcrun notarytool submit "dist/HaoPaste-0.14.0.dmg" \
   --keychain-profile "haopaste-notary" --wait
 
-xcrun stapler staple "dist/HaoPaste-0.13.22.dmg"
-xcrun stapler validate "dist/HaoPaste-0.13.22.dmg"
+xcrun stapler staple "dist/HaoPaste-0.14.0.dmg"
+xcrun stapler validate "dist/HaoPaste-0.14.0.dmg"
 ```
 
 也可以对 `.app` 先公证再打包（Apple 推荐流程根据分发方式调整）。需要 Apple Developer Program 账号。
@@ -198,8 +200,8 @@ xcrun stapler validate "dist/HaoPaste-0.13.22.dmg"
 版本号位于 `project.yml`：
 
 ```yaml
-MARKETING_VERSION: "0.13.22"
-CURRENT_PROJECT_VERSION: "45"
+MARKETING_VERSION: "0.14.0"
+CURRENT_PROJECT_VERSION: "46"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：
@@ -229,7 +231,7 @@ CURRENT_PROJECT_VERSION: "45"
 - [ ] 浅色 / 深色 / 减弱动态效果表现正常
 - [ ] DMG 可以拖入 Applications 并正常启动
 - [ ] `codesign --verify --deep --strict` 通过
-- [ ] 更新 `Docs/` 与 README 所需截图
+- [ ] 运行 `make screenshots` 更新中英文截图，并用 `make verify-screenshots` 检查
 
 ## 6. 测试与诊断
 
@@ -251,17 +253,17 @@ xcodebuild \
   test
 ```
 
-当前 119 个测试覆盖：
+当前 120 个测试覆盖：
 
 - 内容分类器：URL / HEX / JSON / 代码 / SQL / 普通文本边界。
 - `HotKeyConfiguration`：默认值、修饰符、显示顺序、校验。
 - `ClipboardItem`：格式徽章、搜索、分类过滤。
-- `AppSettings`：默认值、持久化、快捷键、隐私排除匹配、非法上限回退。
+- `AppSettings`：默认值、持久化、快捷键、隐私排除匹配、非法上限回退、主面板 / 挂架复制行为。
 - `ClipboardStore`：文本 / 图片资产往返、缺失图片过滤。
 - `ClipboardManager`：FIFO 裁剪、置顶保护、清空逻辑。
 - `HistoryArchiveService`：导出 → 空库导入 → 重复导入去重、无效归档报错。
 - 预览：状态生命周期、超长文本截断、富文本格式保留与颜色归一化。
-- 拖拽：文本 / RTF / 图片 Provider 的类型注册与数据内容。
+- 拖拽：文本 / RTF / 图片 Provider 的类型注册与数据内容；多文件拖拽的 NSDraggingItem 数量与拖拽帧。
 - 多选：⌘ 切换、⇧ 范围、锚点、全选与删除后的选择裁剪。
 - 合并：文本顺序、文件 URL、混合路径、去重、图片限制与剪贴板写入。
 - 翻译 Provider：Google / Bing / DeepL / Azure / 百度 / Google Cloud 的请求参数、签名与响应解析。
@@ -349,6 +351,8 @@ defaults delete com.hao.HaoPaste 2>/dev/null || true
     --storage /tmp/haopaste-target --import-history /tmp/haopaste-backup.zip
   ```
 - **截图渲染**：`DebugRenderer` 使用真实的 `NSHostingView` + 窗口缓存，避免 `ImageRenderer` 对 TextField / LazyVStack 的渲染限制。不要删除这段 Debug 工具后继续使用 README 中的渲染命令。
+- **中英文截图**：`make screenshots` 会用固定的渲染时间生成全部 `Docs/screenshot-*.png` 与 `Docs/screenshot-*-en.png`；`make verify-screenshots` 会把渲染结果与已提交基线逐字节比较。OCR 截图因 TextEditor 光标闪烁会跳过自动比较。
+- **截图语言**：脚本通过 Debug 参数 `--language en|zh-Hans` 强制语言，不受开发者本机的应用语言设置影响；`HAOPASTE_RENDER_FIXED_NOW` 用于固定相对时间。
 - **DMG 未提交到 Git**：`dist/` 被 `.gitignore` 排除。每次发布请重新运行 `make dmg`。
 - **应用图标**：修改 `Scripts/generate-app-icon.swift` 后重新生成 10 个尺寸，或直接替换 `AppIcon.appiconset` 中的 PNG。
 

@@ -9,7 +9,7 @@ import Foundation
 import Observation
 import ServiceManagement
 
-enum ShelfCopyBehavior: String, CaseIterable, Identifiable, Codable, Sendable {
+enum CopyBehavior: String, CaseIterable, Identifiable, Codable, Sendable {
     case stayOpen
     case hideImmediately
     case hideAfterDelay
@@ -57,6 +57,7 @@ final class AppSettings {
         static let shelfCardFallDuration = "settings.shelfCardFallDuration"
         static let updateFeedURL = "settings.updateFeedURL"
         static let shelfCopyBehavior = "settings.shelfCopyBehavior"
+        static let panelCopyBehavior = "settings.panelCopyBehavior"
         static let copyPlainTextOnly = "settings.copyPlainTextOnly"
         static let shelfEnabled = "settings.shelfEnabled"
         static let shelfItemLimit = "settings.shelfItemLimit"
@@ -130,7 +131,17 @@ final class AppSettings {
         }
     }
 
-    var shelfCopyBehavior: ShelfCopyBehavior {
+    var panelCopyBehavior: CopyBehavior {
+        didSet {
+            guard oldValue != panelCopyBehavior else { return }
+            defaults.set(
+                panelCopyBehavior.rawValue,
+                forKey: Keys.panelCopyBehavior
+            )
+        }
+    }
+
+    var shelfCopyBehavior: CopyBehavior {
         didSet {
             guard oldValue != shelfCopyBehavior else { return }
             defaults.set(
@@ -309,9 +320,13 @@ final class AppSettings {
             ? storedFallDuration
             : Self.defaultShelfCardFallDuration
 
+        self.panelCopyBehavior = defaults
+            .string(forKey: Keys.panelCopyBehavior)
+            .flatMap(CopyBehavior.init(rawValue:))
+            ?? .hideImmediately
         self.shelfCopyBehavior = defaults
             .string(forKey: Keys.shelfCopyBehavior)
-            .flatMap(ShelfCopyBehavior.init(rawValue:))
+            .flatMap(CopyBehavior.init(rawValue:))
             ?? .stayOpen
         self.copyPlainTextOnly = defaults.bool(
             forKey: Keys.copyPlainTextOnly

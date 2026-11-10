@@ -411,11 +411,27 @@ struct SettingsView: View {
 
         SettingsCard(L("复制行为")) {
             SettingsRow(
+                L("主面板复制后"),
+                subtitle: L("点击条目复制后，主面板保持打开、立即收起或延迟收起")
+            ) {
+                Picker("", selection: $settings.panelCopyBehavior) {
+                    ForEach(CopyBehavior.allCases) { behavior in
+                        Text(behavior.title).tag(behavior)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 200)
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
                 L("挂架复制后"),
                 subtitle: L("点击卡片复制后，挂架保持展开、立即收起或延迟收起")
             ) {
                 Picker("", selection: $settings.shelfCopyBehavior) {
-                    ForEach(ShelfCopyBehavior.allCases) { behavior in
+                    ForEach(CopyBehavior.allCases) { behavior in
                         Text(behavior.title).tag(behavior)
                     }
                 }

@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.14.0 — 2026-11-11
+
+### 中文
+
+- 设置 → 通用 →「复制行为」新增「主面板复制后」，支持保持打开、立即收起、延迟 0.6 秒收起。
+- 多文件条目可拖动文件图标一次拖出全部文件到 Finder 或其他应用。
+- 新增 `make screenshots`，一键生成全部中英文 README 截图。
+- 新增 `make verify-screenshots`，用固定时间和固定语言对比截图基线，帮助发现 UI 回归。
+- 新增多文件拖拽测试；120 个 XCTest。
+
+### English
+
+- Added "After Copying from Panel" under Settings → General → Copy Behavior, with keep-open, hide-immediately, and hide-after-0.6-seconds options.
+- Multi-file items can drag all files at once from the file icon into Finder or another app.
+- Added `make screenshots` to regenerate all Chinese and English README screenshots.
+- Added `make verify-screenshots` to compare deterministic renders against committed UI baselines.
+- Added multi-file drag coverage; 120 XCTest cases.
+
+
 ## 0.13.22 — 2026-11-10
 
 ### 中文

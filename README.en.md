@@ -2,7 +2,7 @@
 
 English | [简体中文](README.md)
 
-Current version: **v0.13.22**
+Current version: **v0.14.0**
 
 A native, fast, keyboard-first clipboard manager for macOS. Press `⌥⌘V` in any app to open a borderless floating panel, then search, select, and copy without breaking your flow.
 
@@ -22,11 +22,11 @@ A native, fast, keyboard-first clipboard manager for macOS. Press `⌥⌘V` in a
 
    ```bash
    make dmg
-   # dist/HaoPaste-0.13.22.dmg
-   # dist/HaoPaste-0.13.22.dmg.sha256
+   # dist/HaoPaste-0.14.0.dmg
+   # dist/HaoPaste-0.14.0.dmg.sha256
    ```
 
-2. Open `HaoPaste-0.13.22.dmg`, then drag **HaoPaste** into **Applications**.
+2. Open `HaoPaste-0.14.0.dmg`, then drag **HaoPaste** into **Applications**.
 3. If macOS says the developer cannot be verified:
    - Open **System Settings → Privacy & Security**
    - Under **Security**, find **HaoPaste**
@@ -67,7 +67,7 @@ For install, quit, uninstall, and FAQ details, see the [User Guide](Docs/USER_GU
 - Text generated inside HaoPaste (OCR, translation, snippets, Markdown / color formats) enters clipboard history when copied, with content-hash deduplication.
 - New copies drop into an open shelf with a spring animation and replace old cards smoothly at the load limit.
 - Deleted items move to **Recently Deleted** and are kept for 7 days by default (1 / 7 / 30 / 90 days). Restore or delete them permanently; they expire automatically.
-- Drag text, image, or single-file cards into other apps.
+- Drag text, image, or file cards into other apps. Multi-file items drag all files from the file icon.
 - Switch between **All / Text / Image** at the bottom. **Text** also includes code, links, and colors.
 - Load limit options: 6 / 8 / 10 / 12 / Unlimited.
 - Full-screen apps, HaoPaste itself, and active menu bar interaction suppress automatic shelf opening.
@@ -176,11 +176,12 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 
 - **Card interactions**: hover highlight, 1pt lift, spring animation, pin / delete controls, and context menus.
 - **Click-away dismissal**: closes when clicking outside or switching apps.
-- **Settings**: global shortcuts, launch at login, pause monitoring, history capacity, shelf toggle / edge / load limit, clear history, open data folder, copy behavior, and backups.
+- **Settings**: global shortcuts, launch at login, pause monitoring, history capacity, shelf toggle / edge / load limit, clear history, open data folder, panel / shelf copy behavior, and backups.
 - **Privacy controls**: exclude apps, disable image capture, and always-on hidden / transient / password-manager type filtering.
 - **Backup & migration**: export history, images, and snippets to an unencrypted `.zip`; import merges, deduplicates, and preserves pinned state.
 - **Smart classification**: text, link, code / JSON, HEX color, image, and file.
 - **File support**: copy one or many files / folders from Finder; copy back, reveal in Finder, and get clear missing-file warnings.
+- **Drag export**: drag text, image, or file items into other apps; multi-file items drag all files at once from the file icon.
 - **Quick actions**: open links / files, save images, copy Markdown links, and copy RGB / HSL color formats.
 - **Rich text preservation**: RTF / HTML from browsers and Notes is stored and restored on copy, with an explicit plain-text option.
 - **Color visualization**: real swatches for HEX items with HEX / RGB / HSL copies.
@@ -228,11 +229,13 @@ Requirements: macOS 14+ and Xcode 15+ (the project is verified with Xcode 26.5).
 # Development
 make run       # debug build and launch
 make demo      # launch with reproducible sample data
-make test      # run 119 XCTest cases
+make test      # run 120 XCTest cases
 
 # Release
 make release   # release build
 make dmg       # dist/HaoPaste-<version>.dmg
+make screenshots        # regenerate Chinese and English README screenshots
+make verify-screenshots # compare screenshots with committed baselines
 make install   # install to /Applications and launch
 ```
 
@@ -242,7 +245,7 @@ HaoPaste stays in the menu bar after launch. Press `⌥⌘V` to open the panel. 
 
 ## Quality and tests
 
-- **119 XCTest cases** cover content classification, shortcut models, history models, settings persistence, privacy exclusions, files and rich text, color parsing, Pinyin / fuzzy search, snippets, preview / drag, multi-select / merge, translation engines / fallback / consent, quick translation / auto-translate policy, shelf layout / scrolling / filtering / hit testing / action bar, OCR / batch recognition / cache, deduplication / trimming, storage I/O, and backup import / export.
+- **120 XCTest cases** cover content classification, shortcut models, history models, settings persistence, privacy exclusions, files and rich text, color parsing, Pinyin / fuzzy search, snippets, preview / drag, multi-select / merge, translation engines / fallback / consent, quick translation / auto-translate policy, shelf layout / scrolling / filtering / hit testing / action bar, OCR / batch recognition / cache, deduplication / trimming, storage I/O, and backup import / export.
 - The test host skips the menu bar, clipboard polling, and global hotkey registration so tests do not affect normal use.
 - GitHub Actions: `.github/workflows/ci.yml` runs tests and a Release build; `.github/workflows/release.yml` runs tests, builds the DMG, creates the GitHub Release, and uploads assets when a `v*` tag is pushed.
 - Run with `make test`.
@@ -383,7 +386,7 @@ launchctl unsetenv HAOPASTE_RENDER_APPEARANCE
 
 - File items store path references, not file contents. Moved or deleted files show as unavailable.
 - Multi-image lists and GIFs are not supported yet.
-- Multi-file items cannot be dragged as a group; copy all file URLs or drag files individually in preview.
+- Multi-file items drag all files from the file icon; preview still drags files individually.
 - Long-text preview renders the first 120,000 characters; copying always uses the full content.
 - Merge supports text and files only. Images show an explanation; rich text merges as plain text.
 - Merge results are not written to clipboard history and do not reorder source items.

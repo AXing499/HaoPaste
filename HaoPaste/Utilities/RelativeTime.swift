@@ -8,6 +8,18 @@
 import Foundation
 
 enum RelativeTime {
+    /// Screenshot renders can pin "now" so generated baselines stay stable.
+    static var renderNow: Date {
+        #if DEBUG
+        if let raw = ProcessInfo.processInfo.environment[
+            "HAOPASTE_RENDER_FIXED_NOW"
+        ], let interval = TimeInterval(raw) {
+            return Date(timeIntervalSince1970: interval)
+        }
+        #endif
+        return Date()
+    }
+
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = AppLanguage.locale
@@ -40,7 +52,7 @@ enum RelativeTime {
 
     static func string(
         from date: Date,
-        now: Date = .now,
+        now: Date = RelativeTime.renderNow,
         calendar: Calendar = .current
     ) -> String {
         let interval = now.timeIntervalSince(date)

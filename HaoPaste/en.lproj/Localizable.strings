@@ -502,3 +502,10 @@
 "重新启动后生效" = "Restart to apply";
 "立即重启" = "Restart Now";
 "跟随系统" = "System";
+
+/* Panel copy behavior */
+"主面板复制后" = "After Copying from Panel";
+"点击条目复制后，主面板保持打开、立即收起或延迟收起" = "After you copy an item, keep the panel open, hide it immediately, or hide it after a delay";
+
+/* Multi-file drag */
+"拖动以复制全部文件" = "Drag to copy all files";

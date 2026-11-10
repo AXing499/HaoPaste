@@ -8,7 +8,7 @@ DEMO_STORAGE := /tmp/haopaste-demo
 RELEASE_DERIVED_DATA := .build/release
 RELEASE_APP := $(RELEASE_DERIVED_DATA)/Build/Products/Release/$(APP_NAME).app
 
-.PHONY: project build run demo test release dmg install clean
+.PHONY: project build run demo test release dmg install screenshots verify-screenshots clean
 
 project:
 	xcodegen generate
@@ -35,6 +35,14 @@ demo: build
 release: project
 	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Release \
 		-derivedDataPath $(RELEASE_DERIVED_DATA) build -quiet
+
+# Regenerate all Chinese and English README screenshots.
+screenshots: project
+	Scripts/generate-screenshots.sh
+
+# Render screenshots and compare them with the committed baselines.
+verify-screenshots: build
+	Scripts/verify-screenshots.sh
 
 # Build a double-clickable DMG in dist/ (app + Applications shortcut).
 dmg: release

@@ -63,10 +63,34 @@ enum AppLanguage {
     }()
 
     private static func storedPreference() -> AppLanguagePreference {
-        UserDefaults.standard
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        if let index = arguments.firstIndex(of: "--language"),
+           arguments.indices.contains(index + 1),
+           let override = preference(from: arguments[index + 1]) {
+            return override
+        }
+        #endif
+
+        return UserDefaults.standard
             .string(forKey: preferenceKey)
             .flatMap(AppLanguagePreference.init(rawValue:))
             ?? .system
+    }
+
+    private static func preference(
+        from rawValue: String
+    ) -> AppLanguagePreference? {
+        switch rawValue.lowercased() {
+        case "en", "english":
+            return .english
+        case "zh", "zh-hans", "zh_cn", "chinese":
+            return .simplifiedChinese
+        case "system":
+            return .system
+        default:
+            return nil
+        }
     }
 }
 

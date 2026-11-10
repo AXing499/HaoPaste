@@ -355,6 +355,7 @@ enum DebugRenderer {
         window.isOpaque = true
         window.backgroundColor = .black
         window.hasShadow = false
+        window.ignoresMouseEvents = true
         window.contentView = hostingView
 
         if ProcessInfo.processInfo.environment["HAOPASTE_RENDER_APPEARANCE"] == "dark" {
@@ -373,7 +374,7 @@ enum DebugRenderer {
         window.orderFrontRegardless()
         renderWindow = window
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             hostingView.layoutSubtreeIfNeeded()
 
             guard

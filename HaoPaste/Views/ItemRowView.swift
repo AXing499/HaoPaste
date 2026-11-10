@@ -60,6 +60,16 @@ struct ItemRowView: View {
             Theme.cardShape
                 .strokeBorder(borderColor, lineWidth: Theme.hairline)
         }
+        .overlay(alignment: .leading) {
+            if item.type == .file, item.availableFileURLs.count > 1 {
+                MultiFileDragHandle(
+                    fileURLs: item.availableFileURLs,
+                    onClick: onRowClick
+                )
+                .frame(width: 32, height: 32)
+                .padding(.leading, 10)
+            }
+        }
         .shadow(
             color: Color.black.opacity(isHovering && !isSelected ? 0.07 : 0),
             radius: 9,

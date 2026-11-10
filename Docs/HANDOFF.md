@@ -21,7 +21,7 @@ make project   # xcodegen generate
 make build     # Debug 构建
 make run       # Debug 构建并启动
 make demo      # 使用可复现示例数据启动
-make test      # 119 个 XCTest（默认英文测试环境）
+make test      # 120 个 XCTest（默认英文测试环境）
 make release   # Release 构建
 make dmg       # 生成 dist/HaoPaste-<version>.dmg
 make install   # 安装 Release 到 /Applications 或 ~/Applications
@@ -58,12 +58,12 @@ CI 不创建 Release，也不上传 DMG。
 
 触发条件：
 
-- 推送 `v*` tag，例如 `v0.13.21`
+- 推送 `v*` tag，例如 `v0.14.0`
 
 执行内容：
 
 1. **Resolve version**：读取 tag 与 `project.yml` 的 `MARKETING_VERSION`，两者必须完全一致，否则失败
-2. **Run unit tests**：运行 119 个 XCTest
+2. **Run unit tests**：运行 120 个 XCTest
 3. **Build Release app**：生成 `.build/release/Build/Products/Release/HaoPaste.app`
 4. **Build DMG**：设置 `HAOPASTE_DMG_LAYOUT=0`，调用 `Scripts/package-dmg.sh`，生成 DMG 与 SHA-256
 5. **Read changelog**：从 `CHANGELOG.md` 提取 `## <version>` 到下一个 `##` 之间的内容；没有对应章节会直接失败
@@ -84,21 +84,22 @@ CI 不创建 Release，也不上传 DMG。
 ```bash
 # 1. 在 CHANGELOG.md 添加与版本号一致的中英双语章节
 # 2. 更新 project.yml：
-#    MARKETING_VERSION: "0.13.21"
-#    CURRENT_PROJECT_VERSION: "44"
+#    MARKETING_VERSION: "0.14.0"
+#    CURRENT_PROJECT_VERSION: "46"
 xcodegen generate
 
 # 3. 本地验证
 make test
+make verify-screenshots
 
 # 4. 提交并推送 main
 git add .
-git commit -m "release: v0.13.21"
+git commit -m "release: v0.14.0"
 git push origin main
 
 # 5. 打 tag 并推送，触发自动发布
-git tag -a v0.13.21 -m "HaoPaste 0.13.21"
-git push origin v0.13.21
+git tag -a v0.14.0 -m "HaoPaste 0.14.0"
+git push origin v0.14.0
 ```
 
 查看与验证：
@@ -106,7 +107,7 @@ git push origin v0.13.21
 ```bash
 gh run list --workflow Release --limit 3
 gh run watch <run-id> --exit-status
-gh release view v0.13.21 --json url,assets,body
+gh release view v0.14.0 --json url,assets,body
 ```
 
 > 如果 Release 工作流失败，先修复代码并推送 `main`，再重新打 tag。已经发布但需要修补时，可以强制移动 tag 到新提交后重新触发工作流；工作流会更新已有 Release 并覆盖上传资产。
@@ -136,38 +137,35 @@ gh release view v0.13.21 --json url,assets,body
 
 新增文案时必须同时更新中英文资源；带 `%d` 的计数文案还要更新两边 `.stringsdict`。
 
-### 4.2 英文截图
+### 4.2 中英文截图
 
-英文 README 使用 `Docs/screenshot-*-en.png`。生成命令示例：
+README 使用两套截图：
+
+- 中文：`Docs/screenshot-*.png`
+- 英文：`Docs/screenshot-*-en.png`
+
+一键重新生成：
 
 ```bash
-APP=.build/Build/Products/Debug/HaoPaste.app/Contents/MacOS/HaoPaste
-STORE=/tmp/hp-demo-en
-rm -rf "$STORE"
-
-"$APP" --storage "$STORE" --render Docs/screenshot-light-en.png -AppleLanguages '(en)'
-HAOPASTE_RENDER_APPEARANCE=dark \
-  "$APP" --storage "$STORE" --render Docs/screenshot-dark-en.png -AppleLanguages '(en)'
-"$APP" --storage "$STORE" --render-shelf Docs/screenshot-shelf-en.png -AppleLanguages '(en)'
-HAOPASTE_RENDER_SHELF_EDGE=left \
-  "$APP" --storage "$STORE" --render-shelf Docs/screenshot-shelf-side-en.png -AppleLanguages '(en)'
-HAOPASTE_RENDER_SNIPPETS=1 \
-  "$APP" --storage "$STORE" --render Docs/screenshot-snippets-en.png -AppleLanguages '(en)'
-HAOPASTE_RENDER_PREVIEW=image \
-  "$APP" --storage "$STORE" --render Docs/screenshot-preview-en.png -AppleLanguages '(en)'
-HAOPASTE_RENDER_MULTI=3 \
-  "$APP" --storage "$STORE" --render Docs/screenshot-multi-select-en.png -AppleLanguages '(en)'
-"$APP" --storage "$STORE" --render-quick Docs/screenshot-quick-translation-en.png -AppleLanguages '(en)'
-HAOPASTE_RENDER_TRANSLATION=success \
-  "$APP" --storage "$STORE" --render Docs/screenshot-translation-en.png -AppleLanguages '(en)'
-HAOPASTE_RENDER_OCR=success \
-  "$APP" --storage "$STORE" --render Docs/screenshot-ocr-en.png -AppleLanguages '(en)'
-"$APP" --storage "$STORE" --render-settings Docs/screenshot-settings-en.png -AppleLanguages '(en)'
-HAOPASTE_RENDER_SETTINGS_TAB=intelligence \
-  "$APP" --storage "$STORE" --render-settings Docs/screenshot-settings-intelligence-en.png -AppleLanguages '(en)'
+make screenshots
 ```
 
-`HaoPaste/Support/DemoContent.swift` 与 `DebugRenderer.swift` 中的示例数据会按当前界面语言输出中文或英文。
+校验当前渲染结果是否与已提交基线一致：
+
+```bash
+make verify-screenshots
+```
+
+脚本会：
+
+- 构建 Debug app
+- 使用 `--language en` / `--language zh-Hans` 强制截图语言
+- 使用 `HAOPASTE_RENDER_FIXED_NOW` 固定相对时间，保证可重复
+- 从 `DemoContent.swift` / `DebugRenderer.swift` 输出对应语言的示例数据
+
+OCR 截图因为 `TextEditor` 光标闪烁，`verify-screenshots` 会跳过逐字节比较，但仍会生成。
+
+新增或修改 UI 后，先人工确认截图，再运行 `make screenshots` 更新基线。
 
 ## 5. 交接给其他 AI
 
@@ -197,13 +195,15 @@ HAOPASTE_RENDER_SETTINGS_TAB=intelligence \
 开发命令：
 make project
 make build
-make test        # 119 个 XCTest，英文测试环境
+make test        # 120 个 XCTest，英文测试环境
+make screenshots # 更新中英文截图
+make verify-screenshots # 检查截图基线
 make dmg
 
 发布流程：
 1. 在 CHANGELOG.md 添加 `## X.Y.Z — YYYY-MM-DD` 中英双语章节。
 2. 修改 project.yml 的 MARKETING_VERSION / CURRENT_PROJECT_VERSION，运行 xcodegen generate。
-3. 运行 make test；必要时再运行：
+3. 运行 make test 与 make verify-screenshots；必要时再运行：
    xcodebuild -project HaoPaste.xcodeproj -scheme HaoPaste -configuration Debug \
      -destination 'platform=macOS' -derivedDataPath .build test -testLanguage zh-Hans
 4. 提交并推送 main。
@@ -216,7 +216,7 @@ make dmg
 - 中英文 UI 均无未翻译中文（英文环境）。
 - README.en.md 的截图全部是 -en.png。
 - CHANGELOG.md 有对应版本的中英双语章节。
-- 119 个测试通过。
+- 120 个测试通过。
 - Release 资产包含 DMG 和 SHA-256。
 - 不修改无关功能，不删除现有测试，不引入第三方运行时依赖。
 ```

@@ -52,6 +52,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     private var presentationGeneration = 0
     private var isHiding = false
     private var lastAutoTranslatedSignature: String?
+    private var pendingCopyHide: DispatchWorkItem?
 
     init(
         manager: ClipboardManager,
@@ -158,6 +159,9 @@ final class PanelController: NSObject, NSWindowDelegate {
     func hide(restoreFocus: Bool = true) {
         guard panel.isVisible, !isHiding else { return }
 
+        pendingCopyHide?.cancel()
+        pendingCopyHide = nil
+
         isHiding = true
         state.endPreview()
         translationService.close()
@@ -247,29 +251,51 @@ final class PanelController: NSObject, NSWindowDelegate {
 
     // MARK: - Copying
 
-    func copyAndHide(_ item: ClipboardItem) {
+    func copyItem(_ item: ClipboardItem) {
         guard manager.copyToPasteboard(item) else { return }
-        hide()
+        finishCopy()
     }
 
-    func copyTextAndHide(_ text: String) {
+    func copyText(_ text: String) {
         guard manager.copyTextToPasteboard(text) else { return }
-        hide()
+        finishCopy()
     }
 
-    func copyPlainTextAndHide(_ text: String) {
+    func copyPlainText(_ text: String) {
         guard manager.copyPlainTextToPasteboard(text) else { return }
-        hide()
+        finishCopy()
     }
 
-    func copyMergedAndHide(_ items: [ClipboardItem]) {
+    func copyMerged(_ items: [ClipboardItem]) {
         guard manager.copyMergedToPasteboard(items) else { return }
-        hide()
+        finishCopy()
     }
 
-    func copySnippetAndHide(_ snippet: Snippet) {
+    func copySnippet(_ snippet: Snippet) {
         guard manager.copyTextToPasteboard(snippet.content) else { return }
-        hide()
+        finishCopy()
+    }
+
+    private func finishCopy() {
+        pendingCopyHide?.cancel()
+        pendingCopyHide = nil
+
+        switch settings.panelCopyBehavior {
+        case .stayOpen:
+            break
+        case .hideImmediately:
+            hide()
+        case .hideAfterDelay:
+            let work = DispatchWorkItem { [weak self] in
+                self?.pendingCopyHide = nil
+                self?.hide()
+            }
+            pendingCopyHide = work
+            DispatchQueue.main.asyncAfter(
+                deadline: .now() + 0.6,
+                execute: work
+            )
+        }
     }
 
     // MARK: - Keyboard
@@ -745,7 +771,7 @@ final class PanelController: NSObject, NSWindowDelegate {
             return
         }
 
-        copyTextAndHide(translationService.resultText)
+        copyText(translationService.resultText)
     }
 
     private func movePreviewSelection(by delta: Int) {
@@ -767,7 +793,7 @@ final class PanelController: NSObject, NSWindowDelegate {
             return
         }
 
-        copyAndHide(item)
+        copyItem(item)
     }
 
     private func copySelectedEntry() {
@@ -778,14 +804,14 @@ final class PanelController: NSObject, NSWindowDelegate {
             else {
                 return
             }
-            copySnippetAndHide(snippet)
+            copySnippet(snippet)
         } else if state.isMultiSelecting {
             let selectedItems = state.selectedItems(in: currentVisibleItems)
             guard selectedItems.count > 1 else {
                 copySelectedItem()
                 return
             }
-            copyMergedAndHide(selectedItems)
+            copyMerged(selectedItems)
         } else {
             copySelectedItem()
         }
@@ -794,18 +820,18 @@ final class PanelController: NSObject, NSWindowDelegate {
     private func copySelectedItem() {
         let items = currentVisibleItems
         guard let item = state.selectedItem(in: items) ?? items.first else { return }
-        copyAndHide(item)
+        copyItem(item)
     }
 
     private func copyItem(at index: Int) {
         if isSnippetMode {
             let snippets = currentVisibleSnippets
             guard snippets.indices.contains(index) else { return }
-            copySnippetAndHide(snippets[index])
+            copySnippet(snippets[index])
         } else {
             let items = currentVisibleItems
             guard items.indices.contains(index) else { return }
-            copyAndHide(items[index])
+            copyItem(items[index])
         }
     }
 
@@ -899,19 +925,19 @@ final class PanelController: NSObject, NSWindowDelegate {
         let rootView = ContentView(
             state: state,
             onCopy: { [weak self] item in
-                self?.copyAndHide(item)
+                self?.copyItem(item)
             },
             onCopyMerged: { [weak self] items in
-                self?.copyMergedAndHide(items)
+                self?.copyMerged(items)
             },
             onCopyText: { [weak self] text in
-                self?.copyTextAndHide(text)
+                self?.copyText(text)
             },
             onCopyPlainText: { [weak self] text in
-                self?.copyPlainTextAndHide(text)
+                self?.copyPlainText(text)
             },
             onCopySnippet: { [weak self] snippet in
-                self?.copySnippetAndHide(snippet)
+                self?.copySnippet(snippet)
             }
         )
         .environment(manager)

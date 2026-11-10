@@ -95,7 +95,7 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | --- | --- |
 | `HaoPasteApplication.swift` | AppKit 入口，持有 AppDelegate，设置 accessory 激活策略 |
 | `AppDelegate.swift` | 依赖装配、主菜单、首次启动展示、应用代理生命周期 |
-| `PanelController.swift` | 无边框悬浮面板的创建 / 定位 / 显隐动画、键盘事件、焦点恢复、自动翻译最新记录 |
+| `PanelController.swift` | 无边框悬浮面板的创建 / 定位 / 显隐动画、键盘事件、焦点恢复、自动翻译最新记录、主面板复制后行为 |
 | `OnboardingWindowController.swift` | 首次启动欢迎引导，可从设置 → 关于再次打开 |
 | `UpdateChecker.swift` | 读取 JSON 更新清单、版本比较和更新提示 |
 | `QuickTranslationPanelController.swift` | `⌥⌘T` 快捷翻译卡片：读取剪贴板、定位、键盘与焦点恢复；也支持从挂架传入文本与锚点 |
@@ -131,6 +131,7 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `OCRCacheStore.swift` | 按图片哈希与识别语言持久化 OCR 文字（`OCR/`） |
 | `ItemPreview.swift` | 预览文本构建：RTF / HTML 归一化、字体大小收敛、12 万字符上限 |
 | `ItemDragProvider.swift` | 为文本 / 图片 / 单文件构建 `NSItemProvider`，附带 RTF / HTML 数据 |
+| `MultiFileDragHandle.swift` | 多文件条目使用 `NSDraggingSession` 一次拖出全部文件 |
 | `MergedContentBuilder.swift` | 多选合并规则：文本换行、文件 URL、混合路径与图片限制 |
 | `ImageSavePanel.swift`（Utilities） | 共享的 PNG 另存为流程与错误提示 |
 | `Localization.swift`（Utilities） | 系统语言选择、`L()` 文案查表与格式化 |
@@ -409,7 +410,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-119 个 XCTest 由 app target 作为测试宿主运行：
+120 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。
@@ -427,7 +428,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - Snippets CRUD、持久化、过滤、面板选中与备份合并。
 - 富文本 RTF/HTML 缓存、回写与备份迁移。
 - 预览状态生命周期、超长文本截断、富文本格式保留与颜色归一化。
-- 文本 / 富文本 / 图片拖拽 Provider 的类型与数据内容。
+- 文本 / 富文本 / 图片拖拽 Provider 的类型与数据内容；多文件拖拽 item 数量。
 - 多选状态：⌘ 切换、⇧ 范围、锚点稳定、全选与删除后的裁剪。
 - 合并复制：文本顺序、文件 URL、混合路径、去重、图片限制与剪贴板写入。
 - 翻译 Provider：Google / Bing / DeepL / Azure / 百度 / Google Cloud 的请求参数、签名与响应解析。

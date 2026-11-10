@@ -17,7 +17,7 @@ enum DemoText {
 @MainActor
 enum DemoContent {
     static func makeItems(store: ClipboardStore) -> [ClipboardItem] {
-        let now = Date()
+        let now = RelativeTime.renderNow
         var items: [ClipboardItem] = []
 
         func textItem(
