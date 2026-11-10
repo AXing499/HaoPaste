@@ -23,7 +23,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.shelfItemLimit, 8)
         XCTAssertEqual(settings.trashRetentionDays, 7)
         XCTAssertEqual(settings.shelfCardFallDuration, 0.75)
-        XCTAssertTrue(settings.updateFeedURL.isEmpty)
+        XCTAssertEqual(settings.updateFeedURL, AppSettings.defaultUpdateFeedURL)
         XCTAssertEqual(settings.shelfEdge, .top)
         XCTAssertTrue(settings.capturesImages)
         XCTAssertTrue(settings.excludedApplications.isEmpty)

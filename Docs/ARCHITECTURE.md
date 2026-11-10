@@ -234,7 +234,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 历史页：未置顶记录上限（100 / 200 / 500 / 1000）、清空未置顶 / 全部、在 Finder 中显示数据目录，以及导出 / 导入 `.zip` 备份。
 - 片段页：创建 / 编辑 / 删除片段；面板提供独立「片段」标签，支持「新建片段」、文本条目右键「保存为片段」、片段行右键编辑 / 删除、搜索、键盘选择和快速复制。打开面板内编辑器时会暂停 `PanelController` 的键盘拦截，让输入框获得完整键盘事件。
 - 首次启动：`showLaunchExperienceIfNeeded` 在首次启动时显示 `OnboardingWindowController`，完成或关闭后打开主面板；`hasCompletedOnboarding` 只写入一次，设置 → 关于的「查看首次引导」通过通知重新打开。
-- 更新检查：`UpdateChecker` 读取 `settings.updateFeedURL`（也可由 Info.plist 的 `HaoPasteUpdateFeedURL` 提供默认值），解析 version / downloadURL / notes；启动后最多每 24 小时自动检查一次，手动检查在设置 → 关于中执行。检查到新版本只显示提示并打开下载链接，不做自动下载或替换安装。
+- 更新检查：`UpdateChecker` 默认请求 `https://api.github.com/repos/AXing499/HaoPaste/releases/latest`，兼容 GitHub Releases API 和自定义 JSON 清单；版本比较会去掉前缀 `v`。启动后最多每 24 小时自动检查一次，手动检查在设置 → 关于中执行。检查到新版本只显示提示并打开下载链接，不做自动下载或替换安装。
 - 最近删除：`ClipboardManager.delete` 把条目移入 `trashedItems` 而不是立刻删除资源；`trash.json` 记录条目和 `deletedAt`，历史与最近删除分两个 JSON 保存。`ClipboardFilter.trash` 在面板中显示最近删除标签，`TrashRowView` 提供恢复 / 彻底删除。`purgeExpiredTrash` 在启动、打开面板和修改保留时间时清理过期条目，保留时间由 `AppSettings.trashRetentionDays` 控制。
 - 隐私页：图片记录开关、按应用排除列表（通过 `NSOpenPanel` 选择 `.app`，记录 Bundle ID / 名称）。
 - 设置保存在 `UserDefaults`；应用启动时读取并将历史上限同步给 `ClipboardManager`。
@@ -401,7 +401,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-110 个 XCTest 由 app target 作为测试宿主运行：
+112 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。

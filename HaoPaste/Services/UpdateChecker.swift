@@ -15,10 +15,39 @@ struct UpdateManifest: Decodable {
     let notes: String?
 }
 
+private struct GitHubRelease: Decodable {
+    struct Asset: Decodable {
+        let name: String
+        let browserDownloadURL: URL
+
+        enum CodingKeys: String, CodingKey {
+            case name
+            case browserDownloadURL = "browser_download_url"
+        }
+    }
+
+    let tagName: String
+    let htmlURL: URL
+    let body: String?
+    let draft: Bool
+    let prerelease: Bool
+    let assets: [Asset]
+
+    enum CodingKeys: String, CodingKey {
+        case tagName = "tag_name"
+        case htmlURL = "html_url"
+        case body
+        case draft
+        case prerelease
+        case assets
+    }
+}
+
 enum UpdateChecker {
     enum CheckError: LocalizedError {
         case invalidResponse
         case invalidFeed
+        case noReleases
 
         var errorDescription: String? {
             switch self {
@@ -26,6 +55,8 @@ enum UpdateChecker {
                 return "更新服务器返回了无效响应。"
             case .invalidFeed:
                 return "更新清单格式不正确。"
+            case .noReleases:
+                return "这个仓库还没有发布版本。"
             }
         }
     }
@@ -38,17 +69,49 @@ enum UpdateChecker {
         var request = URLRequest(url: url)
         request.timeoutInterval = 12
         request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.setValue(
+            "application/vnd.github+json",
+            forHTTPHeaderField: "Accept"
+        )
+        request.setValue(
+            "HaoPaste/\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0")",
+            forHTTPHeaderField: "User-Agent"
+        )
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard
-            let http = response as? HTTPURLResponse,
-            (200..<300).contains(http.statusCode)
-        else {
+        guard let http = response as? HTTPURLResponse else {
+            throw CheckError.invalidResponse
+        }
+        if http.statusCode == 404 {
+            throw CheckError.noReleases
+        }
+        guard (200..<300).contains(http.statusCode) else {
             throw CheckError.invalidResponse
         }
 
+        return try manifest(from: data)
+    }
+
+    /// Accepts either a GitHub Releases API payload or the small custom
+    /// manifest documented in Docs/update-manifest-example.json.
+    static func manifest(from data: Data) throws -> UpdateManifest {
+        let decoder = JSONDecoder()
+        if let release = try? decoder.decode(GitHubRelease.self, from: data) {
+            guard !release.draft, !release.prerelease else {
+                throw CheckError.noReleases
+            }
+            let download = release.assets.first {
+                $0.name.lowercased().hasSuffix(".dmg")
+            }?.browserDownloadURL ?? release.htmlURL
+            return UpdateManifest(
+                version: release.tagName,
+                downloadURL: download,
+                notes: release.body
+            )
+        }
+
         do {
-            return try JSONDecoder().decode(UpdateManifest.self, from: data)
+            return try decoder.decode(UpdateManifest.self, from: data)
         } catch {
             throw CheckError.invalidFeed
         }

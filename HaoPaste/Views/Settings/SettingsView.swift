@@ -873,7 +873,7 @@ struct SettingsView: View {
 
             SettingsRow(
                 "更新清单地址",
-                subtitle: "填写返回版本 JSON 的 https 地址；留空则关闭自动检查"
+                subtitle: "默认使用 GitHub Releases；清空地址可关闭自动检查"
             ) {
                 TextField(
                     "https://example.com/hao-paste/latest.json",

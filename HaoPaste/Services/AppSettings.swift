@@ -24,6 +24,8 @@ final class AppSettings {
     static let defaultTrashRetentionDays = 7
     static let shelfCardFallDurationOptions: [Double] = [0.3, 0.5, 0.75, 1.0, 1.2]
     static let defaultShelfCardFallDuration: Double = 0.75
+    static let defaultUpdateFeedURL =
+        "https://api.github.com/repos/AXing499/HaoPaste/releases/latest"
 
     private enum Keys {
         static let maxUnpinnedItems = "settings.maxUnpinnedItems"
@@ -256,11 +258,17 @@ final class AppSettings {
             ? storedFallDuration
             : Self.defaultShelfCardFallDuration
 
-        self.updateFeedURL = defaults.string(forKey: Keys.updateFeedURL)
-            ?? (Bundle.main.object(
-                forInfoDictionaryKey: "HaoPasteUpdateFeedURL"
-            ) as? String)
-            ?? ""
+        if defaults.object(forKey: Keys.updateFeedURL) != nil {
+            self.updateFeedURL = defaults.string(
+                forKey: Keys.updateFeedURL
+            ) ?? ""
+        } else if let infoURL = Bundle.main.object(
+            forInfoDictionaryKey: "HaoPasteUpdateFeedURL"
+        ) as? String, !infoURL.isEmpty {
+            self.updateFeedURL = infoURL
+        } else {
+            self.updateFeedURL = Self.defaultUpdateFeedURL
+        }
 
         if defaults.object(forKey: Keys.shelfEnabled) == nil {
             self.shelfEnabled = true

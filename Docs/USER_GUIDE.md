@@ -6,7 +6,7 @@
 
 ### 方式 A：DMG（推荐给日常使用）
 
-1. 打开 `dist/HaoPaste-0.13.17.dmg`（仓库开发目录中，执行 `make dmg` 生成），按窗口中的安装提示将 HaoPaste 拖入 Applications。
+1. 打开 `dist/HaoPaste-0.13.18.dmg`（仓库开发目录中，执行 `make dmg` 生成），按窗口中的安装提示将 HaoPaste 拖入 Applications。
 2. 将左侧的 **HaoPaste** 拖入右侧的 **Applications / 应用程序** 文件夹。
 3. 从“应用程序”、Launchpad 或 Spotlight 启动 **HaoPaste**。
 4. 首次启动会自动展示一次面板；之后它会驻留在菜单栏。
@@ -167,10 +167,11 @@ HaoPaste 的 `LSUIElement = true`，因此**不会出现在 Dock**。启动成�
 
 ### 检查更新
 
-- 设置 → 关于 →「更新」中可以填写更新清单地址并手动检查。
-- 勾选自动检查后（填写地址即启用），启动时每天最多检查一次。
-- 发现新版本会显示版本说明和「下载更新」按钮，点击只会打开下载链接，不会自动安装。
-- 更新清单格式见 `Docs/update-manifest-example.json`。
+- 默认从 `AXing499/HaoPaste` 的 GitHub Releases 检查更新，无需手动填写地址。
+- 启动时最多每 24 小时自动检查一次；设置 → 关于中也可以手动检查。
+- 发现新版本会显示版本说明和「下载更新」按钮，优先打开 Release 里的 DMG，没有 DMG 时打开 Release 页面。
+- 只打开下载链接，不会自动下载或替换安装。
+- 也支持自定义 JSON 更新清单，格式见 `Docs/update-manifest-example.json`。
 
 ### 最近删除
 
