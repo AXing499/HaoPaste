@@ -88,6 +88,25 @@ struct SettingsView: View {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
     }
 
+    private var languageNeedsRestart: Bool {
+        AppLanguage.code != AppLanguage.resolvedCode(for: settings.appLanguage)
+    }
+
+    private func relaunchApp() {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-n", Bundle.main.bundleURL.path]
+
+        do {
+            try task.run()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                NSApp.terminate(nil)
+            }
+        } catch {
+            NSSound.beep()
+        }
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             sidebar
@@ -235,6 +254,42 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var generalPage: some View {
+        SettingsCard(L("应用语言")) {
+            SettingsRow(
+                L("界面语言"),
+                subtitle: L("选择应用界面语言；更改后需要重新启动 HaoPaste。")
+            ) {
+                Picker("", selection: $settings.appLanguage) {
+                    ForEach(AppLanguagePreference.allCases) { language in
+                        Text(language.title).tag(language)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 160)
+            }
+
+            if languageNeedsRestart {
+                SettingsDivider()
+
+                HStack(spacing: 10) {
+                    Label(L("重新启动后生效"), systemImage: "arrow.clockwise")
+                        .font(.system(size: 10.5, design: .rounded))
+                        .foregroundStyle(.orange)
+
+                    Spacer(minLength: 8)
+
+                    Button(L("立即重启")) {
+                        relaunchApp()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                .padding(.horizontal, 14)
+                .padding(.bottom, 11)
+            }
+        }
+
         SettingsCard(L("启动")) {
             SettingsRow(
                 L("登录时自动启动"),

@@ -8,6 +8,12 @@
 #if DEBUG
 import AppKit
 
+enum DemoText {
+    static func text(_ chinese: String, _ english: String) -> String {
+        AppLanguage.isChinese ? chinese : english
+    }
+}
+
 @MainActor
 enum DemoContent {
     static func makeItems(store: ClipboardStore) -> [ClipboardItem] {
@@ -34,9 +40,12 @@ enum DemoContent {
 
         items.append(
             textItem(
-                "把复杂留给系统，把简单留给用户。",
+                DemoText.text(
+                    "把复杂留给系统，把简单留给用户。",
+                    "Keep the system complex; keep the user's experience simple."
+                ),
                 type: .text,
-                source: "备忘录",
+                source: DemoText.text("备忘录", "Notes"),
                 ago: 120,
                 pinned: true
             )
@@ -65,11 +74,18 @@ enum DemoContent {
         )
 
         let richTextID = UUID()
-        let richTextContent = """
-        HaoPaste 保留富文本格式。
+        let richTextContent = DemoText.text(
+            """
+            HaoPaste 保留富文本格式。
 
-        在浏览器或备忘录中复制的粗体、斜体与链接，会在预览中按原样显示；复制回剪贴板时同样保留 RTF / HTML。
-        """
+            在浏览器或备忘录中复制的粗体、斜体与链接，会在预览中按原样显示；复制回剪贴板时同样保留 RTF / HTML。
+            """,
+            """
+            HaoPaste preserves rich text formatting.
+
+            Bold, italic, and links copied from a browser or Notes appear as-is in preview and are preserved as RTF / HTML when copied back.
+            """
+        )
         let richTextAttributed = NSMutableAttributedString(string: richTextContent)
         richTextAttributed.addAttribute(
             .font,
@@ -82,10 +98,16 @@ enum DemoContent {
             from: richTextRange,
             documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
         ) {
-            let html = """
-            <p><strong>HaoPaste</strong> 保留富文本格式。</p>
-            <p>在浏览器或备忘录中复制的粗体、斜体与链接，会在预览中按原样显示；复制回剪贴板时同样保留 RTF / HTML。</p>
-            """
+            let html = DemoText.text(
+                """
+                <p><strong>HaoPaste</strong> 保留富文本格式。</p>
+                <p>在浏览器或备忘录中复制的粗体、斜体与链接，会在预览中按原样显示；复制回剪贴板时同样保留 RTF / HTML。</p>
+                """,
+                """
+                <p><strong>HaoPaste</strong> preserves rich text formatting.</p>
+                <p>Bold, italic, and links copied from a browser or Notes appear as-is in preview and are preserved as RTF / HTML when copied back.</p>
+                """
+            )
             let richTextPayload = RichTextPayload(
                 rtfData: rtfData,
                 htmlData: Data(html.utf8)
@@ -145,9 +167,12 @@ enum DemoContent {
 
         items.append(
             textItem(
-                "明天的评审改到下午三点，记得带上最新的设计稿。",
+                DemoText.text(
+                    "明天的评审改到下午三点，记得带上最新的设计稿。",
+                    "Move tomorrow's review to 3 PM and bring the latest design draft."
+                ),
                 type: .text,
-                source: "飞书",
+                source: DemoText.text("飞书", "Lark"),
                 ago: 1_800
             )
         )
@@ -173,7 +198,7 @@ enum DemoContent {
                     createdAt: now.addingTimeInterval(-360),
                     sourceApp: SourceApplication(
                         bundleIdentifier: "com.apple.finder",
-                        name: "访达"
+                        name: DemoText.text("访达", "Finder")
                     ),
                     contentHash: ContentHasher.files(demoFilePaths),
                     filePaths: demoFilePaths
@@ -185,7 +210,7 @@ enum DemoContent {
             textItem(
                 "npm run build && open .build/Build/Products/Debug/HaoPaste.app",
                 type: .text,
-                source: "终端",
+                source: DemoText.text("终端", "Terminal"),
                 ago: 5_400
             )
         )
@@ -198,12 +223,15 @@ enum DemoContent {
                         id: id,
                         type: .image,
                         content: stored.fileName,
-                        plainText: "图片 \(stored.dimensions.displayText)",
+                        plainText: DemoText.text(
+                            "图片 \(stored.dimensions.displayText)",
+                            "Image \(stored.dimensions.displayText)"
+                        ),
                         isPinned: false,
                         createdAt: now.addingTimeInterval(-320),
                         sourceApp: SourceApplication(
                             bundleIdentifier: nil,
-                            name: "截图"
+                            name: DemoText.text("截图", "Screenshot")
                         ),
                         contentHash: ContentHasher.imageData(imageData),
                         imageFileName: stored.fileName,
@@ -301,24 +329,34 @@ extension SnippetManager {
         guard snippets.isEmpty else { return }
 
         _ = create(
-            title: "工作邮箱",
+            title: DemoText.text("工作邮箱", "Work Email"),
             content: "hello@haopaste.app"
         )
         _ = create(
-            title: "HaoPaste 签名",
-            content: "—— 来自 HaoPaste\nClipboard, reimagined."
+            title: DemoText.text("HaoPaste 签名", "HaoPaste Signature"),
+            content: DemoText.text(
+                "—— 来自 HaoPaste\nClipboard, reimagined.",
+                "— from HaoPaste\nClipboard, reimagined."
+            )
         )
         _ = create(
-            title: "构建命令",
+            title: DemoText.text("构建命令", "Build Command"),
             content: "swift build && swift test"
         )
         _ = create(
-            title: "会议纪要模板",
-            content: """
-            议题：
-            结论：
-            下一步：
-            """
+            title: DemoText.text("会议纪要模板", "Meeting Notes Template"),
+            content: DemoText.text(
+                """
+                议题：
+                结论：
+                下一步：
+                """,
+                """
+                Agenda:
+                Decisions:
+                Next steps:
+                """
+            )
         )
     }
 }

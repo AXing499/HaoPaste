@@ -22,7 +22,8 @@ jobs:
             -configuration Debug \
             -destination 'platform=macOS' \
             -derivedDataPath .build/ci \
-            test -quiet
+            test -quiet \
+            -testLanguage en
 
       - name: Build Release
         run: |

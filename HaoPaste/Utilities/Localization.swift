@@ -3,25 +3,71 @@
 //  HaoPaste
 //
 //  Chinese source strings are the localization keys. The app ships an
-//  English and a Simplified Chinese localization; any Chinese system
-//  language uses Simplified Chinese and every other language uses English.
+//  English and a Simplified Chinese localization. The default follows the
+//  system language; Settings can force either language explicitly.
 //
 
 import Foundation
 
+enum AppLanguagePreference: String, CaseIterable, Identifiable, Codable, Sendable {
+    case system
+    case simplifiedChinese
+    case english
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .system: return L("跟随系统")
+        case .simplifiedChinese: return "简体中文"
+        case .english: return "English"
+        }
+    }
+}
+
 enum AppLanguage {
-    private static let preferred = Locale.preferredLanguages.first?
+    static let preferenceKey = "settings.appLanguage"
+
+    private static let systemLanguage = Locale.preferredLanguages.first?
         .lowercased() ?? "en"
+
+    /// The preference captured at launch. Changing the setting takes effect
+    /// after the app restarts, so the running process stays on this value.
+    static let launchPreference = storedPreference()
 
     /// Chinese system languages use Simplified Chinese. Every other
     /// language uses the English localization.
-    static let isChinese = preferred.hasPrefix("zh")
-    static let code = isChinese ? "zh-Hans" : "en"
-    static let locale = Locale(
-        identifier: isChinese
-            ? "zh-Hans"
-            : (preferred.hasPrefix("en") ? preferred : "en-US")
-    )
+    static func resolvedCode(
+        for preference: AppLanguagePreference
+    ) -> String {
+        switch preference {
+        case .english:
+            return "en"
+        case .simplifiedChinese:
+            return "zh-Hans"
+        case .system:
+            return systemLanguage.hasPrefix("zh") ? "zh-Hans" : "en"
+        }
+    }
+
+    static let code = resolvedCode(for: launchPreference)
+    static let isChinese = code == "zh-Hans"
+    static let locale: Locale = {
+        if isChinese {
+            return Locale(identifier: "zh-Hans")
+        }
+        if launchPreference == .system, systemLanguage.hasPrefix("en") {
+            return Locale(identifier: systemLanguage)
+        }
+        return Locale(identifier: "en-US")
+    }()
+
+    private static func storedPreference() -> AppLanguagePreference {
+        UserDefaults.standard
+            .string(forKey: preferenceKey)
+            .flatMap(AppLanguagePreference.init(rawValue:))
+            ?? .system
+    }
 }
 
 private let localizedBundle: Bundle = {

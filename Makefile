@@ -23,7 +23,8 @@ run: build
 # Run the XCTest suite (hosted by the app, UI setup skipped in test mode).
 test: project
 	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Debug \
-		-destination 'platform=macOS' -derivedDataPath $(DERIVED_DATA) test
+		-destination 'platform=macOS' -derivedDataPath $(DERIVED_DATA) test \
+		-testLanguage en
 
 # Launch with a throwaway history so the sample content is deterministic.
 demo: build

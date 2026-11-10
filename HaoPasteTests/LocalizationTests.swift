@@ -36,6 +36,17 @@ final class LocalizationTests: XCTestCase {
         )
     }
 
+    func testExplicitLanguagePreferences() {
+        XCTAssertEqual(
+            AppLanguage.resolvedCode(for: .english),
+            "en"
+        )
+        XCTAssertEqual(
+            AppLanguage.resolvedCode(for: .simplifiedChinese),
+            "zh-Hans"
+        )
+    }
+
     func testCoreEnglishTranslations() throws {
         guard #available(macOS 15.4, *) else {
             throw XCTSkip("Localization lookup requires macOS 15.4 or newer.")

@@ -61,6 +61,14 @@ final class AppSettings {
         static let shelfEnabled = "settings.shelfEnabled"
         static let shelfItemLimit = "settings.shelfItemLimit"
         static let shelfEdge = "settings.shelfEdge"
+        static let appLanguage = AppLanguage.preferenceKey
+    }
+
+    var appLanguage: AppLanguagePreference {
+        didSet {
+            guard oldValue != appLanguage else { return }
+            defaults.set(appLanguage.rawValue, forKey: Keys.appLanguage)
+        }
     }
 
     var maxUnpinnedItems: Int {
@@ -246,6 +254,11 @@ final class AppSettings {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+
+        self.appLanguage = defaults
+            .string(forKey: Keys.appLanguage)
+            .flatMap(AppLanguagePreference.init(rawValue:))
+            ?? .system
 
         let storedLimit = defaults.integer(forKey: Keys.maxUnpinnedItems)
         self.maxUnpinnedItems = Self.historyLimitOptions.contains(storedLimit)

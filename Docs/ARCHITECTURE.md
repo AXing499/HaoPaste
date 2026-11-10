@@ -401,14 +401,15 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 ### 本地化
 
 - 源代码中的中文同时作为本地化 key，`Localization.swift` 的 `L()` 负责查表与格式化。
-- 资源为 `en.lproj` 与 `zh-Hans.lproj`，工程 development language 为 `en`；运行时按 `Locale.preferredLanguages` 选择：中文语言使用简体中文，其余语言使用英文。
+- 资源为 `en.lproj` 与 `zh-Hans.lproj`，工程 development language 为 `en`；默认按 `Locale.preferredLanguages` 选择（中文语言使用简体中文，其余语言使用英文），也可在设置中显式选择简体中文或英文。
+- 语言设置保存在 `settings.appLanguage`，切换后通过重启应用生效；`AppLanguage.launchPreference` 固定当前进程使用的语言。
 - 动态计数使用 `.stringsdict` 处理英文单复数；日期与相对时间使用 `AppLanguage.locale`，避免界面英文但日期仍跟随系统语言。
 
 ## 10. 测试与验证现状
 
 ### 自动化测试
 
-118 个 XCTest 由 app target 作为测试宿主运行：
+119 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。

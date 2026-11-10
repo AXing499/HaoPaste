@@ -47,7 +47,10 @@ enum DebugRenderer {
         switch ProcessInfo.processInfo.environment["HAOPASTE_RENDER_TRANSLATION"] {
         case "1", "success":
             translationService.seedPreview(
-                sourceTitle: "HaoPaste 设计格言",
+                sourceTitle: DemoText.text(
+                    "HaoPaste 设计格言",
+                    "HaoPaste Design Quote"
+                ),
                 sourceText: "Design is not just what it looks like. Design is how it works.",
                 target: .simplifiedChinese,
                 result: "设计不只是看起来怎样，设计是它如何运作。",
@@ -55,17 +58,26 @@ enum DebugRenderer {
             )
         case "consent":
             translationService.seedConsentPreview(
-                sourceTitle: "HaoPaste 设计格言",
+                sourceTitle: DemoText.text(
+                    "HaoPaste 设计格言",
+                    "HaoPaste Design Quote"
+                ),
                 sourceText: "Design is not just what it looks like. Design is how it works.",
                 target: .simplifiedChinese,
                 providers: [.googleUnofficial, .bingUnofficial]
             )
         case "error":
             translationService.seedFailurePreview(
-                sourceTitle: "HaoPaste 设计格言",
+                sourceTitle: DemoText.text(
+                    "HaoPaste 设计格言",
+                    "HaoPaste Design Quote"
+                ),
                 sourceText: "Design is not just what it looks like. Design is how it works.",
                 target: .simplifiedChinese,
-                message: "Google：网络请求失败，请检查网络或切换翻译引擎。"
+                message: DemoText.text(
+                    "Google：网络请求失败，请检查网络或切换翻译引擎。",
+                    "Google: Request failed. Check your network or try another engine."
+                )
             )
         default:
             break
@@ -78,12 +90,20 @@ enum DebugRenderer {
                 ocrService.seedPreview(
                     sourceTitle: imageItem.displayTitle,
                     imageURL: imageURL,
-                    text: """
-                    HaoPaste
-                    Clipboard, reimagined.
+                    text: DemoText.text(
+                        """
+                        HaoPaste
+                        Clipboard, reimagined.
 
-                    复制、翻译、搜索，一切都在指尖完成。
-                    """
+                        复制、翻译、搜索，一切都在指尖完成。
+                        """,
+                        """
+                        HaoPaste
+                        Clipboard, reimagined.
+
+                        Search, translate, and copy—all at your fingertips.
+                        """
+                    )
                 )
             }
         case "empty":
@@ -100,14 +120,20 @@ enum DebugRenderer {
                let imageURL = manager.imageURL(for: imageItem) {
                 ocrService.seedBatchPreview(entries: [
                     (
-                        "截图 1",
+                        DemoText.text("截图 1", "Screenshot 1"),
                         imageURL,
-                        "HaoPaste\nClipboard, reimagined.\n复制、翻译、搜索，一切都在指尖完成。"
+                        DemoText.text(
+                            "HaoPaste\nClipboard, reimagined.\n复制、翻译、搜索，一切都在指尖完成。",
+                            "HaoPaste\nClipboard, reimagined.\nSearch, translate, and copy—all at your fingertips."
+                        )
                     ),
                     (
-                        "截图 2",
+                        DemoText.text("截图 2", "Screenshot 2"),
                         imageURL,
-                        "明天的评审改到下午三点，请带上最新的设计稿。"
+                        DemoText.text(
+                            "明天的评审改到下午三点，请带上最新的设计稿。",
+                            "Move tomorrow's review to 3 PM and bring the latest design draft."
+                        )
                     )
                 ])
             }
@@ -237,7 +263,7 @@ enum DebugRenderer {
         completion: @escaping @MainActor () -> Void
     ) {
         service.seedPreview(
-            sourceTitle: "剪贴板翻译",
+            sourceTitle: L("剪贴板翻译"),
             sourceText: "Design is not just what it looks like. Design is how it works.",
             target: .simplifiedChinese,
             result: "设计不只是看起来怎样，设计是它如何运作。",

@@ -15,6 +15,7 @@ final class AppSettingsTests: XCTestCase {
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
         let settings = AppSettings(defaults: defaults)
+        XCTAssertEqual(settings.appLanguage, .system)
         XCTAssertEqual(settings.maxUnpinnedItems, 200)
         XCTAssertEqual(settings.hotKey, .default)
         XCTAssertEqual(settings.translationHotKey, .translationDefault)
@@ -56,6 +57,7 @@ final class AppSettingsTests: XCTestCase {
         settings.updateFeedURL = "https://example.com/hao-paste/latest.json"
         settings.shelfCopyBehavior = .hideAfterDelay
         settings.copyPlainTextOnly = true
+        settings.appLanguage = .english
 
         let reloaded = AppSettings(defaults: defaults)
         XCTAssertEqual(reloaded.maxUnpinnedItems, 500)
@@ -74,6 +76,7 @@ final class AppSettingsTests: XCTestCase {
         )
         XCTAssertEqual(reloaded.shelfCopyBehavior, .hideAfterDelay)
         XCTAssertTrue(reloaded.copyPlainTextOnly)
+        XCTAssertEqual(reloaded.appLanguage, .english)
     }
 
     func testShelfEdgeFallsBackToTop() throws {
@@ -170,6 +173,7 @@ final class AppSettingsTests: XCTestCase {
 
         defaults.set(123, forKey: "settings.maxUnpinnedItems")
         let settings = AppSettings(defaults: defaults)
+        XCTAssertEqual(settings.appLanguage, .system)
         XCTAssertEqual(settings.maxUnpinnedItems, 200)
 
         settings.maxUnpinnedItems = 123

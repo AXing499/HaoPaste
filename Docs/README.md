@@ -8,10 +8,11 @@
 | [架构与技术](ARCHITECTURE.md) | 技术栈、模块划分、数据模型、监听 / 去重 / 存储流程、设计规范 |
 | [开发与发布](DEVELOPMENT.md) | 本地构建、Xcode / 命令行运行、DMG 打包、签名与安装 |
 | [路线规划](ROADMAP.md) | 已交付版本、近期计划、长期方向、技术债与版本验收标准 |
+| [开发交接](HANDOFF.md) | 自动发布流程、版本发布步骤、本地化、英文截图与 AI 交接提示词 |
 
 ## 当前版本
 
-- 版本：`0.13.20`
+- 版本：`0.13.21`
 - 运行要求：macOS 14+
 - 构建环境：Xcode 15+，本项目在 Xcode 26.5 / macOS 26.5 上验证
 - 分发形态：菜单栏驻留应用，Release `.app` + DMG
@@ -26,6 +27,6 @@
 - 搜索：中文、拼音全拼 / 首字母缩写、模糊匹配、相关性排序
 - Snippets：常用文本片段，面板快速复制，随备份导出
 - 运行时依赖：无第三方库
-- 质量：118 个 XCTest + GitHub Actions CI
+- 质量：119 个 XCTest + GitHub Actions CI
 - 本地化：跟随系统语言的中文 / 英文界面，资源位于 `HaoPaste/en.lproj` 与 `HaoPaste/zh-Hans.lproj`
 - 英文 README：仓库根目录 `README.en.md`

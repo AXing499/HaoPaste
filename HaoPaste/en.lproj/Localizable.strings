@@ -432,8 +432,8 @@
 "识别语言" = "Recognition Language";
 "识图" = "Image Text";
 "识图 · %@" = "Image Text · %@";
-"识图并翻译" = "Recognize & Translate";
-"识图并翻译…" = "Recognize & Translate…";
+"识图并翻译" = "OCR & Translate";
+"识图并翻译…" = "OCR & Translate…";
 "识图缓存" = "Image Text Cache";
 "译文" = "Translation";
 "语言" = "Language";
@@ -494,3 +494,11 @@
 "默认目标语言" = "Default Target Language";
 "鼠标停在所选屏幕边缘的中间区域即可展开；点击卡片复制，鼠标离开后自动收起" = "Move the pointer to the middle of the selected screen edge to open the shelf. Click a card to copy; it closes when the pointer leaves.";
 "，" = ", ";
+
+/* Language setting */
+"应用语言" = "App Language";
+"界面语言" = "Interface Language";
+"选择应用界面语言；更改后需要重新启动 HaoPaste。" = "Choose the language for HaoPaste. Restart the app to apply changes.";
+"重新启动后生效" = "Restart to apply";
+"立即重启" = "Restart Now";
+"跟随系统" = "System";
