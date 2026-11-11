@@ -29,7 +29,7 @@ struct SelectionTranslationCardView: View {
         }
         .frame(width: 400, height: 340)
         .background(.regularMaterial)
-        .background(Color(nsColor: .windowBackgroundColor).opacity(0.28))
+        .background(Color(nsColor: .windowBackgroundColor).opacity(0.62))
         .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 13, style: .continuous)

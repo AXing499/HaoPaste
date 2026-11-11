@@ -146,9 +146,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settings: settings
         )
 
+        #if DEBUG
+        let selectionCredentials: TranslationCredentialStoring = isRendering
+            ? InMemoryTranslationCredentialStore()
+            : KeychainTranslationCredentialStore(
+                promptsForAuthentication: false
+            )
+        #else
+        let selectionCredentials = KeychainTranslationCredentialStore(
+            promptsForAuthentication: false
+        )
+        #endif
         selectionTranslationService = TranslationService(
             settings: translationService.settings,
-            credentials: translationService.credentials
+            credentials: selectionCredentials
         )
         selectionTranslationController = SelectionTranslationController(
             manager: manager,

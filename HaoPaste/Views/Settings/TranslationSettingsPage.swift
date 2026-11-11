@@ -359,10 +359,9 @@ struct TranslationSettingsPage: View {
         descriptor: TranslationProviderDescriptor
     ) -> Bool {
         guard descriptor.requiresConfiguration else { return true }
-        guard let credentials = service.credentials.credentials(for: id) else {
-            return false
-        }
-        return credentials.hasValues(for: descriptor)
+        // Attribute-only lookup avoids prompting for the login password just
+        // because the translation settings page was opened.
+        return service.credentials.hasCredentials(for: id)
     }
 
     private func providerSubtitle(

@@ -20,7 +20,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
     private let cardPanel: SelectionTranslationCardPanel
     private let iconButton: SelectionTranslationIconButton
 
-    private let iconSize: CGFloat = 32
+    private let iconSize: CGFloat = 26
     private let cardSize = NSSize(width: 400, height: 340)
 
     private var isEnabled = false
@@ -51,7 +51,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
         self.service = service
         self.settings = settings
         self.iconPanel = SelectionTranslationIconPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 32, height: 32),
+            contentRect: NSRect(x: 0, y: 0, width: 26, height: 26),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -522,15 +522,15 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
             systemSymbolName: "character.bubble",
             accessibilityDescription: L("翻译选中文本")
         )
-        iconButton.image?.size = NSSize(width: 15, height: 15)
+        iconButton.image?.size = NSSize(width: 12, height: 12)
         iconButton.contentTintColor = .white
         iconButton.toolTip = L("翻译选中文本")
         iconButton.setAccessibilityLabel(L("翻译选中文本"))
-        iconButton.frame = NSRect(x: 0, y: 0, width: 32, height: 32)
+        iconButton.frame = NSRect(x: 0, y: 0, width: 26, height: 26)
         iconButton.autoresizingMask = [.width, .height]
         iconButton.wantsLayer = true
         iconButton.layer?.backgroundColor = NSColor.controlAccentColor.cgColor
-        iconButton.layer?.cornerRadius = 16
+        iconButton.layer?.cornerRadius = 13
         iconButton.layer?.shadowColor = NSColor.black.cgColor
         iconButton.layer?.shadowOpacity = 0.20
         iconButton.layer?.shadowRadius = 5

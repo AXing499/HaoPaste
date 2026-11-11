@@ -14,32 +14,37 @@ enum SelectionTextReader {
     static func selectedText(in app: NSRunningApplication) -> String? {
         let application = AXUIElementCreateApplication(app.processIdentifier)
 
-        var focusedValue: CFTypeRef?
-        guard
-            AXUIElementCopyAttributeValue(
-                application,
-                kAXFocusedUIElementAttribute as CFString,
-                &focusedValue
-            ) == .success,
-            let focusedValue,
-            CFGetTypeID(focusedValue) == AXUIElementGetTypeID()
-        else {
-            return nil
+        // Chromium/Electron apps expose their accessibility tree lazily. This
+        // hint is ignored by apps that do not support it.
+        AXUIElementSetAttributeValue(
+            application,
+            "AXEnhancedUserInterface" as CFString,
+            kCFBooleanTrue
+        )
+
+        var roots: [AXUIElement] = []
+        if let focused = focusedElement(of: application) {
+            roots.append(focused)
+        }
+        if let systemFocused = focusedElement(
+            of: AXUIElementCreateSystemWide()
+        ), !roots.contains(where: { CFEqual($0, systemFocused) }) {
+            roots.append(systemFocused)
         }
 
-        let element = focusedValue as! AXUIElement
-
-        if let text = stringAttribute(
-            kAXSelectedTextAttribute as CFString,
-            from: element
-        ) {
-            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !trimmed.isEmpty {
+        for root in roots {
+            if let text = text(from: root) {
+                return text
+            }
+            if let text = text(inChildrenOf: root) {
+                return text
+            }
+            if let text = text(inAncestorsOf: root) {
                 return text
             }
         }
 
-        return selectedTextFromRange(element)
+        return nil
     }
 
     static func isSecureInputEnabled() -> Bool {
@@ -80,17 +85,92 @@ enum SelectionTextReader {
         return false
     }
 
-    private static func stringAttribute(
-        _ attribute: CFString,
-        from element: AXUIElement
-    ) -> String? {
+    // MARK: - Focused elements
+
+    private static func focusedElement(
+        of application: AXUIElement
+    ) -> AXUIElement? {
         var value: CFTypeRef?
         guard
-            AXUIElementCopyAttributeValue(element, attribute, &value) == .success
+            AXUIElementCopyAttributeValue(
+                application,
+                kAXFocusedUIElementAttribute as CFString,
+                &value
+            ) == .success,
+            let value,
+            CFGetTypeID(value) == AXUIElementGetTypeID()
         else {
             return nil
         }
-        return value as? String
+        return (value as! AXUIElement)
+    }
+
+    // MARK: - Selection extraction
+
+    private static func text(from element: AXUIElement) -> String? {
+        if let text = stringAttribute(
+            kAXSelectedTextAttribute as CFString,
+            from: element
+        ) {
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                return text
+            }
+        }
+
+        return selectedTextFromRange(element)
+    }
+
+    private static func text(
+        inChildrenOf root: AXUIElement
+    ) -> String? {
+        var queue: [(AXUIElement, Int)] = [(root, 0)]
+        var visited = Set<CFHashCode>()
+        var visitedCount = 0
+
+        while !queue.isEmpty, visitedCount < 80 {
+            let (element, depth) = queue.removeFirst()
+            let hash = CFHash(element)
+            guard visited.insert(hash).inserted else { continue }
+            visitedCount += 1
+
+            if let text = text(from: element) {
+                return text
+            }
+
+            guard depth < 3 else { continue }
+            guard
+                let children = elementArrayAttribute(
+                    kAXChildrenAttribute as CFString,
+                    from: element
+                )
+            else {
+                continue
+            }
+            queue.append(contentsOf: children.map { ($0, depth + 1) })
+        }
+
+        return nil
+    }
+
+    private static func text(
+        inAncestorsOf element: AXUIElement
+    ) -> String? {
+        var current: AXUIElement? = element
+        var depth = 0
+
+        while let element = current, depth < 4 {
+            if let text = text(from: element) {
+                return text
+            }
+            current = elementAttribute(
+                kAXParentAttribute as CFString,
+                from: element
+            )
+            depth += 1
+        }
+
+        return nil
     }
 
     private static func selectedTextFromRange(
@@ -132,5 +212,50 @@ enum SelectionTextReader {
         }
 
         return text
+    }
+
+    // MARK: - Attribute helpers
+
+    private static func stringAttribute(
+        _ attribute: CFString,
+        from element: AXUIElement
+    ) -> String? {
+        var value: CFTypeRef?
+        guard
+            AXUIElementCopyAttributeValue(element, attribute, &value) == .success
+        else {
+            return nil
+        }
+        return value as? String
+    }
+
+    private static func elementAttribute(
+        _ attribute: CFString,
+        from element: AXUIElement
+    ) -> AXUIElement? {
+        var value: CFTypeRef?
+        guard
+            AXUIElementCopyAttributeValue(element, attribute, &value) == .success,
+            let value,
+            CFGetTypeID(value) == AXUIElementGetTypeID()
+        else {
+            return nil
+        }
+        return (value as! AXUIElement)
+    }
+
+    private static func elementArrayAttribute(
+        _ attribute: CFString,
+        from element: AXUIElement
+    ) -> [AXUIElement]? {
+        var value: CFTypeRef?
+        guard
+            AXUIElementCopyAttributeValue(element, attribute, &value) == .success,
+            let value,
+            CFGetTypeID(value) == CFArrayGetTypeID()
+        else {
+            return nil
+        }
+        return value as? [AXUIElement]
     }
 }

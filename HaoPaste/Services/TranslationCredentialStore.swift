@@ -19,15 +19,24 @@ protocol TranslationCredentialStoring: AnyObject {
 @MainActor
 final class KeychainTranslationCredentialStore: TranslationCredentialStoring {
     private let service: String
+    private let promptsForAuthentication: Bool
 
-    init(service: String = "com.hao.HaoPaste.translation") {
+    init(
+        service: String = "com.hao.HaoPaste.translation",
+        promptsForAuthentication: Bool = true
+    ) {
         self.service = service
+        self.promptsForAuthentication = promptsForAuthentication
     }
 
     func credentials(for id: TranslationProviderID) -> TranslationCredentials? {
         var query = baseQuery(for: id)
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
+        if !promptsForAuthentication {
+            query[kSecUseAuthenticationUI as String] =
+                kSecUseAuthenticationUIFail
+        }
 
         var result: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -64,7 +73,19 @@ final class KeychainTranslationCredentialStore: TranslationCredentialStoring {
     }
 
     func hasCredentials(for id: TranslationProviderID) -> Bool {
-        credentials(for: id) != nil
+        if !promptsForAuthentication {
+            return credentials(for: id) != nil
+        }
+
+        var query = baseQuery(for: id)
+        query[kSecReturnAttributes as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        query[kSecUseAuthenticationUI as String] =
+            kSecUseAuthenticationUIFail
+
+        var result: CFTypeRef?
+        return SecItemCopyMatching(query as CFDictionary, &result)
+            == errSecSuccess
     }
 
     private func baseQuery(for id: TranslationProviderID) -> [String: Any] {
