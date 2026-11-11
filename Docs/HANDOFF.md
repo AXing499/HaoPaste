@@ -58,7 +58,7 @@ CI 不创建 Release，也不上传 DMG。
 
 触发条件：
 
-- 推送 `v*` tag，例如 `v0.14.0`
+- 推送 `v*` tag，例如 `v0.14.1`
 
 执行内容：
 
@@ -84,8 +84,8 @@ CI 不创建 Release，也不上传 DMG。
 ```bash
 # 1. 在 CHANGELOG.md 添加与版本号一致的中英双语章节
 # 2. 更新 project.yml：
-#    MARKETING_VERSION: "0.14.0"
-#    CURRENT_PROJECT_VERSION: "46"
+#    MARKETING_VERSION: "0.14.1"
+#    CURRENT_PROJECT_VERSION: "47"
 xcodegen generate
 
 # 3. 本地验证
@@ -94,12 +94,12 @@ make verify-screenshots
 
 # 4. 提交并推送 main
 git add .
-git commit -m "release: v0.14.0"
+git commit -m "release: v0.14.1"
 git push origin main
 
 # 5. 打 tag 并推送，触发自动发布
-git tag -a v0.14.0 -m "HaoPaste 0.14.0"
-git push origin v0.14.0
+git tag -a v0.14.1 -m "HaoPaste 0.14.1"
+git push origin v0.14.1
 ```
 
 查看与验证：
@@ -107,7 +107,7 @@ git push origin v0.14.0
 ```bash
 gh run list --workflow Release --limit 3
 gh run watch <run-id> --exit-status
-gh release view v0.14.0 --json url,assets,body
+gh release view v0.14.1 --json url,assets,body
 ```
 
 > 如果 Release 工作流失败，先修复代码并推送 `main`，再重新打 tag。已经发布但需要修补时，可以强制移动 tag 到新提交后重新触发工作流；工作流会更新已有 Release 并覆盖上传资产。

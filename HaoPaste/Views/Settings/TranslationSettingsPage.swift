@@ -222,7 +222,7 @@ struct TranslationSettingsPage: View {
                 } label: {
                     Image(systemName: "chevron.up")
                         .font(.system(size: 9, weight: .bold, design: .rounded))
-                        .frame(width: 20, height: 20)
+                        .frame(width: 22, height: 22)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -234,26 +234,30 @@ struct TranslationSettingsPage: View {
                 } label: {
                     Image(systemName: "chevron.down")
                         .font(.system(size: 9, weight: .bold, design: .rounded))
-                        .frame(width: 20, height: 20)
+                        .frame(width: 22, height: 22)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .disabled(index == count - 1)
                 .help(L("降低优先级"))
             }
+            .frame(width: 46)
             .foregroundStyle(.secondary)
 
-            if descriptor.requiresConfiguration {
-                Button(isConfigured ? L("修改…") : L("配置…")) {
-                    configuringProvider = id
+            Group {
+                if descriptor.requiresConfiguration {
+                    Button(isConfigured ? L("修改…") : L("配置…")) {
+                        configuringProvider = id
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                } else {
+                    Text(L("无需配置"))
+                        .font(.system(size: 9.5, weight: .regular, design: .rounded))
+                        .foregroundStyle(.tertiary)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-            } else {
-                Text(L("无需配置"))
-                    .font(.system(size: 9.5, weight: .regular, design: .rounded))
-                    .foregroundStyle(.tertiary)
             }
+            .frame(width: 96, alignment: .trailing)
 
             Toggle(
                 "",

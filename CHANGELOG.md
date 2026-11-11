@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.14.1 — 2026-11-11
+
+### 中文
+
+- 修复挂架滚动指示器的轨道与滑块粗细不一致问题，滚动条更清晰。
+- 修复翻译引擎优先级的上下箭头在不同配置状态下左右不对齐的问题，使用固定操作列宽。
+- 修复截图渲染时读取 Keychain 可能卡住的问题；Debug 截图改用内存凭证，并用占位 Azure 配置展示混合状态。
+- 重新生成中英文截图。
+
+### English
+
+- Fixed the shelf scroll indicator track and thumb thickness mismatch for a clearer scrollbar.
+- Fixed horizontal misalignment of the translation engine priority arrows across configured and unconfigured rows by using fixed action columns.
+- Fixed screenshot renders hanging on Keychain access; Debug renders now use in-memory credentials with a placeholder Azure configuration.
+- Regenerated the Chinese and English screenshots.
+
+
 ## 0.14.0 — 2026-11-11
 
 ### 中文

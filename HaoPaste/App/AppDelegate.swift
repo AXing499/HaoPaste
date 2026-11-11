@@ -51,7 +51,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settings = AppSettings()
         settings.refreshLaunchAtLoginStatus()
         snippetManager = SnippetManager()
+        #if DEBUG
+        let renderArguments = [
+            "--render",
+            "--render-settings",
+            "--render-shelf",
+            "--render-quick"
+        ]
+        let isRendering = renderArguments.contains {
+            CommandLine.arguments.contains($0)
+        }
+        if isRendering {
+            let store = InMemoryTranslationCredentialStore()
+            store.save(
+                TranslationCredentials(apiKey: "demo", region: "eastasia"),
+                for: .azure
+            )
+            translationService = TranslationService(credentials: store)
+        } else {
+            translationService = TranslationService()
+        }
+        #else
         translationService = TranslationService()
+        #endif
         ocrService = OCRService()
 
         manager = ClipboardManager()

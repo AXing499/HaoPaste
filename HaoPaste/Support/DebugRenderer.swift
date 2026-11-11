@@ -319,6 +319,13 @@ enum DebugRenderer {
         default: tab = .general
         }
 
+        let height = CGFloat(
+            Double(
+                ProcessInfo.processInfo.environment[
+                    "HAOPASTE_RENDER_SETTINGS_HEIGHT"
+                ] ?? ""
+            ) ?? 480
+        )
         let content = SettingsView(
             settings: settings,
             manager: manager,
@@ -327,11 +334,11 @@ enum DebugRenderer {
         )
         .environment(snippetManager)
         .environment(ocrService)
-        .frame(width: 720, height: 480)
+        .frame(width: 720, height: height)
 
         render(
             content: content,
-            size: CGSize(width: 720, height: 480),
+            size: CGSize(width: 720, height: height),
             to: url,
             completion: completion
         )

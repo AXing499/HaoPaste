@@ -66,7 +66,9 @@ struct ClipboardShelfView: View {
 
     @State private var filter: ClipboardShelfFilter = .all
     @State private var copiedID: UUID?
-    @State private var scrollHintVisible = false
+    @State private var scrollHintVisible = ProcessInfo.processInfo.environment[
+        "HAOPASTE_RENDER_SHELF_SCROLL"
+    ] == "1"
     @State private var scrollHintToken = UUID()
 
     var body: some View {
@@ -746,7 +748,7 @@ private struct ShelfScrollIndicator: View {
     }
 
     private var thumbLength: CGFloat {
-        max(24, trackLength * ratio)
+        max(32, trackLength * ratio)
     }
 
     private var thumbStart: CGFloat {
@@ -784,8 +786,8 @@ private struct ShelfScrollIndicator: View {
 
             Capsule()
                 .fill(Color.primary.opacity(0.38))
-                .frame(width: thumbLength, height: 3)
-                .offset(x: thumbStart, y: 1.5)
+                .frame(width: thumbLength, height: 6)
+                .offset(x: thumbStart)
         }
         .frame(width: trackLength, height: 6)
     }
@@ -798,8 +800,8 @@ private struct ShelfScrollIndicator: View {
 
             Capsule()
                 .fill(Color.primary.opacity(0.38))
-                .frame(width: 3, height: thumbLength)
-                .offset(x: 1.5, y: thumbStart)
+                .frame(width: 6, height: thumbLength)
+                .offset(y: thumbStart)
         }
         .frame(width: 6, height: trackLength)
     }
