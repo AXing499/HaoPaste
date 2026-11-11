@@ -35,7 +35,6 @@ struct SelectionTranslationCardView: View {
             RoundedRectangle(cornerRadius: 13, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.10), lineWidth: Theme.hairline)
         }
-        .shadow(color: .black.opacity(0.22), radius: 18, y: 8)
         .scaleEffect(appeared ? 1 : 0.96, anchor: .topLeading)
         .opacity(appeared ? 1 : 0)
         .onAppear {

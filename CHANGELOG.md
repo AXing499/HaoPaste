@@ -9,9 +9,9 @@
 - 通过 Accessibility 读取选中文本，不模拟 ⌘C、不自动复制，也不会抢走用户的复制操作。
 - 全屏应用、安全输入状态、隐私排除应用和 HaoPaste 自身不触发；当前仅支持鼠标划词。
 - 设置中增加辅助功能权限说明与授权入口，并对 ad-hoc 重装后的旧权限给出提示。
-- 划词图标改为无底色、无边框的更小 `translate` 图形，扩大透明点击区域，避免悬停缩放被裁剪；增加回弹出现 / 消失、悬停和按压反馈。
+- 划词图标改为无底色、无边框的更小 `translate` 图形，改用原生符号渲染以提升 Retina 清晰度；扩大透明点击区域，避免悬停缩放被裁剪，并增加回弹出现 / 消失、悬停和按压反馈。
 - 图片条目的快捷操作改为「提取文字」；识图窗口内再点击「翻译」，不再默认识图后自动翻译。
-- 划词卡片、预览、识图、批量识图与翻译弹框统一使用更浅的近不透明背景，减少桌面或页面深色内容带来的灰暗感；卡片继续显示在选区附近。
+- 划词卡片、预览、识图、批量识图与翻译弹框统一使用一致的不透明系统表面，划词卡片与识图弹框颜色完全一致；划词卡片改用系统原生窗口阴影，四周边缘更平滑。
 - 扩大 Accessibility 选区读取范围，兼容更多 Chromium / Electron 和文档类应用。
 - 设置页与划词翻译改为无提示凭证检查，避免打开设置或划词时反复弹出钥匙串密码框。
 - 新增划词卡片截图与布局测试；124 个 XCTest。
@@ -23,9 +23,9 @@
 - Selected text is read through Accessibility without simulating ⌘C, copying automatically, or stealing copy operations.
 - Full-screen apps, secure input, excluded apps, and HaoPaste itself are skipped. Mouse selection is supported in this version.
 - Added Accessibility permission guidance and a shortcut to System Settings, including guidance for stale ad-hoc approvals.
-- Switched the selection icon to a smaller, chrome-free native `translate` glyph with a larger transparent hit area so hover scaling never clips; added spring appearance / dismissal, hover, and press feedback.
+- Switched the selection icon to a smaller, chrome-free native `translate` glyph rendered as a native symbol for sharper Retina output; enlarged the transparent hit area so hover scaling never clips, and added spring appearance / dismissal, hover, and press feedback.
 - Changed the image quick action to **Extract Text**; translation is now a separate action in the OCR window instead of running automatically after recognition.
-- Unified the selection card, preview, OCR, batch OCR, and translation panes on a lighter, near-opaque surface so dark page or desktop content no longer makes them look muddy; the card still opens near the selection.
+- Unified the selection card, preview, OCR, batch OCR, and translation panes on the same opaque system surface, so the selection card and OCR pane match exactly; the selection card now uses the native window shadow for smooth edges.
 - Expanded Accessibility selection lookup for more Chromium / Electron and document apps.
 - Changed settings and selection translation to use non-prompting credential checks, avoiding repeated Keychain password dialogs.
 - Added selection-card screenshots and placement tests; 124 XCTest cases.

@@ -60,11 +60,9 @@ enum Theme {
     static let hairlineColor = Color.primary.opacity(0.08)
     static let subtleBorderColor = Color.primary.opacity(0.06)
 
-    // Floating panes: a light, near-opaque tint over regular material so the
-    // cards keep the app's surface color instead of picking up dark page or
-    // desktop content behind them.
+    // Floating panes: an opaque system surface keeps every popover the same
+    // brightness even when it floats over dark page or desktop content.
     static let popoverBackground = Color(nsColor: .windowBackgroundColor)
-        .opacity(0.82)
 
     // Typography helpers
     static func rounded(_ style: Font.TextStyle, weight: Font.Weight = .regular) -> Font {
