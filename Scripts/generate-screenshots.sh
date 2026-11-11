@@ -25,8 +25,23 @@ fi
 
 EN_STORE="$(mktemp -d "${TMPDIR:-/tmp}/haopaste-shots-en.XXXXXX")"
 ZH_STORE="$(mktemp -d "${TMPDIR:-/tmp}/haopaste-shots-zh.XXXXXX")"
+
+# Keep documentation screenshots on the default-off state regardless of the
+# developer's current app preferences.
+DEFAULTS_DOMAIN="com.hao.HaoPaste"
+SELECTION_SETTING_KEY="settings.selectionTranslationEnabled"
+ORIGINAL_SELECTION_SETTING="$(
+    defaults read "$DEFAULTS_DOMAIN" "$SELECTION_SETTING_KEY" 2>/dev/null || true
+)"
+defaults write "$DEFAULTS_DOMAIN" "$SELECTION_SETTING_KEY" -bool false
+
 cleanup() {
     rm -rf "$EN_STORE" "$ZH_STORE"
+    if [[ "$ORIGINAL_SELECTION_SETTING" == "1" ]]; then
+        defaults write "$DEFAULTS_DOMAIN" "$SELECTION_SETTING_KEY" -bool true
+    else
+        defaults delete "$DEFAULTS_DOMAIN" "$SELECTION_SETTING_KEY" 2>/dev/null || true
+    fi
 }
 trap cleanup EXIT
 

@@ -102,6 +102,17 @@ struct TranslationSettingsPage: View {
                         )
                         .font(.system(size: 9.5, design: .rounded))
                         .foregroundStyle(.secondary)
+
+                        if !accessibilityTrusted {
+                            Text(
+                                L(
+                                    "如果系统设置中已勾选 HaoPaste 但仍显示此提示，请先移除 HaoPaste，再重新添加当前版本。"
+                                )
+                            )
+                            .font(.system(size: 9.5, design: .rounded))
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
 
                     Spacer(minLength: 8)
