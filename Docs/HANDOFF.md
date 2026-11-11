@@ -11,6 +11,7 @@
 - 版本文件：`project.yml` 中的 `MARKETING_VERSION` 与 `CURRENT_PROJECT_VERSION`
 - Release 说明：`CHANGELOG.md`，必须包含与版本号一致的中英双语章节
 - 签名：本地 ad-hoc 签名；不使用 Developer ID，不做公证
+- 可选「划词翻译」：默认关闭；启用时需要 Accessibility 权限；通过 `AXSelectedText` 读取，不模拟 ⌘C
 - 更新源：默认读取 GitHub Releases API
   `https://api.github.com/repos/AXing499/HaoPaste/releases/latest`
 
@@ -21,7 +22,7 @@ make project   # xcodegen generate
 make build     # Debug 构建
 make run       # Debug 构建并启动
 make demo      # 使用可复现示例数据启动
-make test      # 120 个 XCTest（默认英文测试环境）
+make test      # 124 个 XCTest（默认英文测试环境）
 make release   # Release 构建
 make dmg       # 生成 dist/HaoPaste-<version>.dmg
 make install   # 安装 Release 到 /Applications 或 ~/Applications
@@ -58,12 +59,12 @@ CI 不创建 Release，也不上传 DMG。
 
 触发条件：
 
-- 推送 `v*` tag，例如 `v0.14.2`
+- 推送 `v*` tag，例如 `v0.15.0`
 
 执行内容：
 
 1. **Resolve version**：读取 tag 与 `project.yml` 的 `MARKETING_VERSION`，两者必须完全一致，否则失败
-2. **Run unit tests**：运行 120 个 XCTest
+2. **Run unit tests**：运行 124 个 XCTest
 3. **Build Release app**：生成 `.build/release/Build/Products/Release/HaoPaste.app`
 4. **Build DMG**：设置 `HAOPASTE_DMG_LAYOUT=0`，调用 `Scripts/package-dmg.sh`，生成 DMG 与 SHA-256
 5. **Read changelog**：从 `CHANGELOG.md` 提取 `## <version>` 到下一个 `##` 之间的内容；没有对应章节会直接失败
@@ -84,8 +85,8 @@ CI 不创建 Release，也不上传 DMG。
 ```bash
 # 1. 在 CHANGELOG.md 添加与版本号一致的中英双语章节
 # 2. 更新 project.yml：
-#    MARKETING_VERSION: "0.14.2"
-#    CURRENT_PROJECT_VERSION: "48"
+#    MARKETING_VERSION: "0.15.0"
+#    CURRENT_PROJECT_VERSION: "49"
 xcodegen generate
 
 # 3. 本地验证
@@ -94,12 +95,12 @@ make verify-screenshots
 
 # 4. 提交并推送 main
 git add .
-git commit -m "release: v0.14.2"
+git commit -m "release: v0.15.0"
 git push origin main
 
 # 5. 打 tag 并推送，触发自动发布
-git tag -a v0.14.2 -m "HaoPaste 0.14.2"
-git push origin v0.14.2
+git tag -a v0.15.0 -m "HaoPaste 0.15.0"
+git push origin v0.15.0
 ```
 
 查看与验证：
@@ -107,7 +108,7 @@ git push origin v0.14.2
 ```bash
 gh run list --workflow Release --limit 3
 gh run watch <run-id> --exit-status
-gh release view v0.14.2 --json url,assets,body
+gh release view v0.15.0 --json url,assets,body
 ```
 
 > 如果 Release 工作流失败，先修复代码并推送 `main`，再重新打 tag。已经发布但需要修补时，可以强制移动 tag 到新提交后重新触发工作流；工作流会更新已有 Release 并覆盖上传资产。
@@ -163,7 +164,7 @@ make verify-screenshots
 - 使用 `HAOPASTE_RENDER_FIXED_NOW` 固定相对时间，并关闭动画（`HAOPASTE_RENDER_DISABLE_ANIMATIONS=1`），保证可重复
 - 从 `DemoContent.swift` / `DebugRenderer.swift` 输出对应语言的示例数据
 
-OCR 截图因为 `TextEditor` 光标闪烁，`verify-screenshots` 会跳过逐字节比较，但仍会生成。
+OCR、富文本预览和划词翻译卡片截图因为可选择文本的光标闪烁，`verify-screenshots` 会跳过逐字节比较，但仍会生成。
 
 新增或修改 UI 后，先人工确认截图，再运行 `make screenshots` 更新基线。
 
@@ -187,6 +188,7 @@ OCR 截图因为 `TextEditor` 光标闪烁，`verify-screenshots` 会跳过逐�
 当前约束：
 - 使用中英双语本地化；中文源代码字符串是 key，通过 L() 查表。
 - 语言设置：设置 → 通用 → 应用语言（跟随系统 / 简体中文 / English），重启后生效。
+- 划词翻译默认关闭，不能自动模拟 ⌘C；全屏、安全输入和排除应用必须跳过。
 - 英文截图放在 Docs/screenshot-*-en.png，英文 README 必须引用这些英文截图。
 - 不接入 Developer ID / 公证；保持 ad-hoc 签名，并在 DMG 和 Release 说明中保留 Gatekeeper 的「隐私与安全性 → 仍要打开」步骤。
 - 发布说明必须同时有中文和英文；CHANGELOG.md 缺少对应版本章节时 Release 工作流会失败。
@@ -195,7 +197,7 @@ OCR 截图因为 `TextEditor` 光标闪烁，`verify-screenshots` 会跳过逐�
 开发命令：
 make project
 make build
-make test        # 120 个 XCTest，英文测试环境
+make test        # 124 个 XCTest，英文测试环境
 make screenshots # 更新中英文截图
 make verify-screenshots # 检查截图基线
 make dmg
@@ -216,7 +218,7 @@ make dmg
 - 中英文 UI 均无未翻译中文（英文环境）。
 - README.en.md 的截图全部是 -en.png。
 - CHANGELOG.md 有对应版本的中英双语章节。
-- 120 个测试通过。
+- 124 个测试通过。
 - Release 资产包含 DMG 和 SHA-256。
 - 不修改无关功能，不删除现有测试，不引入第三方运行时依赖。
 ```

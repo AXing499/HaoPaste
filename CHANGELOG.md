@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.15.0 — 2026-11-11
+
+### 中文
+
+- 新增实验性「划词翻译」，默认关闭，可在设置 → 智能中启用。
+- 鼠标划词后显示翻译图标，点击后在选区附近显示紧凑翻译卡片。
+- 通过 Accessibility 读取选中文本，不模拟 ⌘C、不自动复制，也不会抢走用户的复制操作。
+- 全屏应用、安全输入状态、隐私排除应用和 HaoPaste 自身不触发；当前仅支持鼠标划词。
+- 设置中增加辅助功能权限说明与授权入口。
+- 新增划词卡片截图与布局测试；124 个 XCTest。
+
+### English
+
+- Added experimental Selection Translation, off by default and enabled in Settings → Smart.
+- Selecting text with the mouse shows a translate icon; clicking it opens a compact translation card near the selection.
+- Selected text is read through Accessibility without simulating ⌘C, copying automatically, or stealing copy operations.
+- Full-screen apps, secure input, excluded apps, and HaoPaste itself are skipped. Mouse selection is supported in this version.
+- Added Accessibility permission guidance and a shortcut to System Settings.
+- Added selection-card screenshots and placement tests; 124 XCTest cases.
+
+
 ## 0.14.2 — 2026-11-11
 
 ### 中文

@@ -19,7 +19,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settings: AppSettings!
     private var translationService: TranslationService!
     private var quickTranslationService: TranslationService!
+    private var selectionTranslationService: TranslationService!
     private var quickTranslationController: QuickTranslationPanelController!
+    private var selectionTranslationController: SelectionTranslationController!
     private var shelfController: ClipboardShelfController!
     private var shelfPreviewController: ShelfPreviewPanelController!
     private var shelfOCRService: OCRService!
@@ -56,7 +58,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             "--render",
             "--render-settings",
             "--render-shelf",
-            "--render-quick"
+            "--render-quick",
+            "--render-selection"
         ]
         let isRendering = renderArguments.contains {
             CommandLine.arguments.contains($0)
@@ -141,6 +144,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         shelfController = ClipboardShelfController(
             manager: manager,
             settings: settings
+        )
+
+        selectionTranslationService = TranslationService(
+            settings: translationService.settings,
+            credentials: translationService.credentials
+        )
+        selectionTranslationController = SelectionTranslationController(
+            manager: manager,
+            snippetManager: snippetManager,
+            service: selectionTranslationService,
+            settings: settings
+        )
+        settings.onSelectionTranslationEnabledChange = { [weak self] enabled in
+            self?.selectionTranslationController?.setEnabled(enabled)
+        }
+        selectionTranslationController.setEnabled(
+            settings.selectionTranslationEnabled
         )
 
         statusBarController = StatusBarController(
@@ -672,6 +692,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let path = value(after: "--render-quick") {
             manager.seedDemoDataIfNeeded()
             DebugRenderer.renderQuickTranslation(
+                service: translationService,
+                to: URL(fileURLWithPath: path)
+            ) {
+                NSApp.terminate(nil)
+            }
+            return true
+        }
+
+        if let path = value(after: "--render-selection") {
+            DebugRenderer.renderSelectionTranslation(
                 service: translationService,
                 to: URL(fileURLWithPath: path)
             ) {

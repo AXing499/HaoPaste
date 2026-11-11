@@ -299,6 +299,42 @@ enum DebugRenderer {
         )
     }
 
+    static func renderSelectionTranslation(
+        service: TranslationService,
+        to url: URL,
+        completion: @escaping @MainActor () -> Void
+    ) {
+        let isChinese = AppLanguage.isChinese
+        service.seedPreview(
+            sourceTitle: "Safari",
+            sourceText: isChinese
+                ? "选中文本后，翻译卡片应该出现在内容附近。"
+                : "The translation card should appear next to the selected text.",
+            target: isChinese ? .english : .simplifiedChinese,
+            result: isChinese
+                ? "The translation card should appear next to the selected text."
+                : "选中文本后，翻译卡片应该出现在内容附近。",
+            provider: .googleUnofficial
+        )
+
+        let content = SelectionTranslationCardView(
+            service: service,
+            onCopyTranslation: {},
+            onCopyBilingual: {},
+            onSaveSnippet: {},
+            onClose: {},
+            onOpenSettings: {}
+        )
+        .frame(width: 400, height: 340)
+
+        render(
+            content: content,
+            size: CGSize(width: 400, height: 340),
+            to: url,
+            completion: completion
+        )
+    }
+
     static func renderSettings(
         manager: ClipboardManager,
         settings: AppSettings,

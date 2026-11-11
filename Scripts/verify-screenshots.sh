@@ -17,8 +17,8 @@ HAOPASTE_SCREENSHOT_OUTPUT="$OUTPUT" \
 failed=0
 for generated in "$OUTPUT"/screenshot-*.png; do
     name="$(basename "$generated")"
-    # TextEditor caret blinking makes OCR captures non-deterministic.
-    if [[ "$name" == screenshot-ocr* ]]; then
+    # Selectable/editable text can blink a caret between renders.
+    if [[ "$name" == screenshot-ocr*         || "$name" == screenshot-preview-text*         || "$name" == screenshot-selection-translation* ]]; then
         continue
     fi
     baseline="Docs/$name"

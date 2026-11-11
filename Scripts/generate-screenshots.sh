@@ -84,6 +84,10 @@ HAOPASTE_RENDER_OCR=success render_zh --render "$OUTPUT_DIR/screenshot-ocr.png"
 HAOPASTE_RENDER_OCR=batch render_en --render "$OUTPUT_DIR/screenshot-ocr-batch-en.png"
 HAOPASTE_RENDER_OCR=batch render_zh --render "$OUTPUT_DIR/screenshot-ocr-batch.png"
 
+# Selection translation
+render_en --render-selection "$OUTPUT_DIR/screenshot-selection-translation-en.png"
+render_zh --render-selection "$OUTPUT_DIR/screenshot-selection-translation.png"
+
 # Settings
 render_en --render-settings "$OUTPUT_DIR/screenshot-settings-en.png"
 render_zh --render-settings "$OUTPUT_DIR/screenshot-settings.png"

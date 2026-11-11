@@ -227,7 +227,10 @@ struct SettingsView: View {
                 case .snippets:
                     snippetsPage
                 case .intelligence:
-                    TranslationSettingsPage(service: translationService)
+                    TranslationSettingsPage(
+                        service: translationService,
+                        appSettings: settings
+                    )
                 case .privacy:
                     privacyPage
                 case .about:

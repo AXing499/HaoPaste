@@ -9,7 +9,7 @@ HaoPaste 是本地优先的 macOS 剪切板管理器，目标是在 Raycast / Pa
 1. **键盘优先**：不用离开键盘即可搜索、选择、复制。
 2. **原生语义**：系统材质、系统强调色、SF Symbols、连续圆角、系统字体。
 3. **本地优先**：无账号、无遥测，历史只存在本机；默认不联网，在线翻译仅在用户操作时按需发送当前文本。
-4. **低权限**：不申请辅助功能、屏幕录制等敏感权限。
+4. **低权限**：核心功能不申请辅助功能、屏幕录制等敏感权限；可选的划词翻译按需申请辅助功能。
 5. **可维护**：模块边界清晰，无第三方运行时依赖。
 
 ## 2. 技术栈
@@ -390,7 +390,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - OCR 使用本地 Vision，不上传图片；识别文字缓存在本机 `OCR/` 目录，默认不进入备份，可在设置中一键清除。
 - Google / Bing / DeepL 非官方通道不受服务端 SLA 保障，可能违反服务条款；默认不自动启用 DeepL 非官方通道，并在设置中明确提示风险。
 - 历史与图片保存在用户 Application Support 目录；翻译 API 凭证保存在 macOS 钥匙串，不写入备份或日志。
-- 不申请辅助功能、屏幕录制、自动化权限；全局快捷键使用 Carbon，不依赖 Accessibility。
+- 核心功能不申请辅助功能、屏幕录制、自动化权限；全局快捷键使用 Carbon。可选的划词翻译需要 Accessibility，仅在启用时读取当前选区。
 - 隐藏类型过滤遵循 NSPasteboard 社区约定，但属于尽力而为：
   - 密码管理器若不设置隐藏类型，内容仍可能被记录；
   - 用户可在菜单栏随时暂停监听或清空未置顶记录。
@@ -398,6 +398,15 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 可关闭图片记录：新图片不会被保存或生成缓存；已有图片保持不动。
 - App Sandbox 未启用（没有 entitlements），以便本地通用剪贴板与全局快捷键完整工作；因此不计划提交 Mac App Store。若未来上架，需要重新评估沙盒和分发策略。
 - 分发构建使用 ad-hoc 签名；对外分发必须替换为 Developer ID 签名与公证。
+
+### 划词翻译
+
+- `SelectionTranslationController` 在设置开启且获得 Accessibility 权限后，安装被动全局鼠标/键盘监听。
+- 鼠标抬起后延迟约 180ms，通过 `AXSelectedText` 读取前台应用选区，不模拟 `⌘C`。
+- 全屏应用、安全输入、排除应用和 HaoPaste 自身会被过滤。
+- 翻译图标为不抢焦点的非激活 `NSPanel`；点击后才创建紧凑翻译卡片。
+- 卡片根据选区鼠标锚点放在附近，优先下方/右侧，空间不足时翻转。
+- 当前版本只支持鼠标划词；键盘选择与完整翻译面板入口待后续版本。
 
 ### 本地化
 
@@ -410,7 +419,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 ### 自动化测试
 
-120 个 XCTest 由 app target 作为测试宿主运行：
+124 个 XCTest 由 app target 作为测试宿主运行：
 
 - 内容分类器边界：URL、HEX、JSON、代码、SQL、普通文本。
 - `HotKeyConfiguration`：校验、修饰符转换、显示顺序。

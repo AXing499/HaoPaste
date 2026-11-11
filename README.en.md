@@ -2,7 +2,7 @@
 
 English | [简体中文](README.md)
 
-Current version: **v0.14.2**
+Current version: **v0.15.0**
 
 A native, fast, keyboard-first clipboard manager for macOS. Press `⌥⌘V` in any app to open a borderless floating panel, then search, select, and copy without breaking your flow.
 
@@ -22,11 +22,11 @@ A native, fast, keyboard-first clipboard manager for macOS. Press `⌥⌘V` in a
 
    ```bash
    make dmg
-   # dist/HaoPaste-0.14.2.dmg
-   # dist/HaoPaste-0.14.2.dmg.sha256
+   # dist/HaoPaste-0.15.0.dmg
+   # dist/HaoPaste-0.15.0.dmg.sha256
    ```
 
-2. Open `HaoPaste-0.14.2.dmg`, then drag **HaoPaste** into **Applications**.
+2. Open `HaoPaste-0.15.0.dmg`, then drag **HaoPaste** into **Applications**.
 3. If macOS says the developer cannot be verified:
    - Open **System Settings → Privacy & Security**
    - Under **Security**, find **HaoPaste**
@@ -121,6 +121,18 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 - **Translate latest record when opening panel** is off by default. It only runs for the genuinely latest text that differs from the target language; pinned items and images are never treated as the latest auto-translate target.
 - Image preview includes **OCR & Translate**: local OCR followed by translation.
 
+### Selection Translation (experimental)
+
+![HaoPaste selection translation](Docs/screenshot-selection-translation-en.png)
+
+- Enable it in **Settings → Smart → Selection Translation**; off by default.
+- Requires Accessibility permission.
+- Select text with the mouse to show a small translate icon. Selected text is read and translated only after clicking the icon.
+- The translation card opens near the selection instead of being fixed to the screen center.
+- It never simulates `⌘C` or copies automatically; normal copy shortcuts keep working.
+- Skipped in full-screen apps, secure input, excluded apps, and HaoPaste itself.
+- This version supports mouse selection only; keyboard selection is planned.
+
 ### Translation engines
 
 | Translation panel | Online consent |
@@ -191,8 +203,9 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 - **Deduplication**: identical content refreshes the existing record and moves it to the top; pinned state is preserved.
 - **History limit**: unpinned history defaults to 200 items with FIFO eviction. Configure it in Settings; pinned items are never removed automatically.
 - **Native details**: follows light / dark appearance and accent color; copy success and pin actions use subtle spring / SF Symbol bounce feedback, Reduce Motion is respected, and icons use hierarchical SF Symbols.
+- **Selection Translation (experimental)**: off by default; mouse selection shows an icon, and clicking it reads the selection and opens a nearby translation card. No simulated ⌘C and no automatic copying; full-screen, secure input, and excluded apps are skipped.
 
-Clicking an item only copies it. HaoPaste does not paste automatically, so it needs no Accessibility permission.
+Clicking an item only copies it. HaoPaste does not paste automatically, so the core clipboard features need no Accessibility permission. The optional Selection Translation feature requires Accessibility permission to read the selected text when enabled.
 
 ### Settings
 
@@ -229,7 +242,7 @@ Requirements: macOS 14+ and Xcode 15+ (the project is verified with Xcode 26.5).
 # Development
 make run       # debug build and launch
 make demo      # launch with reproducible sample data
-make test      # run 120 XCTest cases
+make test      # run 124 XCTest cases
 
 # Release
 make release   # release build
@@ -245,7 +258,7 @@ HaoPaste stays in the menu bar after launch. Press `⌥⌘V` to open the panel. 
 
 ## Quality and tests
 
-- **120 XCTest cases** cover content classification, shortcut models, history models, settings persistence, privacy exclusions, files and rich text, color parsing, Pinyin / fuzzy search, snippets, preview / drag, multi-select / merge, translation engines / fallback / consent, quick translation / auto-translate policy, shelf layout / scrolling / filtering / hit testing / action bar, OCR / batch recognition / cache, deduplication / trimming, storage I/O, and backup import / export.
+- **124 XCTest cases** cover content classification, shortcut models, history models, settings persistence, privacy exclusions, files and rich text, color parsing, Pinyin / fuzzy search, snippets, preview / drag, multi-select / merge, translation engines / fallback / consent, quick translation / auto-translate policy, shelf layout / scrolling / filtering / hit testing / action bar, OCR / batch recognition / cache, deduplication / trimming, storage I/O, and backup import / export.
 - The test host skips the menu bar, clipboard polling, and global hotkey registration so tests do not affect normal use.
 - GitHub Actions: `.github/workflows/ci.yml` runs tests and a Release build; `.github/workflows/release.yml` runs tests, builds the DMG, creates the GitHub Release, and uploads assets when a `v*` tag is pushed.
 - Run with `make test`.
@@ -401,14 +414,14 @@ launchctl unsetenv HAOPASTE_RENDER_APPEARANCE
 - Auto-translation handles text items only; it skips images, code, and text already in the target language.
 - RTF and HTML are each capped at 2MB; larger payloads fall back to plain text.
 - File items in backups are also path references and may be unavailable after moving to another Mac.
-- Copy does not paste automatically, so no Accessibility permission is required.
+- Copy does not paste automatically, so no Accessibility permission is required for the core app. The optional Selection Translation feature does require it when enabled.
 - The shelf uses one edge at a time. If the Dock occupies the left or right edge, use another edge.
 - Shelf preview / translation / OCR cards float beside the shelf and do not open the main panel.
 - iCloud sync is not implemented.
 - Exported `.zip` backups contain full clipboard contents and are unencrypted. Store them safely.
 - Launch at login uses `SMAppService`; macOS may require approval in **System Settings → General → Login Items**.
 - Custom shortcuts use fixed key-name mapping; non-US keyboard layouts may display different characters.
-- The app is signed ad-hoc. Public distribution still requires Developer ID signing and notarization.
+- The app is signed ad-hoc. Public distribution still requires Developer ID signing and notarization. Selection Translation depends on Accessibility permission, which may need to be granted again after reinstalling an ad-hoc build.
 - The app icon is generated by `Scripts/generate-app-icon.swift` and can be rebuilt.
 
 See [ROADMAP.md](Docs/ROADMAP.md) for future plans.

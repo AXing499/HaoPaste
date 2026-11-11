@@ -5,19 +5,24 @@
 //  Settings for translation engines, language defaults and API credentials.
 //
 
+import AppKit
 import SwiftUI
 
 struct TranslationSettingsPage: View {
     let service: TranslationService
     @Bindable var settings: TranslationSettingsStore
+    @Bindable var appSettings: AppSettings
+
+    @State private var accessibilityTrusted = SelectionTranslationAccess.isTrusted
 
     @Environment(OCRService.self) private var ocrService
     @State private var configuringProvider: TranslationProviderID?
     @State private var showClearOCRCacheAlert = false
 
-    init(service: TranslationService) {
+    init(service: TranslationService, appSettings: AppSettings) {
         self.service = service
         self._settings = Bindable(wrappedValue: service.settings)
+        self._appSettings = Bindable(wrappedValue: appSettings)
     }
 
     var body: some View {
@@ -48,6 +53,69 @@ struct TranslationSettingsPage: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .disabled(settings.consentedProviderIDs.isEmpty)
+            }
+        }
+
+        SettingsCard(L("划词翻译")) {
+            SettingsRow(
+                L("启用划词翻译"),
+                subtitle: L("选中文本后显示翻译图标；默认关闭，启用需要辅助功能权限。")
+            ) {
+                Toggle("", isOn: $appSettings.selectionTranslationEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .tint(Color.accentColor)
+                    .onChange(of: appSettings.selectionTranslationEnabled) { _, enabled in
+                        if enabled, !SelectionTranslationAccess.isTrusted {
+                            _ = SelectionTranslationAccess.request()
+                        }
+                        accessibilityTrusted = SelectionTranslationAccess.isTrusted
+                    }
+            }
+
+            if appSettings.selectionTranslationEnabled {
+                SettingsDivider()
+
+                HStack(spacing: 10) {
+                    Image(
+                        systemName: accessibilityTrusted
+                            ? "checkmark.shield"
+                            : "lock.shield"
+                    )
+                    .foregroundStyle(
+                        accessibilityTrusted ? Color.accentColor : Color.orange
+                    )
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(
+                            accessibilityTrusted
+                                ? L("辅助功能权限已授权")
+                                : L("需要辅助功能权限")
+                        )
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+
+                        Text(
+                            L(
+                                "仅在启用划词翻译时读取当前选中文本；不会读取其他内容。"
+                            )
+                        )
+                        .font(.system(size: 9.5, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    if !accessibilityTrusted {
+                        Button(L("打开辅助功能设置…")) {
+                            SelectionTranslationAccess.openSettings()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
             }
         }
 
@@ -139,6 +207,16 @@ struct TranslationSettingsPage: View {
             .fixedSize(horizontal: false, vertical: true)
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .onAppear {
+            accessibilityTrusted = SelectionTranslationAccess.isTrusted
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(
+                for: NSApplication.didBecomeActiveNotification
+            )
+        ) { _ in
+            accessibilityTrusted = SelectionTranslationAccess.isTrusted
         }
         .sheet(item: $configuringProvider) { id in
             TranslationProviderConfigSheet(

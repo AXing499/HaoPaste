@@ -55,6 +55,7 @@ final class AppSettingsTests: XCTestCase {
         settings.trashRetentionDays = 30
         settings.shelfCardFallDuration = 1.0
         settings.updateFeedURL = "https://example.com/hao-paste/latest.json"
+        settings.selectionTranslationEnabled = true
         settings.panelCopyBehavior = .stayOpen
         settings.shelfCopyBehavior = .hideAfterDelay
         settings.copyPlainTextOnly = true
@@ -75,6 +76,7 @@ final class AppSettingsTests: XCTestCase {
             reloaded.updateFeedURL,
             "https://example.com/hao-paste/latest.json"
         )
+        XCTAssertTrue(reloaded.selectionTranslationEnabled)
         XCTAssertEqual(reloaded.panelCopyBehavior, .stayOpen)
         XCTAssertEqual(reloaded.shelfCopyBehavior, .hideAfterDelay)
         XCTAssertTrue(reloaded.copyPlainTextOnly)

@@ -58,6 +58,11 @@ Release 构建输出：
 | `HAOPASTE_STORAGE_DIR=<path>` | 环境变量形式的存储覆盖 |
 | `--render <path>` | Debug：离屏渲染面板 PNG 后退出 |
 | `--render-settings <path>` | Debug：离屏渲染设置窗口 PNG 后退出 |
+| `--render-selection <path>` | Debug：离屏渲染划词翻译卡片 PNG 后退出 |
+| `--language en\|zh-Hans` | Debug：覆盖界面语言，截图生成使用 |
+| `HAOPASTE_RENDER_DISABLE_ANIMATIONS=1` | Debug：关闭动效，生成稳定截图基线 |
+| `HAOPASTE_RENDER_FIXED_NOW=<epoch>` | Debug：固定相对时间 |
+| `HAOPASTE_RENDER_SETTINGS_HEIGHT=<pt>` | Debug：加高设置渲染窗口用于布局检查 |
 | `HAOPASTE_RENDER_APPEARANCE=dark` | Debug 离屏渲染时使用深色外观 |
 | `HAOPASTE_RENDER_SETTINGS_TAB=general\|history\|snippets\|intelligence\|privacy\|about` | Debug 设置渲染的标签页 |
 | `HAOPASTE_RENDER_PREVIEW=image\|text` | Debug 渲染预览界面（图片或富文本） |
@@ -69,6 +74,7 @@ Release 构建输出：
 | `--render-shelf <path>` | Debug：离屏渲染剪贴板挂架 PNG 后退出 |
 | `HAOPASTE_RENDER_SHELF_EDGE=left\|right` | Debug：渲染左侧 / 右侧挂架（默认顶部） |
 | `HAOPASTE_RENDER_SHELF_HOVER=1` | Debug：渲染第一张卡片的悬停操作条 |
+| `HAOPASTE_RENDER_SHELF_SCROLL=1` | Debug：强制显示挂架滚动指示器 |
 | `--show-shelf` | Debug：启动后用示例数据展开剪贴板挂架 |
 | `--show-settings` | Debug：启动后直接打开设置窗口 |
 | `--export-history <path>` | Debug：将指定 storage 的历史导出为 zip 后退出 |
@@ -138,8 +144,8 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste-0.14.2.dmg                 # 安装包（app + Applications 快捷方式）
-dist/HaoPaste-0.14.2.dmg.sha256          # SHA-256 校验
+dist/HaoPaste-0.15.0.dmg                 # 安装包（app + Applications 快捷方式）
+dist/HaoPaste-0.15.0.dmg.sha256          # SHA-256 校验
 ```
 
 > `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
@@ -186,11 +192,11 @@ codesign --force --deep --options runtime --timestamp \
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash
-xcrun notarytool submit "dist/HaoPaste-0.14.2.dmg" \
+xcrun notarytool submit "dist/HaoPaste-0.15.0.dmg" \
   --keychain-profile "haopaste-notary" --wait
 
-xcrun stapler staple "dist/HaoPaste-0.14.2.dmg"
-xcrun stapler validate "dist/HaoPaste-0.14.2.dmg"
+xcrun stapler staple "dist/HaoPaste-0.15.0.dmg"
+xcrun stapler validate "dist/HaoPaste-0.15.0.dmg"
 ```
 
 也可以对 `.app` 先公证再打包（Apple 推荐流程根据分发方式调整）。需要 Apple Developer Program 账号。
@@ -200,8 +206,8 @@ xcrun stapler validate "dist/HaoPaste-0.14.2.dmg"
 版本号位于 `project.yml`：
 
 ```yaml
-MARKETING_VERSION: "0.14.2"
-CURRENT_PROJECT_VERSION: "48"
+MARKETING_VERSION: "0.15.0"
+CURRENT_PROJECT_VERSION: "49"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：
@@ -253,7 +259,7 @@ xcodebuild \
   test
 ```
 
-当前 120 个测试覆盖：
+当前 124 个测试覆盖：
 
 - 内容分类器：URL / HEX / JSON / 代码 / SQL / 普通文本边界。
 - `HotKeyConfiguration`：默认值、修饰符、显示顺序、校验。
@@ -273,6 +279,7 @@ xcodebuild \
 - OCR：成功 / 空结果 / 失败状态、编辑后缓存复用、批量识别与缓存复用、识别语言持久化，以及真实 Vision 中英文图片识别。
 - 本地化：`en` / `zh-Hans` 资源存在、核心英文文案与复数字典。
 - 更新检查：版本比较、GitHub / 自定义清单解析、双语发布说明摘要。
+- 划词翻译：设置持久化、卡片/图标靠近选区的边界定位。
 
 测试宿主使用的是真实 app target，但 `AppDelegate` 会检测 XCTest 环境并跳过菜单栏、轮询和全局快捷键初始化。`make test`、CI 与 Release 工作流默认使用 `-testLanguage en`，确保英文界面也在测试中覆盖；中文环境可手动追加 `-testLanguage zh-Hans`。CI 工作流位于 `.github/workflows/ci.yml`，会运行测试并额外执行一次 Release 构建。
 
@@ -351,7 +358,7 @@ defaults delete com.hao.HaoPaste 2>/dev/null || true
     --storage /tmp/haopaste-target --import-history /tmp/haopaste-backup.zip
   ```
 - **截图渲染**：`DebugRenderer` 使用真实的 `NSHostingView` + 窗口缓存，避免 `ImageRenderer` 对 TextField / LazyVStack 的渲染限制。不要删除这段 Debug 工具后继续使用 README 中的渲染命令。
-- **中英文截图**：`make screenshots` 会用固定的渲染时间并关闭动画生成全部 `Docs/screenshot-*.png` 与 `Docs/screenshot-*-en.png`；`make verify-screenshots` 会把渲染结果与已提交基线逐字节比较。OCR 截图因 TextEditor 光标闪烁会跳过自动比较。
+- **中英文截图**：`make screenshots` 会用固定的渲染时间并关闭动画生成全部 `Docs/screenshot-*.png` 与 `Docs/screenshot-*-en.png`；`make verify-screenshots` 会把渲染结果与已提交基线逐字节比较。OCR、富文本预览和划词翻译卡片截图因可选择文本的光标闪烁会跳过自动比较。
 - **截图语言**：脚本通过 Debug 参数 `--language en|zh-Hans` 强制语言，不受开发者本机的应用语言设置影响；`HAOPASTE_RENDER_FIXED_NOW` 用于固定相对时间。
 - **DMG 未提交到 Git**：`dist/` 被 `.gitignore` 排除。每次发布请重新运行 `make dmg`。
 - **应用图标**：修改 `Scripts/generate-app-icon.swift` 后重新生成 10 个尺寸，或直接替换 `AppIcon.appiconset` 中的 PNG。

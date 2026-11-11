@@ -58,6 +58,7 @@ final class AppSettings {
         static let updateFeedURL = "settings.updateFeedURL"
         static let shelfCopyBehavior = "settings.shelfCopyBehavior"
         static let panelCopyBehavior = "settings.panelCopyBehavior"
+        static let selectionTranslationEnabled = "settings.selectionTranslationEnabled"
         static let copyPlainTextOnly = "settings.copyPlainTextOnly"
         static let shelfEnabled = "settings.shelfEnabled"
         static let shelfItemLimit = "settings.shelfItemLimit"
@@ -128,6 +129,17 @@ final class AppSettings {
                 autoTranslateLatestOnOpen,
                 forKey: Keys.autoTranslateLatestOnOpen
             )
+        }
+    }
+
+    var selectionTranslationEnabled: Bool {
+        didSet {
+            guard oldValue != selectionTranslationEnabled else { return }
+            defaults.set(
+                selectionTranslationEnabled,
+                forKey: Keys.selectionTranslationEnabled
+            )
+            onSelectionTranslationEnabledChange?(selectionTranslationEnabled)
         }
     }
 
@@ -258,6 +270,7 @@ final class AppSettings {
     @ObservationIgnored var onShelfEnabledChange: ((Bool) -> Void)?
     @ObservationIgnored var onShelfEdgeChange: ((ClipboardShelfEdge) -> Void)?
     @ObservationIgnored var onTrashRetentionChange: ((Int) -> Void)?
+    @ObservationIgnored var onSelectionTranslationEnabledChange: ((Bool) -> Void)?
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var isRevertingHotKey = false
@@ -320,6 +333,9 @@ final class AppSettings {
             ? storedFallDuration
             : Self.defaultShelfCardFallDuration
 
+        self.selectionTranslationEnabled = defaults.bool(
+            forKey: Keys.selectionTranslationEnabled
+        )
         self.panelCopyBehavior = defaults
             .string(forKey: Keys.panelCopyBehavior)
             .flatMap(CopyBehavior.init(rawValue:))

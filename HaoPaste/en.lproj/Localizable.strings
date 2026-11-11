@@ -509,3 +509,14 @@
 
 /* Multi-file drag */
 "拖动以复制全部文件" = "Drag to copy all files";
+
+/* Selection translation */
+"划词翻译" = "Selection Translation";
+"启用划词翻译" = "Enable Selection Translation";
+"选中文本后显示翻译图标；默认关闭，不会模拟 ⌘C 或自动复制。" = "Show a translate icon after you select text. Off by default; never simulates ⌘C or copies automatically.";
+"辅助功能权限已授权" = "Accessibility permission granted";
+"需要辅助功能权限" = "Accessibility permission required";
+"仅在启用划词翻译时读取当前选中文本；不会读取其他内容。" = "Selected text is read only while Selection Translation is enabled. Nothing else is read.";
+"打开辅助功能设置…" = "Open Accessibility Settings…";
+"翻译选中文本" = "Translate selected text";
+"选中文本后显示翻译图标；默认关闭，启用需要辅助功能权限。" = "Show a translate icon after you select text. Off by default; requires Accessibility permission.";
