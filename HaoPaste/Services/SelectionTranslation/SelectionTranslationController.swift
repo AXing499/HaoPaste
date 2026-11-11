@@ -20,7 +20,8 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
     private let cardPanel: SelectionTranslationCardPanel
     private let iconButton: SelectionTranslationIconButton
 
-    private let iconSize: CGFloat = 24
+    private let iconSize: CGFloat = 34
+    private let iconButtonSize: CGFloat = 28
     private let cardSize = NSSize(width: 400, height: 340)
 
     private var isEnabled = false
@@ -52,7 +53,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
         self.service = service
         self.settings = settings
         self.iconPanel = SelectionTranslationIconPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 24, height: 24),
+            contentRect: NSRect(x: 0, y: 0, width: 34, height: 34),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -596,32 +597,33 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
         iconButton.target = self
         iconButton.action = #selector(translateSelection)
         iconButton.isBordered = false
-        iconButton.imagePosition = .imageOnly
-        iconButton.imageScaling = .scaleProportionallyDown
-        iconButton.image = NSImage(
-            systemSymbolName: "translate",
-            accessibilityDescription: L("翻译选中文本")
-        )
-        iconButton.image?.size = NSSize(width: 14, height: 14)
-        iconButton.contentTintColor = .labelColor
         iconButton.toolTip = L("翻译选中文本")
         iconButton.setAccessibilityLabel(L("翻译选中文本"))
-        iconButton.frame = NSRect(x: 0, y: 0, width: 24, height: 24)
-        iconButton.autoresizingMask = [.width, .height]
+        iconButton.focusRingType = .none
+        iconButton.frame = NSRect(
+            x: (iconSize - iconButtonSize) / 2,
+            y: (iconSize - iconButtonSize) / 2,
+            width: iconButtonSize,
+            height: iconButtonSize
+        )
+        iconButton.autoresizingMask = [
+            .minXMargin,
+            .maxXMargin,
+            .minYMargin,
+            .maxYMargin
+        ]
         iconButton.wantsLayer = true
-        iconButton.layer?.backgroundColor = NSColor.windowBackgroundColor
-            .withAlphaComponent(0.94)
-            .cgColor
-        iconButton.layer?.cornerRadius = 12
-        iconButton.layer?.borderWidth = 1
-        iconButton.layer?.borderColor = NSColor.separatorColor
-            .withAlphaComponent(0.55)
-            .cgColor
-        iconButton.layer?.shadowColor = NSColor.black.cgColor
-        iconButton.layer?.shadowOpacity = 0.16
-        iconButton.layer?.shadowRadius = 4
-        iconButton.layer?.shadowOffset = CGSize(width: 0, height: -1.5)
-        iconPanel.contentView = iconButton
+        iconButton.layer?.backgroundColor = NSColor.clear.cgColor
+        iconButton.layer?.borderWidth = 0
+        iconButton.layer?.shadowOpacity = 0
+
+        let container = NSView(
+            frame: NSRect(x: 0, y: 0, width: iconSize, height: iconSize)
+        )
+        container.wantsLayer = true
+        container.layer?.backgroundColor = NSColor.clear.cgColor
+        container.addSubview(iconButton)
+        iconPanel.contentView = container
     }
 
     private func installCardContent() {
@@ -672,6 +674,67 @@ private final class SelectionTranslationIconButton: NSButton {
         true
     }
 
+    override func draw(_ dirtyRect: NSRect) {
+        guard let symbol = NSImage(
+            systemSymbolName: "translate",
+            accessibilityDescription: nil
+        ) else {
+            return
+        }
+
+        let pointSize: CGFloat = isHovering || isPressed ? 14.2 : 13.5
+        let configuration = NSImage.SymbolConfiguration(
+            pointSize: pointSize,
+            weight: .semibold
+        )
+        let configured = symbol.withSymbolConfiguration(configuration) ?? symbol
+        let glyphSize = configured.size
+        let glyphRect = NSRect(
+            x: bounds.midX - glyphSize.width / 2,
+            y: bounds.midY - glyphSize.height / 2,
+            width: glyphSize.width,
+            height: glyphSize.height
+        )
+
+        let tint = isHovering || isPressed
+            ? NSColor.controlAccentColor
+            : NSColor.labelColor
+        let tinted = NSImage(size: glyphSize, flipped: false) { rect in
+            configured.draw(in: rect)
+            tint.set()
+            rect.fill(using: .sourceAtop)
+            return true
+        }
+
+        // A soft contrasting halo keeps the bare glyph legible over both light
+        // and dark page content without adding a visible circle or border.
+        let isDark = effectiveAppearance.bestMatch(
+            from: [.darkAqua, .aqua]
+        ) == .darkAqua
+        let halo = NSShadow()
+        halo.shadowColor = isDark
+            ? NSColor.black.withAlphaComponent(0.55)
+            : NSColor.white.withAlphaComponent(0.92)
+        halo.shadowBlurRadius = isHovering ? 3.2 : 2.6
+        halo.shadowOffset = .zero
+
+        NSGraphicsContext.saveGraphicsState()
+        halo.set()
+        tinted.draw(in: glyphRect)
+        NSGraphicsContext.restoreGraphicsState()
+        tinted.draw(in: glyphRect)
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        needsDisplay = true
+    }
+
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        addCursorRect(bounds, cursor: .pointingHand)
+    }
+
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
 
@@ -708,42 +771,37 @@ private final class SelectionTranslationIconButton: NSButton {
 
     private func updateAppearance() {
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        let scale: CGFloat = isPressed ? 0.94 : (isHovering ? 1.06 : 1)
+        let target: CGFloat = isPressed ? 0.92 : (isHovering ? 1.06 : 1)
 
-        if reduceMotion {
+        if reduceMotion || window?.isVisible != true {
             layer?.setAffineTransform(
-                CGAffineTransform(scaleX: scale, y: scale)
+                CGAffineTransform(scaleX: target, y: target)
             )
         } else {
+            let currentScale = (
+                (
+                    layer?.presentation()?.value(forKeyPath: "transform.scale")
+                        ?? layer?.value(forKeyPath: "transform.scale")
+                ) as? NSNumber
+            )?.doubleValue ?? 1
+
             layer?.setAffineTransform(
-                CGAffineTransform(scaleX: scale, y: scale)
+                CGAffineTransform(scaleX: target, y: target)
             )
             let animation = CASpringAnimation(keyPath: "transform.scale")
-            animation.fromValue = 1
-            animation.toValue = scale
+            animation.fromValue = currentScale
+            animation.toValue = target
             animation.mass = 1
-            animation.stiffness = 320
-            animation.damping = 25
-            animation.duration = 0.22
-            layer?.add(animation, forKey: "selectionIconHoverScale")
+            animation.stiffness = 340
+            animation.damping = 26
+            animation.initialVelocity = 0
+            animation.duration = 0.26
+            layer?.add(animation, forKey: "selectionIconScale")
         }
 
-        layer?.backgroundColor = (
-            isHovering
-                ? NSColor.controlAccentColor.withAlphaComponent(0.16)
-                : NSColor.windowBackgroundColor.withAlphaComponent(0.94)
-        ).cgColor
-        layer?.borderColor = (
-            isHovering
-                ? NSColor.controlAccentColor.withAlphaComponent(0.35)
-                : NSColor.separatorColor.withAlphaComponent(0.55)
-        ).cgColor
-        layer?.shadowOpacity = isHovering ? 0.22 : 0.16
-        layer?.shadowRadius = isHovering ? 5 : 4
-        contentTintColor = isHovering ? .controlAccentColor : .labelColor
+        needsDisplay = true
     }
 }
-
 
 private final class SelectionTranslationIconPanel: NSPanel {
     override var canBecomeKey: Bool { false }

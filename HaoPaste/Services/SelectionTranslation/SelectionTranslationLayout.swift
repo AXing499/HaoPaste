@@ -13,7 +13,7 @@ enum SelectionTranslationLayout {
         size: CGFloat,
         visibleFrame: NSRect
     ) -> NSRect {
-        let gap: CGFloat = 6
+        let gap: CGFloat = 3
         var x = anchor.x + gap
         var y = anchor.y - size - gap
 

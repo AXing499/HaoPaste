@@ -29,12 +29,6 @@ final class ShelfPreviewPanelController: NSObject, NSWindowDelegate {
         NSRect,
         ClipboardShelfEdge
     ) -> Void)?
-    var onExtractAndTranslate: ((
-        ClipboardItem,
-        URL,
-        NSRect,
-        ClipboardShelfEdge
-    ) -> Void)?
 
     var isVisible: Bool {
         panel.isVisible
@@ -108,18 +102,6 @@ final class ShelfPreviewPanelController: NSObject, NSWindowDelegate {
                 }
                 self.hide()
                 self.onExtractText?(
-                    item,
-                    imageURL,
-                    anchor,
-                    self.edge
-                )
-            },
-            onExtractAndTranslate: { [weak self] in
-                guard let self, let imageURL, let anchor = self.anchor else {
-                    return
-                }
-                self.hide()
-                self.onExtractAndTranslate?(
                     item,
                     imageURL,
                     anchor,

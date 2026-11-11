@@ -21,7 +21,6 @@ struct PreviewOverlayView: View {
     let onSaveImage: () -> Void
     let onTranslate: () -> Void
     let onExtractText: () -> Void
-    let onExtractAndTranslate: () -> Void
     var showsScrim = true
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -367,11 +366,6 @@ struct PreviewOverlayView: View {
                         L("提取文字"),
                         systemImage: "text.viewfinder",
                         action: onExtractText
-                    )
-                    secondaryButton(
-                        L("识图并翻译"),
-                        systemImage: "character.bubble",
-                        action: onExtractAndTranslate
                     )
                     secondaryButton(
                         L("保存…"),

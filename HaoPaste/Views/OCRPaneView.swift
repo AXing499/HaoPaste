@@ -65,7 +65,7 @@ struct OCRPaneView: View {
         }
         .frame(width: 640, height: 480)
         .background(.regularMaterial)
-        .background(Color(nsColor: .windowBackgroundColor).opacity(0.35))
+        .background(Theme.popoverBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)

@@ -431,16 +431,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 edge: edge
             )
         }
-        shelfPreviewController.onExtractAndTranslate = {
-            [weak self] item, imageURL, anchor, edge in
-            self?.shelfOCRController.present(
-                item: item,
-                imageURL: imageURL,
-                translateAfterRecognition: true,
-                anchor: anchor,
-                edge: edge
-            )
-        }
         shelfOCRController.onSaveSnippet = { [weak self] text in
             guard let self, !text.isEmpty else { return }
             let source = self.shelfOCRService.sourceTitle

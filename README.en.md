@@ -116,10 +116,10 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 - Copy text in any app and press `⌥⌘T` to open a translation card without the main panel.
 - The source language is detected automatically. Press `↵` to copy the translation and close, `esc` to close, or `⌘C` to copy.
 - The menu bar menu also offers **Translate Clipboard**.
-- Hover a text or image item to translate. Images run local OCR first.
+- Hover a text item to translate. Hover an image item to extract text; then use **Translate** in the OCR window.
 - Change the shortcut in **Settings → General**.
 - **Translate latest record when opening panel** is off by default. It only runs for the genuinely latest text that differs from the target language; pinned items and images are never treated as the latest auto-translate target.
-- Image preview includes **OCR & Translate**: local OCR followed by translation.
+- **Extract Text** in image preview runs local OCR only. Use **Translate** in the OCR window afterwards to translate the recognized text.
 
 ### Selection Translation (experimental)
 
@@ -410,7 +410,7 @@ launchctl unsetenv HAOPASTE_RENDER_APPEARANCE
 - Apple offline translation is not integrated yet (macOS 15+ language packs need separate validation).
 - OCR results are cached locally in `OCR/` by image and language and are not included in backups by default. Clear them in **Settings → Smart**.
 - Batch OCR runs sequentially. Scanned PDFs are not supported.
-- The quick translation shortcut handles plain clipboard text only; use **OCR & Translate** in the panel for images.
+- The quick translation shortcut handles plain clipboard text only. For images, extract text first and then click **Translate** in the OCR window.
 - Auto-translation handles text items only; it skips images, code, and text already in the target language.
 - RTF and HTML are each capped at 2MB; larger payloads fall back to plain text.
 - File items in backups are also path references and may be unavailable after moving to another Mac.

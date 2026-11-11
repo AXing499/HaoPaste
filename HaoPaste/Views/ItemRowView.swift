@@ -25,7 +25,6 @@ struct ItemRowView: View {
     let onPreview: () -> Void
     let onTranslate: () -> Void
     let onExtractText: () -> Void
-    let onExtractAndTranslate: () -> Void
     let onTogglePin: () -> Void
     let onDelete: () -> Void
 
@@ -161,12 +160,6 @@ struct ItemRowView: View {
                     onExtractText()
                 } label: {
                     Label(L("提取文字…"), systemImage: "text.viewfinder")
-                }
-
-                Button {
-                    onExtractAndTranslate()
-                } label: {
-                    Label(L("识图并翻译…"), systemImage: "character.bubble")
                 }
 
                 Button {
@@ -474,7 +467,7 @@ struct ItemRowView: View {
             return ("character.bubble", L("翻译（⌘T）"), onTranslate)
         }
         if item.type == .image {
-            return ("character.bubble", L("识图并翻译"), onExtractAndTranslate)
+            return ("text.viewfinder", L("提取文字"), onExtractText)
         }
         return nil
     }
