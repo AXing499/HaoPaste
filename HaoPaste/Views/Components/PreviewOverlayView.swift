@@ -68,7 +68,7 @@ struct PreviewOverlayView: View {
         }
         .frame(width: 620, height: 452)
         .background(.regularMaterial)
-        .background(Color(nsColor: .windowBackgroundColor).opacity(0.35))
+        .background(Theme.popoverBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)

@@ -11,7 +11,7 @@
 - 设置中增加辅助功能权限说明与授权入口，并对 ad-hoc 重装后的旧权限给出提示。
 - 划词图标改为无底色、无边框的更小 `translate` 图形，扩大透明点击区域，避免悬停缩放被裁剪；增加回弹出现 / 消失、悬停和按压反馈。
 - 图片条目的快捷操作改为「提取文字」；识图窗口内再点击「翻译」，不再默认识图后自动翻译。
-- 划词卡片、识图、批量识图与翻译弹框统一使用更浅的近不透明背景，减少桌面或页面深色内容带来的灰暗感；卡片继续显示在选区附近。
+- 划词卡片、预览、识图、批量识图与翻译弹框统一使用更浅的近不透明背景，减少桌面或页面深色内容带来的灰暗感；卡片继续显示在选区附近。
 - 扩大 Accessibility 选区读取范围，兼容更多 Chromium / Electron 和文档类应用。
 - 设置页与划词翻译改为无提示凭证检查，避免打开设置或划词时反复弹出钥匙串密码框。
 - 新增划词卡片截图与布局测试；124 个 XCTest。
@@ -25,7 +25,7 @@
 - Added Accessibility permission guidance and a shortcut to System Settings, including guidance for stale ad-hoc approvals.
 - Switched the selection icon to a smaller, chrome-free native `translate` glyph with a larger transparent hit area so hover scaling never clips; added spring appearance / dismissal, hover, and press feedback.
 - Changed the image quick action to **Extract Text**; translation is now a separate action in the OCR window instead of running automatically after recognition.
-- Unified the selection card, OCR, batch OCR, and translation panes on a lighter, near-opaque surface so dark page or desktop content no longer makes them look muddy; the card still opens near the selection.
+- Unified the selection card, preview, OCR, batch OCR, and translation panes on a lighter, near-opaque surface so dark page or desktop content no longer makes them look muddy; the card still opens near the selection.
 - Expanded Accessibility selection lookup for more Chromium / Electron and document apps.
 - Changed settings and selection translation to use non-prompting credential checks, avoiding repeated Keychain password dialogs.
 - Added selection-card screenshots and placement tests; 124 XCTest cases.
