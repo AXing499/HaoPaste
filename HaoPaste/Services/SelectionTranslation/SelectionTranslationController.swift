@@ -20,7 +20,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
     private let cardPanel: SelectionTranslationCardPanel
     private let iconButton: SelectionTranslationIconButton
 
-    private let iconSize: CGFloat = 26
+    private let iconSize: CGFloat = 24
     private let cardSize = NSSize(width: 400, height: 340)
 
     private var isEnabled = false
@@ -30,6 +30,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
     private var cardKeyMonitor: Any?
     private var selectionCheckTask: Task<Void, Never>?
     private var iconHideTask: Task<Void, Never>?
+    private var iconGeneration = 0
     private var workspaceObserver: NSObjectProtocol?
     private var applicationObserver: NSObjectProtocol?
 
@@ -51,7 +52,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
         self.service = service
         self.settings = settings
         self.iconPanel = SelectionTranslationIconPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 26, height: 26),
+            contentRect: NSRect(x: 0, y: 0, width: 24, height: 24),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -265,6 +266,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
     private func showIcon(at anchor: NSPoint) {
         guard let screen = screen(containing: anchor) else { return }
 
+        iconGeneration &+= 1
         iconPanel.setFrame(
             SelectionTranslationLayout.iconFrame(
                 anchor: anchor,
@@ -273,7 +275,32 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
             ),
             display: false
         )
+
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        iconPanel.alphaValue = reduceMotion ? 1 : 0
+        iconButton.layer?.setAffineTransform(
+            reduceMotion
+                ? .identity
+                : CGAffineTransform(scaleX: 0.78, y: 0.78)
+        )
         iconPanel.orderFrontRegardless()
+
+        if !reduceMotion {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.14
+                context.timingFunction = CAMediaTimingFunction(
+                    controlPoints: 0.16, 1, 0.3, 1
+                )
+                iconPanel.animator().alphaValue = 1
+            }
+            animateIconScale(
+                from: 0.78,
+                to: 1,
+                stiffness: 300,
+                damping: 24,
+                duration: 0.34
+            )
+        }
 
         iconHideTask?.cancel()
         iconHideTask = Task { [weak self] in
@@ -288,7 +315,60 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
     private func hideIcon() {
         iconHideTask?.cancel()
         iconHideTask = nil
-        iconPanel.orderOut(nil)
+
+        guard iconPanel.isVisible else { return }
+
+        iconGeneration &+= 1
+        let generation = iconGeneration
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+
+        guard !reduceMotion else {
+            iconPanel.orderOut(nil)
+            iconPanel.alphaValue = 1
+            iconButton.layer?.setAffineTransform(.identity)
+            return
+        }
+
+        animateIconScale(
+            from: 1,
+            to: 0.88,
+            stiffness: 260,
+            damping: 30,
+            duration: 0.12
+        )
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.12
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            iconPanel.animator().alphaValue = 0
+        } completionHandler: {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.iconGeneration == generation else { return }
+                self.iconPanel.orderOut(nil)
+                self.iconPanel.alphaValue = 1
+                self.iconButton.layer?.setAffineTransform(.identity)
+            }
+        }
+    }
+
+    private func animateIconScale(
+        from: CGFloat,
+        to: CGFloat,
+        stiffness: CGFloat,
+        damping: CGFloat,
+        duration: CFTimeInterval
+    ) {
+        guard let layer = iconButton.layer else { return }
+
+        layer.setAffineTransform(CGAffineTransform(scaleX: to, y: to))
+        let animation = CASpringAnimation(keyPath: "transform.scale")
+        animation.fromValue = from
+        animation.toValue = to
+        animation.mass = 1
+        animation.stiffness = stiffness
+        animation.damping = damping
+        animation.initialVelocity = 0
+        animation.duration = duration
+        layer.add(animation, forKey: "selectionIconScale")
     }
 
     @objc
@@ -519,22 +599,28 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
         iconButton.imagePosition = .imageOnly
         iconButton.imageScaling = .scaleProportionallyDown
         iconButton.image = NSImage(
-            systemSymbolName: "character.bubble",
+            systemSymbolName: "translate",
             accessibilityDescription: L("翻译选中文本")
         )
-        iconButton.image?.size = NSSize(width: 12, height: 12)
-        iconButton.contentTintColor = .white
+        iconButton.image?.size = NSSize(width: 14, height: 14)
+        iconButton.contentTintColor = .labelColor
         iconButton.toolTip = L("翻译选中文本")
         iconButton.setAccessibilityLabel(L("翻译选中文本"))
-        iconButton.frame = NSRect(x: 0, y: 0, width: 26, height: 26)
+        iconButton.frame = NSRect(x: 0, y: 0, width: 24, height: 24)
         iconButton.autoresizingMask = [.width, .height]
         iconButton.wantsLayer = true
-        iconButton.layer?.backgroundColor = NSColor.controlAccentColor.cgColor
-        iconButton.layer?.cornerRadius = 13
+        iconButton.layer?.backgroundColor = NSColor.windowBackgroundColor
+            .withAlphaComponent(0.94)
+            .cgColor
+        iconButton.layer?.cornerRadius = 12
+        iconButton.layer?.borderWidth = 1
+        iconButton.layer?.borderColor = NSColor.separatorColor
+            .withAlphaComponent(0.55)
+            .cgColor
         iconButton.layer?.shadowColor = NSColor.black.cgColor
-        iconButton.layer?.shadowOpacity = 0.20
-        iconButton.layer?.shadowRadius = 5
-        iconButton.layer?.shadowOffset = CGSize(width: 0, height: -2)
+        iconButton.layer?.shadowOpacity = 0.16
+        iconButton.layer?.shadowRadius = 4
+        iconButton.layer?.shadowOffset = CGSize(width: 0, height: -1.5)
         iconPanel.contentView = iconButton
     }
 
@@ -578,8 +664,83 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
 }
 
 private final class SelectionTranslationIconButton: NSButton {
+    private var isHovering = false
+    private var isPressed = false
+    private var trackingArea: NSTrackingArea?
+
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         true
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+
+        if let trackingArea {
+            removeTrackingArea(trackingArea)
+        }
+        let area = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(area)
+        trackingArea = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        isHovering = true
+        updateAppearance()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        isHovering = false
+        updateAppearance()
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        isPressed = true
+        updateAppearance()
+        super.mouseDown(with: event)
+        isPressed = false
+        updateAppearance()
+    }
+
+    private func updateAppearance() {
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let scale: CGFloat = isPressed ? 0.94 : (isHovering ? 1.06 : 1)
+
+        if reduceMotion {
+            layer?.setAffineTransform(
+                CGAffineTransform(scaleX: scale, y: scale)
+            )
+        } else {
+            layer?.setAffineTransform(
+                CGAffineTransform(scaleX: scale, y: scale)
+            )
+            let animation = CASpringAnimation(keyPath: "transform.scale")
+            animation.fromValue = 1
+            animation.toValue = scale
+            animation.mass = 1
+            animation.stiffness = 320
+            animation.damping = 25
+            animation.duration = 0.22
+            layer?.add(animation, forKey: "selectionIconHoverScale")
+        }
+
+        layer?.backgroundColor = (
+            isHovering
+                ? NSColor.controlAccentColor.withAlphaComponent(0.16)
+                : NSColor.windowBackgroundColor.withAlphaComponent(0.94)
+        ).cgColor
+        layer?.borderColor = (
+            isHovering
+                ? NSColor.controlAccentColor.withAlphaComponent(0.35)
+                : NSColor.separatorColor.withAlphaComponent(0.55)
+        ).cgColor
+        layer?.shadowOpacity = isHovering ? 0.22 : 0.16
+        layer?.shadowRadius = isHovering ? 5 : 4
+        contentTintColor = isHovering ? .controlAccentColor : .labelColor
     }
 }
 

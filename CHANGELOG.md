@@ -8,7 +8,11 @@
 - 鼠标划词后显示翻译图标，点击后在选区附近显示紧凑翻译卡片。
 - 通过 Accessibility 读取选中文本，不模拟 ⌘C、不自动复制，也不会抢走用户的复制操作。
 - 全屏应用、安全输入状态、隐私排除应用和 HaoPaste 自身不触发；当前仅支持鼠标划词。
-- 设置中增加辅助功能权限说明与授权入口。
+- 设置中增加辅助功能权限说明与授权入口，并对 ad-hoc 重装后的旧权限给出提示。
+- 划词图标改为更小的系统 `translate` 图标，增加回弹出现 / 消失、悬停和按压反馈。
+- 翻译卡片背景提亮，贴近现有设置窗口和翻译面板；卡片继续显示在选区附近。
+- 扩大 Accessibility 选区读取范围，兼容更多 Chromium / Electron 和文档类应用。
+- 设置页与划词翻译改为无提示凭证检查，避免打开设置或划词时反复弹出钥匙串密码框。
 - 新增划词卡片截图与布局测试；124 个 XCTest。
 
 ### English
@@ -17,7 +21,11 @@
 - Selecting text with the mouse shows a translate icon; clicking it opens a compact translation card near the selection.
 - Selected text is read through Accessibility without simulating ⌘C, copying automatically, or stealing copy operations.
 - Full-screen apps, secure input, excluded apps, and HaoPaste itself are skipped. Mouse selection is supported in this version.
-- Added Accessibility permission guidance and a shortcut to System Settings.
+- Added Accessibility permission guidance and a shortcut to System Settings, including guidance for stale ad-hoc approvals.
+- Switched the selection icon to a smaller native `translate` symbol with spring appearance / dismissal, hover, and press feedback.
+- Lightened the translation card background to match existing settings and translation panels; the card still opens near the selection.
+- Expanded Accessibility selection lookup for more Chromium / Electron and document apps.
+- Changed settings and selection translation to use non-prompting credential checks, avoiding repeated Keychain password dialogs.
 - Added selection-card screenshots and placement tests; 124 XCTest cases.
 
 
