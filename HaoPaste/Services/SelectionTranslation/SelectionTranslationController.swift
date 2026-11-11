@@ -32,6 +32,8 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
     private var selectionCheckTask: Task<Void, Never>?
     private var iconHideTask: Task<Void, Never>?
     private var iconGeneration = 0
+    private var isIconHovered = false
+    private var isHidingIcon = false
     private var workspaceObserver: NSObjectProtocol?
     private var applicationObserver: NSObjectProtocol?
 
@@ -268,6 +270,8 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
         guard let screen = screen(containing: anchor) else { return }
 
         iconGeneration &+= 1
+        isHidingIcon = false
+        iconButton.prepareForShow()
         iconButton.layer?.contentsScale = screen.backingScaleFactor
         iconPanel.contentView?.layer?.contentsScale = screen.backingScaleFactor
         iconPanel.setFrame(
@@ -306,12 +310,47 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
         }
 
         iconHideTask?.cancel()
+        scheduleIconHide(afterMilliseconds: 2_600)
+    }
+
+    private func scheduleIconHide(afterMilliseconds delay: Int = 2_000) {
+        iconHideTask?.cancel()
+        iconHideTask = nil
+
+        guard iconPanel.isVisible, !isIconHovered else { return }
+
         iconHideTask = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(2600))
+            try? await Task.sleep(for: .milliseconds(delay))
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 self?.hideIcon()
             }
+        }
+    }
+
+    private func iconHoverChanged(_ isHovering: Bool) {
+        isIconHovered = isHovering
+
+        guard isHovering else {
+            scheduleIconHide()
+            return
+        }
+
+        iconHideTask?.cancel()
+        iconHideTask = nil
+
+        guard isHidingIcon, !cardPanel.isVisible else { return }
+
+        // The pointer reached the icon just as the hide animation began.
+        // Invalidate the pending order-out and fade the icon back in.
+        iconGeneration &+= 1
+        isHidingIcon = false
+        iconButton.prepareForShow()
+        iconButton.setHovered(true)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.10
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            iconPanel.animator().alphaValue = 1
         }
     }
 
@@ -321,6 +360,10 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
 
         guard iconPanel.isVisible else { return }
 
+        isIconHovered = false
+        isHidingIcon = true
+        iconButton.resetInteraction()
+
         iconGeneration &+= 1
         let generation = iconGeneration
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
@@ -329,6 +372,8 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
             iconPanel.orderOut(nil)
             iconPanel.alphaValue = 1
             iconButton.layer?.setAffineTransform(.identity)
+            iconButton.releaseCursor()
+            isHidingIcon = false
             return
         }
 
@@ -349,6 +394,8 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
                 self.iconPanel.orderOut(nil)
                 self.iconPanel.alphaValue = 1
                 self.iconButton.layer?.setAffineTransform(.identity)
+                self.iconButton.releaseCursor()
+                self.isHidingIcon = false
             }
         }
     }
@@ -601,6 +648,9 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
     private func installIconContent() {
         iconButton.target = self
         iconButton.action = #selector(translateSelection)
+        iconButton.onHoverChanged = { [weak self] isHovering in
+            self?.iconHoverChanged(isHovering)
+        }
         iconButton.isBordered = false
         iconButton.imagePosition = .imageOnly
         iconButton.imageScaling = .scaleProportionallyDown
@@ -687,12 +737,27 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
 }
 
 private final class SelectionTranslationIconButton: NSButton {
+    var onHoverChanged: ((Bool) -> Void)?
+
     private var isHovering = false
     private var isPressed = false
+    private var isCursorPushed = false
+    private var isDismissing = false
     private var trackingArea: NSTrackingArea?
+
+    deinit {
+        releaseCursor()
+    }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         true
+    }
+
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        super.viewWillMove(toWindow: newWindow)
+        if newWindow == nil {
+            releaseCursor()
+        }
     }
 
     override func viewDidChangeEffectiveAppearance() {
@@ -718,7 +783,12 @@ private final class SelectionTranslationIconButton: NSButton {
         }
         let area = NSTrackingArea(
             rect: bounds,
-            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            options: [
+                .mouseEnteredAndExited,
+                .cursorUpdate,
+                .activeAlways,
+                .inVisibleRect
+            ],
             owner: self,
             userInfo: nil
         )
@@ -727,13 +797,27 @@ private final class SelectionTranslationIconButton: NSButton {
     }
 
     override func mouseEntered(with event: NSEvent) {
-        isHovering = true
-        updateAppearance()
+        pushCursor()
+        onHoverChanged?(true)
+        setHovered(true)
+    }
+
+    override func cursorUpdate(with event: NSEvent) {
+        guard !isDismissing else {
+            super.cursorUpdate(with: event)
+            return
+        }
+        if bounds.contains(convert(event.locationInWindow, from: nil)) {
+            NSCursor.pointingHand.set()
+        } else {
+            super.cursorUpdate(with: event)
+        }
     }
 
     override func mouseExited(with event: NSEvent) {
-        isHovering = false
-        updateAppearance()
+        releaseCursor()
+        setHovered(false)
+        onHoverChanged?(false)
     }
 
     override func mouseDown(with event: NSEvent) {
@@ -742,6 +826,36 @@ private final class SelectionTranslationIconButton: NSButton {
         super.mouseDown(with: event)
         isPressed = false
         updateAppearance()
+    }
+
+    func setHovered(_ hovering: Bool) {
+        isHovering = hovering
+        updateAppearance()
+    }
+
+    func prepareForShow() {
+        isDismissing = false
+    }
+
+    func resetInteraction() {
+        isDismissing = true
+        isHovering = false
+        isPressed = false
+        releaseCursor()
+        contentTintColor = .labelColor
+        updateHalo()
+    }
+
+    func releaseCursor() {
+        guard isCursorPushed else { return }
+        NSCursor.pop()
+        isCursorPushed = false
+    }
+
+    private func pushCursor() {
+        guard !isCursorPushed else { return }
+        NSCursor.pointingHand.push()
+        isCursorPushed = true
     }
 
     func updateHalo() {
@@ -759,6 +873,8 @@ private final class SelectionTranslationIconButton: NSButton {
     }
 
     private func updateAppearance() {
+        guard !isDismissing else { return }
+
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         let target: CGFloat = isPressed ? 0.92 : (isHovering ? 1.06 : 1)
 

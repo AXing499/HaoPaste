@@ -128,6 +128,7 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 - Enable it in **Settings → Smart → Selection Translation**; off by default.
 - Requires Accessibility permission.
 - Select text with the mouse to show a small translate icon. Selected text is read and translated only after clicking the icon.
+- The icon stays visible while hovered, shows a pointing-hand cursor, and hides 2 seconds after the pointer leaves.
 - The translation card opens near the selection instead of being fixed to the screen center.
 - It never simulates `⌘C` or copies automatically; normal copy shortcuts keep working.
 - Skipped in full-screen apps, secure input, excluded apps, and HaoPaste itself.

@@ -10,6 +10,7 @@
 - 全屏应用、安全输入状态、隐私排除应用和 HaoPaste 自身不触发；当前仅支持鼠标划词。
 - 设置中增加辅助功能权限说明与授权入口，并对 ad-hoc 重装后的旧权限给出提示。
 - 划词图标改为无底色、无边框的更小 `translate` 图形，改用原生符号渲染以提升 Retina 清晰度；扩大透明点击区域，避免悬停缩放被裁剪，并增加回弹出现 / 消失、悬停和按压反馈。
+- 划词图标在鼠标悬停时暂停自动消失，移开鼠标后 2 秒再消失；悬停时显示手型光标，明确表示可以点击。
 - 图片条目的快捷操作改为「提取文字」；识图窗口内再点击「翻译」，不再默认识图后自动翻译。
 - 划词卡片、预览、识图、批量识图与翻译弹框统一使用一致的不透明系统表面，划词卡片与识图弹框颜色完全一致；划词卡片改用系统原生窗口阴影，四周边缘更平滑。
 - 扩大 Accessibility 选区读取范围，兼容更多 Chromium / Electron 和文档类应用。
@@ -24,6 +25,7 @@
 - Full-screen apps, secure input, excluded apps, and HaoPaste itself are skipped. Mouse selection is supported in this version.
 - Added Accessibility permission guidance and a shortcut to System Settings, including guidance for stale ad-hoc approvals.
 - Switched the selection icon to a smaller, chrome-free native `translate` glyph rendered as a native symbol for sharper Retina output; enlarged the transparent hit area so hover scaling never clips, and added spring appearance / dismissal, hover, and press feedback.
+- The translation icon now stays visible while the pointer hovers over it and disappears 2 seconds after the pointer leaves; hovering also shows the pointing-hand cursor.
 - Changed the image quick action to **Extract Text**; translation is now a separate action in the OCR window instead of running automatically after recognition.
 - Unified the selection card, preview, OCR, batch OCR, and translation panes on the same opaque system surface, so the selection card and OCR pane match exactly; the selection card now uses the native window shadow for smooth edges.
 - Expanded Accessibility selection lookup for more Chromium / Electron and document apps.
