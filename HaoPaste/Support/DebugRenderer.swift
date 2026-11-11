@@ -381,7 +381,7 @@ enum DebugRenderer {
         window.orderFrontRegardless()
         renderWindow = window
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             hostingView.layoutSubtreeIfNeeded()
 
             guard

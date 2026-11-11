@@ -8,6 +8,20 @@
 import AppKit
 import SwiftUI
 
+enum DebugMotion {
+    /// Screenshot/UI snapshot renders can disable animations so captures are
+    /// byte-for-byte deterministic.
+    static var disablesAnimations: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.environment[
+            "HAOPASTE_RENDER_DISABLE_ANIMATIONS"
+        ] == "1"
+        #else
+        false
+        #endif
+    }
+}
+
 enum Theme {
     // Geometry
     static let panelCornerRadius: CGFloat = 16
@@ -40,6 +54,7 @@ enum Theme {
     static let spring = Animation.spring(response: 0.25, dampingFraction: 0.8)
     static let gentleSpring = Animation.spring(response: 0.32, dampingFraction: 0.86)
     static let quickSpring = Animation.spring(response: 0.2, dampingFraction: 0.76)
+    static let shelfDropSpring = Animation.spring(response: 0.34, dampingFraction: 0.72)
 
     // Borders
     static let hairlineColor = Color.primary.opacity(0.08)

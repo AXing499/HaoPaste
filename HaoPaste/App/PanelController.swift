@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import QuartzCore
 import SwiftUI
 
 @MainActor
@@ -145,6 +146,8 @@ final class PanelController: NSObject, NSWindowDelegate {
         scheduleAutoTranslationIfNeeded()
 
         if !reduceMotion {
+            addPresentationScaleAnimation()
+
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = 0.18
                 context.timingFunction = CAMediaTimingFunction(
@@ -159,6 +162,9 @@ final class PanelController: NSObject, NSWindowDelegate {
     func hide(restoreFocus: Bool = true) {
         guard panel.isVisible, !isHiding else { return }
 
+        panel.contentView?.layer?.removeAnimation(
+            forKey: "presentationScale"
+        )
         pendingCopyHide?.cancel()
         pendingCopyHide = nil
 
@@ -202,6 +208,23 @@ final class PanelController: NSObject, NSWindowDelegate {
         } completionHandler: {
             DispatchQueue.main.async(execute: finish)
         }
+    }
+
+    private func addPresentationScaleAnimation() {
+        guard let layer = panel.contentView?.layer else { return }
+
+        layer.removeAnimation(forKey: "presentationScale")
+        layer.setAffineTransform(.identity)
+
+        let animation = CASpringAnimation(keyPath: "transform.scale")
+        animation.fromValue = 0.98
+        animation.toValue = 1.0
+        animation.mass = 1
+        animation.stiffness = 230
+        animation.damping = 26
+        animation.initialVelocity = 0
+        animation.duration = 0.36
+        layer.add(animation, forKey: "presentationScale")
     }
 
     private func scheduleAutoTranslationIfNeeded() {

@@ -64,7 +64,12 @@ struct ClipboardShelfView: View {
     let onMaxScrollOffsetChanged: (CGFloat) -> Void
     let onHideShelf: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var filter: ClipboardShelfFilter = .all
+
+    private var animates: Bool {
+        !reduceMotion && !DebugMotion.disablesAnimations
+    }
     @State private var copiedID: UUID?
     @State private var scrollHintVisible = ProcessInfo.processInfo.environment[
         "HAOPASTE_RENDER_SHELF_SCROLL"
@@ -197,11 +202,11 @@ struct ClipboardShelfView: View {
                             end: sideRack.upperBound
                         )
                         .animation(
-                            Theme.gentleSpring,
+                            animates ? Theme.gentleSpring : nil,
                             value: sideRack.lowerBound
                         )
                         .animation(
-                            Theme.gentleSpring,
+                            animates ? Theme.gentleSpring : nil,
                             value: sideRack.upperBound
                         )
 
@@ -225,8 +230,14 @@ struct ClipboardShelfView: View {
                             span: topRack.upperBound - topRack.lowerBound
                         )
                     )
-                    .animation(Theme.gentleSpring, value: topRack.lowerBound)
-                    .animation(Theme.gentleSpring, value: topRack.upperBound)
+                    .animation(
+                        animates ? Theme.gentleSpring : nil,
+                        value: topRack.lowerBound
+                    )
+                    .animation(
+                        animates ? Theme.gentleSpring : nil,
+                        value: topRack.upperBound
+                    )
                 }
 
                 if count == 0 {
@@ -371,12 +382,12 @@ struct ClipboardShelfView: View {
             .onChange(of: scrollOffset) { _, _ in
                 flashScrollHint()
             }
-            .animation(Theme.gentleSpring, value: count)
+            .animation(animates ? Theme.gentleSpring : nil, value: count)
             // A new generated copy usually replaces the oldest card, so the
             // count stays the same. Animate by item identity as well so the
             // insertion still drops the new card onto the line smoothly.
             .animation(
-                Theme.gentleSpring,
+                animates ? Theme.shelfDropSpring : nil,
                 value: loadedItems.map(\.id)
             )
         }
@@ -386,12 +397,12 @@ struct ClipboardShelfView: View {
     private func flashScrollHint() {
         let token = UUID()
         scrollHintToken = token
-        withAnimation(.easeOut(duration: 0.12)) {
+        withAnimation(animates ? .easeOut(duration: 0.12) : nil) {
             scrollHintVisible = true
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) {
             guard scrollHintToken == token else { return }
-            withAnimation(.easeIn(duration: 0.35)) {
+            withAnimation(animates ? .easeIn(duration: 0.35) : nil) {
                 scrollHintVisible = false
             }
         }
@@ -450,7 +461,7 @@ struct ClipboardShelfView: View {
     }
 
     private func togglePin(_ item: ClipboardItem) {
-        withAnimation(Theme.spring) {
+        withAnimation(animates ? Theme.spring : nil) {
             manager.togglePin(item)
         }
     }
@@ -462,11 +473,15 @@ struct ClipboardShelfView: View {
     }
 
     private func flashCopied(_ item: ClipboardItem) {
-        copiedID = item.id
+        withAnimation(animates ? Theme.quickSpring : nil) {
+            copiedID = item.id
+        }
         Task {
             try? await Task.sleep(for: .milliseconds(900))
             if copiedID == item.id {
-                copiedID = nil
+                withAnimation(animates ? Theme.spring : nil) {
+                    copiedID = nil
+                }
             }
         }
     }
@@ -815,6 +830,12 @@ private struct ShelfFilterBar: View {
     let totalCount: Int
     let onSelect: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var animates: Bool {
+        !reduceMotion && !DebugMotion.disablesAnimations
+    }
+
     var body: some View {
         HStack(spacing: 3) {
             ForEach(ClipboardShelfFilter.allCases) { option in
@@ -861,7 +882,7 @@ private struct ShelfFilterBar: View {
                 .monospacedDigit()
                 .foregroundStyle(.tertiary)
                 .contentTransition(.numericText())
-                .animation(Theme.quickSpring, value: countLabel)
+                .animation(animates ? Theme.quickSpring : nil, value: countLabel)
                 .padding(.leading, 4)
                 .padding(.trailing, 2)
         }
@@ -878,13 +899,13 @@ private struct ShelfFilterBar: View {
                 .allowsHitTesting(false)
         }
         .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 3)
-        .animation(Theme.gentleSpring, value: countLabel)
+        .animation(animates ? Theme.gentleSpring : nil, value: countLabel)
     }
 
     private func select(_ option: ClipboardShelfFilter) {
         guard filter != option else { return }
         onSelect()
-        withAnimation(Theme.gentleSpring) {
+        withAnimation(animates ? Theme.gentleSpring : nil) {
             filter = option
         }
     }

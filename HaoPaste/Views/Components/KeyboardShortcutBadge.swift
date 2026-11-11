@@ -50,6 +50,7 @@ struct FooterShortcutHint: View {
 struct RoundIconButton: View {
     let symbolName: String
     let help: String
+    var bounceValue: Bool? = nil
     let action: () -> Void
 
     @State private var isHovering = false
@@ -62,6 +63,11 @@ struct RoundIconButton: View {
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(isHovering ? Color.primary : Color.secondary)
                 .frame(width: 22, height: 22)
+                .symbolEffect(
+                    .bounce,
+                    options: .nonRepeating,
+                    value: bounceValue ?? false
+                )
                 .background {
                     RoundedRectangle(cornerRadius: 5.5, style: .continuous)
                         .fill(Color.primary.opacity(isHovering ? 0.08 : 0))

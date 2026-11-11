@@ -24,6 +24,8 @@ struct ContentView: View {
 
     @FocusState private var isSearchFocused: Bool
     @State private var snippetEditor: SnippetEditorTarget?
+    @State private var copiedItemID: UUID?
+    @State private var copyFeedbackToken = UUID()
 
     private var isSnippetMode: Bool {
         state.filter == .snippets
@@ -144,7 +146,7 @@ struct ContentView: View {
                         }
                     },
                     onCopy: {
-                        onCopy(previewItem)
+                        copyItem(previewItem)
                     },
                     onCopyText: onCopyText,
                     onOpenURL: { url in
@@ -492,6 +494,7 @@ struct ContentView: View {
                             isSelected: state.isItemSelected(item.id),
                             isMultiSelected: state.isMultiSelecting
                                 && state.selectedIDs.contains(item.id),
+                            isCopied: copiedItemID == item.id,
                             onRowClick: {
                                 if NSEvent.modifierFlags.contains(.command) {
                                     withAnimation(reduceMotion ? nil : Theme.spring) {
@@ -502,11 +505,11 @@ struct ContentView: View {
                                         state.extendSelection(to: item, in: visibleItems)
                                     }
                                 } else {
-                                    onCopy(item)
+                                    copyItem(item)
                                 }
                             },
                             onCopy: {
-                                onCopy(item)
+                                copyItem(item)
                             },
                             onCopyText: onCopyText,
                             onCopyPlainText: {
@@ -864,6 +867,23 @@ struct ContentView: View {
         )
     }
 
+    private func copyItem(_ item: ClipboardItem) {
+        onCopy(item)
+
+        let token = UUID()
+        copyFeedbackToken = token
+        withAnimation(reduceMotion ? nil : Theme.quickSpring) {
+            copiedItemID = item.id
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            guard copyFeedbackToken == token else { return }
+            withAnimation(reduceMotion ? nil : Theme.spring) {
+                copiedItemID = nil
+            }
+        }
+    }
+
     private func copySelectedEntry() {
         if isSnippetMode {
             guard
@@ -882,7 +902,7 @@ struct ContentView: View {
         guard let item = state.selectedItem(in: visibleItems) ?? visibleItems.first else {
             return
         }
-        onCopy(item)
+        copyItem(item)
     }
 }
 

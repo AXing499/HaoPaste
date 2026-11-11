@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.14.2 — 2026-11-11
+
+### 中文
+
+- 复制成功后，主面板条目与挂架卡片显示勾选弹跳和轻微缩放反馈。
+- 置顶 / 取消置顶增加 SF Symbol 回弹反馈。
+- 主面板打开增加 0.98 → 1.0 的短弹簧缩放，保留原有上滑淡入。
+- 挂架新卡片落入使用更轻快的弹簧回弹。
+- 新增动效均尊重「减弱动态效果」；截图渲染可关闭动画以保证基线稳定。
+
+### English
+
+- Added a checkmark bounce and subtle scale feedback after copying in the panel and shelf.
+- Added SF Symbol bounce feedback for pin / unpin.
+- Added a short 0.98 → 1.0 spring scale when opening the panel, alongside the existing slide and fade.
+- Gave new shelf cards a lighter spring landing animation.
+- All new motion respects Reduce Motion; screenshot renders can disable animations for stable baselines.
+
+
 ## 0.14.1 — 2026-11-11
 
 ### 中文

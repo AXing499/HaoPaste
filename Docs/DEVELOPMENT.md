@@ -138,8 +138,8 @@ make dmg
 输出：
 
 ```text
-dist/HaoPaste-0.14.1.dmg                 # 安装包（app + Applications 快捷方式）
-dist/HaoPaste-0.14.1.dmg.sha256          # SHA-256 校验
+dist/HaoPaste-0.14.2.dmg                 # 安装包（app + Applications 快捷方式）
+dist/HaoPaste-0.14.2.dmg.sha256          # SHA-256 校验
 ```
 
 > `dist/` 只保留 DMG，不再额外放一份 `.app`，避免 Spotlight / Launch Services 中出现多个 HaoPaste 副本。可运行的 Release 产物位于 `.build/release/Build/Products/Release/HaoPaste.app`。
@@ -186,11 +186,11 @@ codesign --force --deep --options runtime --timestamp \
 5. 提交 Apple Notary Service 并 stapling：
 
 ```bash
-xcrun notarytool submit "dist/HaoPaste-0.14.1.dmg" \
+xcrun notarytool submit "dist/HaoPaste-0.14.2.dmg" \
   --keychain-profile "haopaste-notary" --wait
 
-xcrun stapler staple "dist/HaoPaste-0.14.1.dmg"
-xcrun stapler validate "dist/HaoPaste-0.14.1.dmg"
+xcrun stapler staple "dist/HaoPaste-0.14.2.dmg"
+xcrun stapler validate "dist/HaoPaste-0.14.2.dmg"
 ```
 
 也可以对 `.app` 先公证再打包（Apple 推荐流程根据分发方式调整）。需要 Apple Developer Program 账号。
@@ -200,8 +200,8 @@ xcrun stapler validate "dist/HaoPaste-0.14.1.dmg"
 版本号位于 `project.yml`：
 
 ```yaml
-MARKETING_VERSION: "0.14.1"
-CURRENT_PROJECT_VERSION: "47"
+MARKETING_VERSION: "0.14.2"
+CURRENT_PROJECT_VERSION: "48"
 ```
 
 修改后运行 `make project` 再构建。发布前检查：
@@ -351,7 +351,7 @@ defaults delete com.hao.HaoPaste 2>/dev/null || true
     --storage /tmp/haopaste-target --import-history /tmp/haopaste-backup.zip
   ```
 - **截图渲染**：`DebugRenderer` 使用真实的 `NSHostingView` + 窗口缓存，避免 `ImageRenderer` 对 TextField / LazyVStack 的渲染限制。不要删除这段 Debug 工具后继续使用 README 中的渲染命令。
-- **中英文截图**：`make screenshots` 会用固定的渲染时间生成全部 `Docs/screenshot-*.png` 与 `Docs/screenshot-*-en.png`；`make verify-screenshots` 会把渲染结果与已提交基线逐字节比较。OCR 截图因 TextEditor 光标闪烁会跳过自动比较。
+- **中英文截图**：`make screenshots` 会用固定的渲染时间并关闭动画生成全部 `Docs/screenshot-*.png` 与 `Docs/screenshot-*-en.png`；`make verify-screenshots` 会把渲染结果与已提交基线逐字节比较。OCR 截图因 TextEditor 光标闪烁会跳过自动比较。
 - **截图语言**：脚本通过 Debug 参数 `--language en|zh-Hans` 强制语言，不受开发者本机的应用语言设置影响；`HAOPASTE_RENDER_FIXED_NOW` 用于固定相对时间。
 - **DMG 未提交到 Git**：`dist/` 被 `.gitignore` 排除。每次发布请重新运行 `make dmg`。
 - **应用图标**：修改 `Scripts/generate-app-icon.swift` 后重新生成 10 个尺寸，或直接替换 `AppIcon.appiconset` 中的 PNG。

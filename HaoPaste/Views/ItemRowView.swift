@@ -16,6 +16,7 @@ struct ItemRowView: View {
     let dragProvider: () -> NSItemProvider
     let isSelected: Bool
     let isMultiSelected: Bool
+    let isCopied: Bool
     let onRowClick: () -> Void
     let onCopy: () -> Void
     let onCopyText: (String) -> Void
@@ -29,6 +30,7 @@ struct ItemRowView: View {
     let onDelete: () -> Void
 
     @State private var isHovering = false
+    @State private var copyPulse = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let iconSize: CGFloat = 32
@@ -76,7 +78,15 @@ struct ItemRowView: View {
             x: 0,
             y: 4
         )
+        .scaleEffect(isCopied && !reduceMotion ? 1.01 : 1)
         .offset(y: isHovering && !isSelected && !reduceMotion ? -1 : 0)
+        .animation(reduceMotion ? nil : Theme.quickSpring, value: isCopied)
+        .onAppear {
+            if isCopied { copyPulse.toggle() }
+        }
+        .onChange(of: isCopied) { _, copied in
+            if copied { copyPulse.toggle() }
+        }
         .contentShape(Theme.cardShape)
         .onHover { hovering in
             isHovering = hovering
@@ -301,11 +311,29 @@ struct ItemRowView: View {
                 .lineLimit(1)
                 .truncationMode(.tail)
 
+            if isCopied {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(Color.accentColor)
+                    .symbolEffect(
+                        .bounce,
+                        options: .nonRepeating,
+                        value: copyPulse
+                    )
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
+            }
+
             if item.isPinned {
                 Image(systemName: "pin.fill")
                     .font(.system(size: 8.5, weight: .semibold, design: .rounded))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(Color.accentColor)
+                    .symbolEffect(
+                        .bounce,
+                        options: .nonRepeating,
+                        value: item.isPinned
+                    )
                     .transition(.scale(scale: 0.6).combined(with: .opacity))
             }
 
@@ -417,6 +445,7 @@ struct ItemRowView: View {
                 RoundIconButton(
                     symbolName: item.isPinned ? "pin.slash" : "pin",
                     help: item.isPinned ? L("取消置顶") : L("置顶"),
+                    bounceValue: item.isPinned,
                     action: onTogglePin
                 )
 
@@ -514,6 +543,9 @@ struct ItemRowView: View {
         }
         if let sourceApp = item.sourceApp {
             parts.append(L("来自 %@", sourceApp.name))
+        }
+        if isCopied {
+            parts.append(L("已复制"))
         }
         parts.append(RelativeTime.string(from: item.createdAt))
         return parts.joined(separator: L("，"))

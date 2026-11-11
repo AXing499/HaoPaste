@@ -2,7 +2,7 @@
 
 English | [简体中文](README.md)
 
-Current version: **v0.14.1**
+Current version: **v0.14.2**
 
 A native, fast, keyboard-first clipboard manager for macOS. Press `⌥⌘V` in any app to open a borderless floating panel, then search, select, and copy without breaking your flow.
 
@@ -22,11 +22,11 @@ A native, fast, keyboard-first clipboard manager for macOS. Press `⌥⌘V` in a
 
    ```bash
    make dmg
-   # dist/HaoPaste-0.14.1.dmg
-   # dist/HaoPaste-0.14.1.dmg.sha256
+   # dist/HaoPaste-0.14.2.dmg
+   # dist/HaoPaste-0.14.2.dmg.sha256
    ```
 
-2. Open `HaoPaste-0.14.1.dmg`, then drag **HaoPaste** into **Applications**.
+2. Open `HaoPaste-0.14.2.dmg`, then drag **HaoPaste** into **Applications**.
 3. If macOS says the developer cannot be verified:
    - Open **System Settings → Privacy & Security**
    - Under **Security**, find **HaoPaste**
@@ -190,7 +190,7 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 - **Safe filtering**: ignores `org.nspasteboard.ConcealedType`, transient types, generated types, and private password-manager types.
 - **Deduplication**: identical content refreshes the existing record and moves it to the top; pinned state is preserved.
 - **History limit**: unpinned history defaults to 200 items with FIFO eviction. Configure it in Settings; pinned items are never removed automatically.
-- **Native details**: follows light / dark appearance and accent color, respects Reduce Motion, and uses hierarchical SF Symbols.
+- **Native details**: follows light / dark appearance and accent color; copy success and pin actions use subtle spring / SF Symbol bounce feedback, Reduce Motion is respected, and icons use hierarchical SF Symbols.
 
 Clicking an item only copies it. HaoPaste does not paste automatically, so it needs no Accessibility permission.
 

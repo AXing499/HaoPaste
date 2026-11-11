@@ -31,7 +31,12 @@ struct ShelfCardView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isFalling = false
+
+    private var animates: Bool {
+        !reduceMotion && !DebugMotion.disablesAnimations
+    }
     @State private var isClipDropping = false
+    @State private var copyPulse = false
 
     private static let bodyOffset = ClipboardShelfLayout.bodyOffset
 
@@ -74,11 +79,11 @@ struct ShelfCardView: View {
                 }
             }
             .scaleEffect(
-                isHovering && !reduceMotion ? 1.03 : 1,
+                isHovering && animates ? 1.03 : 1,
                 anchor: rotationAnchor
             )
             .animation(
-                reduceMotion ? nil : Theme.spring,
+                animates ? Theme.spring : nil,
                 value: isHovering
             )
             .offset(
@@ -91,7 +96,7 @@ struct ShelfCardView: View {
             )
             .opacity(isFalling ? 0 : 1)
             .animation(
-                reduceMotion ? nil : .easeIn(duration: fallDuration),
+                animates ? .easeIn(duration: fallDuration) : nil,
                 value: isFalling
             )
 
@@ -110,6 +115,11 @@ struct ShelfCardView: View {
             height: cardHeight,
             alignment: .top
         )
+        .scaleEffect(isCopied && animates ? 1.015 : 1)
+        .animation(animates ? Theme.spring : nil, value: isCopied)
+        .onChange(of: isCopied) { _, copied in
+            if copied { copyPulse.toggle() }
+        }
         .allowsHitTesting(!isFalling && !isClipDropping)
         .help(L("点击复制"))
         .accessibilityLabel("\(item.formatBadge)，\(item.displayTitle)")
@@ -346,6 +356,11 @@ struct ShelfCardView: View {
                         .font(.system(size: 22, weight: .semibold, design: .rounded))
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(Color.accentColor)
+                        .symbolEffect(
+                            .bounce,
+                            options: .nonRepeating,
+                            value: copyPulse
+                        )
                     Text(L("已复制"))
                         .font(.system(size: 10.5, weight: .semibold, design: .rounded))
                         .foregroundStyle(Color.accentColor)
@@ -380,7 +395,7 @@ struct ShelfCardView: View {
             x: 0,
             y: isHovering ? 7 : 3
         )
-        .animation(reduceMotion ? nil : Theme.spring, value: isHovering)
+        .animation(animates ? Theme.spring : nil, value: isHovering)
     }
 
     @ViewBuilder
@@ -555,22 +570,22 @@ struct ShelfCardView: View {
         let dropDelay = bodyDuration * 0.5
 
         withAnimation(
-            reduceMotion ? nil : .easeIn(duration: bodyDuration)
+            animates ? .easeIn(duration: bodyDuration) : nil
         ) {
             isFalling = true
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + dropDelay) {
             withAnimation(
-                reduceMotion ? nil : .easeIn(duration: dropDuration)
+                animates ? .easeIn(duration: dropDuration) : nil
             ) {
                 isClipDropping = true
             }
         }
 
-        let total = reduceMotion
-            ? 0.1
-            : max(bodyDuration, dropDelay + dropDuration) + 0.05
+        let total = animates
+            ? max(bodyDuration, dropDelay + dropDuration) + 0.05
+            : 0.1
         DispatchQueue.main.asyncAfter(deadline: .now() + total) {
             onDelete()
         }

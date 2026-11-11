@@ -17,6 +17,7 @@ APP=".build/Build/Products/Debug/HaoPaste.app/Contents/MacOS/HaoPaste"
 OUTPUT_DIR="${HAOPASTE_SCREENSHOT_OUTPUT:-Docs}"
 mkdir -p "$OUTPUT_DIR"
 export HAOPASTE_RENDER_FIXED_NOW="${HAOPASTE_RENDER_FIXED_NOW:-1794326400}"
+export HAOPASTE_RENDER_DISABLE_ANIMATIONS=1
 if [[ ! -x "$APP" ]]; then
     echo "Debug app not found at $APP; run make build first." >&2
     exit 1

@@ -58,7 +58,7 @@ CI 不创建 Release，也不上传 DMG。
 
 触发条件：
 
-- 推送 `v*` tag，例如 `v0.14.1`
+- 推送 `v*` tag，例如 `v0.14.2`
 
 执行内容：
 
@@ -84,8 +84,8 @@ CI 不创建 Release，也不上传 DMG。
 ```bash
 # 1. 在 CHANGELOG.md 添加与版本号一致的中英双语章节
 # 2. 更新 project.yml：
-#    MARKETING_VERSION: "0.14.1"
-#    CURRENT_PROJECT_VERSION: "47"
+#    MARKETING_VERSION: "0.14.2"
+#    CURRENT_PROJECT_VERSION: "48"
 xcodegen generate
 
 # 3. 本地验证
@@ -94,12 +94,12 @@ make verify-screenshots
 
 # 4. 提交并推送 main
 git add .
-git commit -m "release: v0.14.1"
+git commit -m "release: v0.14.2"
 git push origin main
 
 # 5. 打 tag 并推送，触发自动发布
-git tag -a v0.14.1 -m "HaoPaste 0.14.1"
-git push origin v0.14.1
+git tag -a v0.14.2 -m "HaoPaste 0.14.2"
+git push origin v0.14.2
 ```
 
 查看与验证：
@@ -107,7 +107,7 @@ git push origin v0.14.1
 ```bash
 gh run list --workflow Release --limit 3
 gh run watch <run-id> --exit-status
-gh release view v0.14.1 --json url,assets,body
+gh release view v0.14.2 --json url,assets,body
 ```
 
 > 如果 Release 工作流失败，先修复代码并推送 `main`，再重新打 tag。已经发布但需要修补时，可以强制移动 tag 到新提交后重新触发工作流；工作流会更新已有 Release 并覆盖上传资产。
@@ -160,7 +160,7 @@ make verify-screenshots
 
 - 构建 Debug app
 - 使用 `--language en` / `--language zh-Hans` 强制截图语言
-- 使用 `HAOPASTE_RENDER_FIXED_NOW` 固定相对时间，保证可重复
+- 使用 `HAOPASTE_RENDER_FIXED_NOW` 固定相对时间，并关闭动画（`HAOPASTE_RENDER_DISABLE_ANIMATIONS=1`），保证可重复
 - 从 `DemoContent.swift` / `DebugRenderer.swift` 输出对应语言的示例数据
 
 OCR 截图因为 `TextEditor` 光标闪烁，`verify-screenshots` 会跳过逐字节比较，但仍会生成。
