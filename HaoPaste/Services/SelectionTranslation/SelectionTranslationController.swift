@@ -34,6 +34,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
     private var iconGeneration = 0
     private var isIconHovered = false
     private var isHidingIcon = false
+    private var suppressSelectionCheckUntil = Date.distantPast
     private var workspaceObserver: NSObjectProtocol?
     private var applicationObserver: NSObjectProtocol?
 
@@ -177,7 +178,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
             matching: [.keyDown]
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.dismissForOutsideInteraction()
+                self?.dismissForOutsideInteraction(protectIconFromMouse: false)
             }
         }
     }
@@ -194,7 +195,14 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
         cancelSelectionCheck()
     }
 
-    private func dismissForOutsideInteraction() {
+    private func dismissForOutsideInteraction(
+        protectIconFromMouse: Bool = true
+    ) {
+        if protectIconFromMouse,
+           iconPanel.isVisible,
+           iconPanel.frame.contains(NSEvent.mouseLocation) {
+            return
+        }
         cancelSelectionCheck()
         hideIcon()
     }
@@ -202,11 +210,14 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
     // MARK: - Selection detection
 
     private func handleMouseUp(_ event: NSEvent) {
+        let mouseLocation = NSEvent.mouseLocation
         guard
             isEnabled,
             SelectionTranslationAccess.isTrusted,
             !SelectionTextReader.isSecureInputEnabled(),
             !cardPanel.isVisible,
+            Date() >= suppressSelectionCheckUntil,
+            !(iconPanel.isVisible && iconPanel.frame.contains(mouseLocation)),
             let app = NSWorkspace.shared.frontmostApplication,
             app.processIdentifier != ProcessInfo.processInfo.processIdentifier
         else {
@@ -220,7 +231,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
         guard !settings.isSourceExcluded(source) else { return }
         guard !SelectionTextReader.isFullscreen(app) else { return }
 
-        let anchor = NSEvent.mouseLocation
+        let anchor = mouseLocation
         guard let screen = screen(containing: anchor) else { return }
         guard screen.visibleFrame.contains(anchor) else { return }
 
@@ -424,6 +435,8 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
     @objc
     private func translateSelection() {
         guard !selectedText.isEmpty else { return }
+
+        suppressSelectionCheckUntil = Date().addingTimeInterval(0.4)
         hideIcon()
         cancelSelectionCheck()
 

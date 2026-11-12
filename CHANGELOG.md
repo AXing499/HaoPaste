@@ -38,12 +38,14 @@
 ### 中文
 
 - 划词图标改为自绘的方向性翻译气泡：保持 A / 文 正向，并根据图标相对选区的位置让气泡尾巴朝向下、上、左或右；优先显示在选区上方，空间不足时依次回退到下方、右侧或左侧。
+- 调整图标比例，加宽 A 气泡、缩短尾巴，并修正点击图标偶发不弹出翻译的问题。
 - 移除无效的手型光标尝试；保留悬停高亮与轻微缩放反馈。
 - 新增方向性图标与四向布局测试；128 个 XCTest。
 
 ### English
 
 - Replaced the fixed-tail SF Symbol with a custom directional translate glyph: the A / 文 bubbles stay upright while the tail points down, up, left, or right based on the icon's position relative to the selection. The icon prefers above, then below, right, and left.
+- Rebalanced the icon proportions, widened the A bubble, shortened the tail, and fixed an occasional failure where clicking the icon did not open translation.
 - Removed the ineffective pointing-hand cursor attempt; hover highlight and slight scaling remain.
 - Added directional icon and four-way placement tests; 128 XCTest cases.
 

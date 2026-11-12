@@ -43,26 +43,26 @@ enum SelectionTranslationIconRenderer {
     }
 
     private static func draw(direction: SelectionTranslationIconDirection) {
-        let backRect = NSRect(x: 3.5, y: 9.5, width: 12, height: 12.5)
-        let frontRect = NSRect(x: 12.0, y: 6.0, width: 13, height: 13)
+        let backRect = NSRect(x: 2.8, y: 9.5, width: 13.5, height: 12.0)
+        let frontRect = NSRect(x: 13.2, y: 6.0, width: 12.8, height: 12.5)
         let back = NSBezierPath(
             roundedRect: backRect,
-            xRadius: 3.4,
-            yRadius: 3.4
+            xRadius: 3.3,
+            yRadius: 3.3
         )
         let front = NSBezierPath(
             roundedRect: frontRect,
-            xRadius: 3.8,
-            yRadius: 3.8
+            xRadius: 3.7,
+            yRadius: 3.7
         )
 
         NSColor.black.setFill()
         back.fill()
 
         let gap = NSBezierPath(
-            roundedRect: frontRect.insetBy(dx: -1.5, dy: -1.5),
-            xRadius: 4.8,
-            yRadius: 4.8
+            roundedRect: frontRect.insetBy(dx: -1.4, dy: -1.4),
+            xRadius: 4.6,
+            yRadius: 4.6
         )
         setCompositing(.destinationOut)
         gap.fill()
@@ -73,32 +73,32 @@ enum SelectionTranslationIconRenderer {
         switch direction {
         case .down:
             tail(
-                NSPoint(x: 18.8, y: 6.4),
-                NSPoint(x: 22.5, y: 6.4),
-                NSPoint(x: 20.0, y: 2.7)
+                NSPoint(x: 19.8, y: 6.3),
+                NSPoint(x: 23.2, y: 6.3),
+                NSPoint(x: 21.5, y: 3.0)
             )
         case .up:
             tail(
-                NSPoint(x: 18.8, y: 18.7),
-                NSPoint(x: 22.5, y: 18.7),
-                NSPoint(x: 20.0, y: 22.6)
+                NSPoint(x: 19.8, y: 18.5),
+                NSPoint(x: 23.2, y: 18.5),
+                NSPoint(x: 21.5, y: 21.8)
             )
         case .left:
             tail(
-                NSPoint(x: 4.1, y: 11.8),
-                NSPoint(x: 4.1, y: 15.4),
-                NSPoint(x: 1.0, y: 12.4)
+                NSPoint(x: 3.0, y: 11.5),
+                NSPoint(x: 3.0, y: 15.0),
+                NSPoint(x: 0.5, y: 12.2)
             )
         case .right:
             tail(
-                NSPoint(x: 24.4, y: 9.8),
-                NSPoint(x: 24.4, y: 13.4),
-                NSPoint(x: 26.6, y: 10.2)
+                NSPoint(x: 26.0, y: 9.8),
+                NSPoint(x: 26.0, y: 13.3),
+                NSPoint(x: 27.8, y: 10.2)
             )
         }
 
-        glyph("A", center: NSPoint(x: 7.2, y: 16.9), size: 8.6)
-        glyph("文", center: NSPoint(x: 18.5, y: 12.5), size: 9.2)
+        glyph("A", center: NSPoint(x: 7.3, y: 15.7), size: 8.6)
+        glyph("文", center: NSPoint(x: 19.6, y: 12.2), size: 9.0)
     }
 
     private static func tail(_ a: NSPoint, _ b: NSPoint, _ tip: NSPoint) {
@@ -109,7 +109,7 @@ enum SelectionTranslationIconRenderer {
         path.close()
         path.lineJoinStyle = .round
         path.lineCapStyle = .round
-        path.lineWidth = 1.5
+        path.lineWidth = 1.4
         NSColor.black.setFill()
         path.fill()
         path.stroke()
