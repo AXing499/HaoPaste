@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.16.0 — 2026-11-12
+
+### 中文
+
+- 新增「连续粘贴 / 粘贴栈」：在主面板多选条目后点击「连续粘贴」，按顺序逐条复制并粘贴；`⌃⌘V` 切换到下一项，底部 HUD 显示进度并可直接结束。
+- 连续粘贴在辅助功能可用时自动发送 `⌘V`；未授权时只复制到剪贴板，并提示手动按 `⌘V`，不会强制要求权限。
+- 新增「截图翻译」：通过 `⌃⌘S` 或菜单栏入口拖拽框选屏幕区域，本地 OCR 后可编辑文字并点击「翻译」；需要屏幕录制权限。
+- 划词翻译卡片新增「替换原文」：将译文粘贴回来源应用，替换当前选中的文字。
+- 设置中补充说明：ad-hoc 签名版本每次更新后可能需要重新授予辅助功能和屏幕录制权限。
+- 128 个 XCTest。
+
+### English
+
+- Added **Sequential Paste**: select multiple items in the panel and click **Paste Sequentially** to copy and paste them in order. Press `⌃⌘V` for the next item; a HUD shows progress and can end the queue.
+- Sequential Paste sends `⌘V` automatically when Accessibility is available. Without permission it only copies each item and shows a manual `⌘V` hint instead of requiring permission.
+- Added **Screenshot Translation**: press `⌃⌘S` or use the menu bar entry, drag to select a screen area, edit the local OCR result, then click Translate. Requires Screen Recording permission.
+- Added **Replace Selection** to the selection translation card: pastes the translation back into the source app, replacing the selected text.
+- Clarified in Settings that ad-hoc signed builds may require re-granting Accessibility and Screen Recording permission after each update.
+- 128 XCTest cases.
+
+
 ## 0.15.0 — 2026-11-12
 
 ### 中文

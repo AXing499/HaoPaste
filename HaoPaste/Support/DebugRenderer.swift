@@ -173,6 +173,7 @@ enum DebugRenderer {
                 state: state,
                 onCopy: { _ in },
                 onCopyMerged: { _ in },
+                onStartPasteStack: { _ in },
                 onCopyText: { _ in },
                 onCopyPlainText: { _ in },
                 onCopySnippet: { _ in }
@@ -321,6 +322,7 @@ enum DebugRenderer {
             service: service,
             onCopyTranslation: {},
             onCopyBilingual: {},
+            onReplaceOriginal: {},
             onSaveSnippet: {},
             onClose: {},
             onOpenSettings: {}

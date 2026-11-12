@@ -599,6 +599,37 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
         hideCard()
     }
 
+    private func replaceOriginal() {
+        guard service.phase == .success, !service.resultText.isEmpty else {
+            NSSound.beep()
+            return
+        }
+
+        let translation = service.resultText
+        let target = previousApplication
+        guard manager.copyTextToPasteboard(translation) else { return }
+        hideCard()
+
+        guard
+            let target,
+            !target.isTerminated,
+            PasteEventSender.isTrusted
+        else {
+            NSSound.beep()
+            return
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
+            guard
+                NSWorkspace.shared.frontmostApplication?.processIdentifier
+                    == target.processIdentifier
+            else {
+                return
+            }
+            PasteEventSender.sendCommandV()
+        }
+    }
+
     private func saveSnippet() {
         guard !service.resultText.isEmpty else {
             NSSound.beep()
@@ -713,6 +744,9 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
             },
             onCopyBilingual: { [weak self] in
                 self?.copyBilingual()
+            },
+            onReplaceOriginal: { [weak self] in
+                self?.replaceOriginal()
             },
             onSaveSnippet: { [weak self] in
                 self?.saveSnippet()

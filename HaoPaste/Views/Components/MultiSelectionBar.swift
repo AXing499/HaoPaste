@@ -12,6 +12,7 @@ struct MultiSelectionBar: View {
     let hint: String?
     let canMerge: Bool
     let onMerge: () -> Void
+    let onPasteStack: () -> Void
     let onRecognizeText: (() -> Void)?
     let onClear: () -> Void
 
@@ -59,6 +60,30 @@ struct MultiSelectionBar: View {
                 .focusable(false)
                 .help(L("批量识别选中图片中的文字"))
             }
+
+            Button(action: onPasteStack) {
+                HStack(spacing: 4) {
+                    Image(systemName: "list.number")
+                        .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                    Text(L("连续粘贴"))
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                }
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 10)
+                .frame(height: 27)
+                .background {
+                    Capsule()
+                        .fill(Color.primary.opacity(0.06))
+                }
+                .overlay {
+                    Capsule()
+                        .strokeBorder(Color.primary.opacity(0.08), lineWidth: Theme.hairline)
+                }
+                .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .focusable(false)
+            .help(L("按顺序逐条复制并粘贴选中的内容"))
 
             Button(action: onClear) {
                 Text(L("取消"))

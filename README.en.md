@@ -121,6 +121,12 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 - **Translate latest record when opening panel** is off by default. It only runs for the genuinely latest text that differs from the target language; pinned items and images are never treated as the latest auto-translate target.
 - **Extract Text** in image preview runs local OCR only. Use **Translate** in the OCR window afterwards to translate the recognized text.
 
+### Sequential Paste and Screenshot Translation
+
+- **Sequential Paste**: select multiple items in the panel and click **Paste Sequentially** at the bottom. Items are copied and pasted in order; press `⌃⌘V` for the next item. HaoPaste sends `⌘V` automatically when Accessibility is available, otherwise it asks you to paste manually.
+- **Screenshot Translation**: press `⌃⌘S` or use **Screenshot Translation** in the menu bar, then drag to select a screen area. Edit the local OCR result and click Translate. Requires Screen Recording permission.
+- **Replace Selection**: in the selection translation card, click **Replace Selection** to paste the translation back into the source app.
+
 ### Selection Translation (experimental)
 
 ![HaoPaste selection translation](Docs/screenshot-selection-translation-en.png)

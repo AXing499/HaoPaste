@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var manager: ClipboardManager!
     private var snippetManager: SnippetManager!
     private var panelController: PanelController!
+    private var pasteStackController: PasteStackController!
     private var statusBarController: StatusBarController!
     private var settings: AppSettings!
     private var translationService: TranslationService!
@@ -22,6 +23,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var selectionTranslationService: TranslationService!
     private var quickTranslationController: QuickTranslationPanelController!
     private var selectionTranslationController: SelectionTranslationController!
+    private var screenshotTranslationController: ScreenshotTranslationController!
+    private var screenshotOCRService: OCRService!
     private var shelfController: ClipboardShelfController!
     private var shelfPreviewController: ShelfPreviewPanelController!
     private var shelfOCRService: OCRService!
@@ -34,6 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var activeHotKeyConfiguration: HotKeyConfiguration?
     private var translationHotKey: GlobalHotKey?
     private var activeTranslationHotKeyConfiguration: HotKeyConfiguration?
+    private var screenshotHotKey: GlobalHotKey?
 
     private var isRunningUnitTests: Bool {
         let environment = ProcessInfo.processInfo.environment
@@ -117,6 +121,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settings: settings
         )
 
+        pasteStackController = PasteStackController(manager: manager)
+        panelController.onStartPasteStack = { [weak self] items in
+            guard let self, !items.isEmpty else { return }
+            _ = self.panelController.state.clearMultiSelection()
+            self.panelController.hide(restoreFocus: true)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
+                self.pasteStackController.start(items: items)
+            }
+        }
+
         quickTranslationService = TranslationService(
             settings: translationService.settings,
             credentials: translationService.credentials
@@ -132,6 +146,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.shelfController?.hideIfVisible()
             }
         }
+
+        screenshotOCRService = OCRService()
+        screenshotTranslationController = ScreenshotTranslationController(
+            manager: manager,
+            snippetManager: snippetManager,
+            ocrService: screenshotOCRService,
+            quickTranslationController: quickTranslationController
+        )
 
         shelfPreviewController = ShelfPreviewPanelController(manager: manager)
         shelfOCRService = OCRService()
@@ -184,6 +206,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.showSettings()
             }
         )
+        statusBarController.onScreenshotTranslation = { [weak self] in
+            self?.screenshotTranslationController.beginCapture()
+        }
+        installScreenshotHotKey()
         shelfController.onVisibilityChanged = { [weak self] in
             self?.statusBarController?.refreshShortcutDisplay()
         }
@@ -569,6 +595,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.async {
                 self?.quickTranslationController?.translateClipboard()
             }
+        }
+    }
+
+    private func installScreenshotHotKey() {
+        screenshotHotKey = nil
+        let configuration = HotKeyConfiguration.screenshotTranslationDefault
+
+        do {
+            screenshotHotKey = try GlobalHotKey(
+                keyCode: configuration.keyCode,
+                modifiers: configuration.carbonModifiers,
+                id: 4
+            ) { [weak self] in
+                DispatchQueue.main.async {
+                    self?.screenshotTranslationController?.beginCapture()
+                }
+            }
+        } catch {
+            NSLog(
+                "HaoPaste: failed to register screenshot translation hotkey \(configuration.displayString): \(error)"
+            )
         }
     }
 

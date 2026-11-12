@@ -12,6 +12,7 @@ struct SelectionTranslationCardView: View {
 
     let onCopyTranslation: () -> Void
     let onCopyBilingual: () -> Void
+    let onReplaceOriginal: () -> Void
     let onSaveSnippet: () -> Void
     let onClose: () -> Void
     let onOpenSettings: () -> Void
@@ -168,9 +169,27 @@ struct SelectionTranslationCardView: View {
 
             case .success:
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(L("译文"))
-                        .font(.system(size: 9.5, weight: .medium, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                    HStack(spacing: 6) {
+                        Text(L("译文"))
+                            .font(.system(size: 9.5, weight: .medium, design: .rounded))
+                            .foregroundStyle(.tertiary)
+
+                        Spacer(minLength: 4)
+
+                        Button {
+                            onReplaceOriginal()
+                        } label: {
+                            Label(
+                                L("替换原文"),
+                                systemImage: "arrow.turn.up.left"
+                            )
+                            .font(.system(size: 9, weight: .medium, design: .rounded))
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
+                        .help(L("将译文粘贴回原应用，替换选中的文字"))
+                        .disabled(isDirty)
+                    }
 
                     ScrollView {
                         Text(service.resultText)

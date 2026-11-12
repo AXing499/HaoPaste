@@ -126,6 +126,18 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         )
     }
 
+    /// Presents a centered translation card for a screenshot OCR result.
+    func present(text: String, title: String) {
+        show(
+            text: text,
+            title: title,
+            anchor: nil,
+            edge: nil,
+            source: .hotKey,
+            animated: true
+        )
+    }
+
     func toggle() {
         if panel.isVisible {
             hide()

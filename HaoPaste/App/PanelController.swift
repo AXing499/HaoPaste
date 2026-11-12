@@ -44,6 +44,9 @@ final class PanelController: NSObject, NSWindowDelegate {
     /// dismiss themselves first.
     var onWillPresent: (() -> Void)?
 
+    /// Starts a sequential paste queue from the current multi-selection.
+    var onStartPasteStack: (([ClipboardItem]) -> Void)?
+
     var isVisible: Bool {
         panel.isVisible
     }
@@ -952,6 +955,9 @@ final class PanelController: NSObject, NSWindowDelegate {
             },
             onCopyMerged: { [weak self] items in
                 self?.copyMerged(items)
+            },
+            onStartPasteStack: { [weak self] items in
+                self?.onStartPasteStack?(items)
             },
             onCopyText: { [weak self] text in
                 self?.copyText(text)

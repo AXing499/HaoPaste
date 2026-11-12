@@ -18,6 +18,7 @@ struct ContentView: View {
     @Bindable var state: PanelViewState
     let onCopy: (ClipboardItem) -> Void
     let onCopyMerged: ([ClipboardItem]) -> Void
+    let onStartPasteStack: ([ClipboardItem]) -> Void
     let onCopyText: (String) -> Void
     let onCopyPlainText: (String) -> Void
     let onCopySnippet: (Snippet) -> Void
@@ -560,6 +561,9 @@ struct ContentView: View {
                         onMerge: {
                             onCopyMerged(selectedHistoryItems)
                         },
+                        onPasteStack: {
+                            onStartPasteStack(selectedHistoryItems)
+                        },
                         onRecognizeText: canBatchRecognizeImages ? {
                             ocrService.presentBatch(items: selectedImageItems)
                         } : nil,
@@ -938,6 +942,7 @@ private struct SnippetEditorOverlay: View {
         state: PanelViewState(),
         onCopy: { _ in },
         onCopyMerged: { _ in },
+        onStartPasteStack: { _ in },
         onCopyText: { _ in },
         onCopyPlainText: { _ in },
         onCopySnippet: { _ in }

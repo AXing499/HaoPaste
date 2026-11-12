@@ -128,6 +128,72 @@ struct TranslationSettingsPage: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 11)
             }
+
+            SettingsDivider()
+
+            Text(
+                L(
+                    "由于当前使用 ad-hoc 签名，每次安装新版本后通常需要重新授予辅助功能权限。"
+                )
+            )
+            .font(.system(size: 9.5, design: .rounded))
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+        }
+
+        SettingsCard(L("截图翻译")) {
+            SettingsRow(
+                L("截图翻译快捷键"),
+                subtitle: L(
+                    "框选屏幕区域并在本机识别文字；识别后可点击「翻译」。需要屏幕录制权限。"
+                )
+            ) {
+                Text(
+                    HotKeyConfiguration.screenshotTranslationDefault.displayString
+                )
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 8)
+                .frame(height: 22)
+                .background {
+                    Capsule()
+                        .fill(Color.primary.opacity(0.05))
+                }
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                L("屏幕录制权限"),
+                subtitle: L(
+                    "首次使用会请求权限；如果截图失败，请在系统设置中允许 HaoPaste。"
+                )
+            ) {
+                Button(L("打开屏幕录制设置…")) {
+                    if let url = URL(
+                        string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+                    ) {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+
+            SettingsDivider()
+
+            Text(
+                L(
+                    "由于当前使用 ad-hoc 签名，每次安装新版本后通常需要重新授予屏幕录制权限。"
+                )
+            )
+            .font(.system(size: 9.5, design: .rounded))
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
 
         SettingsCard(L("识图")) {

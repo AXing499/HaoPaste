@@ -22,6 +22,21 @@ struct HotKeyConfiguration: Equatable, Sendable {
         carbonModifiers: UInt32(cmdKey | optionKey)
     )
 
+    static let pasteStackNextDefault = HotKeyConfiguration(
+        keyCode: UInt32(kVK_ANSI_V),
+        carbonModifiers: UInt32(cmdKey | controlKey)
+    )
+
+    static let pasteStackNextFallback = HotKeyConfiguration(
+        keyCode: UInt32(kVK_ANSI_B),
+        carbonModifiers: UInt32(cmdKey | controlKey)
+    )
+
+    static let screenshotTranslationDefault = HotKeyConfiguration(
+        keyCode: UInt32(kVK_ANSI_S),
+        carbonModifiers: UInt32(cmdKey | controlKey)
+    )
+
     var hasPrimaryModifier: Bool {
         carbonModifiers & UInt32(cmdKey | optionKey | controlKey) != 0
     }

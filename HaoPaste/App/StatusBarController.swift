@@ -16,11 +16,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private weak var shelfController: ClipboardShelfController?
     private let onOpenSettings: () -> Void
 
+    var onScreenshotTranslation: (() -> Void)?
+
     private let statusItem: NSStatusItem
     private let menu = NSMenu()
 
     private let showItem = NSMenuItem()
     private let translateItem = NSMenuItem()
+    private let screenshotItem = NSMenuItem()
     private let shelfItem = NSMenuItem()
     private let historyInfoItem = NSMenuItem()
     private let pauseItem = NSMenuItem()
@@ -109,6 +112,20 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         )
         menu.addItem(translateItem)
 
+        screenshotItem.title = L(
+            "截图翻译（%@）",
+            HotKeyConfiguration.screenshotTranslationDefault.displayString
+        )
+        screenshotItem.action = #selector(captureScreenshot)
+        screenshotItem.keyEquivalent = ""
+        screenshotItem.target = self
+        screenshotItem.image = symbolImage(
+            named: "text.viewfinder",
+            pointSize: 13,
+            weight: .regular
+        )
+        menu.addItem(screenshotItem)
+
         shelfItem.title = L("显示剪贴板挂架")
         shelfItem.action = #selector(toggleShelf)
         shelfItem.keyEquivalent = ""
@@ -181,6 +198,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             "翻译剪贴板（%@）",
             settings.translationHotKey.displayString
         )
+        screenshotItem.title = L(
+            "截图翻译（%@）",
+            HotKeyConfiguration.screenshotTranslationDefault.displayString
+        )
         shelfItem.title = shelfController?.isShowing == true
             ? L("收起剪贴板挂架")
             : L("显示剪贴板挂架")
@@ -219,6 +240,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     @objc
     private func translateClipboard() {
         quickTranslationController?.translateClipboard()
+    }
+
+    @objc
+    private func captureScreenshot() {
+        onScreenshotTranslation?()
     }
 
     @objc

@@ -12,8 +12,8 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
-    MARKETING_VERSION: "0.15.1"
-    CURRENT_PROJECT_VERSION: "50"
+    MARKETING_VERSION: "0.16.0"
+    CURRENT_PROJECT_VERSION: "51"
     SWIFT_STRICT_CONCURRENCY: minimal
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     CLANG_ENABLE_MODULES: YES
@@ -30,12 +30,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hao.HaoPaste
         PRODUCT_NAME: HaoPaste
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: HaoPaste
-        INFOPLIST_KEY_CFBundleDevelopmentRegion: en
-        INFOPLIST_KEY_LSUIElement: YES
-        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
-        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 Hao. All rights reserved."
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Config/HaoPaste-Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         COMBINE_HIDPI_IMAGES: YES
         SWIFT_EMIT_LOC_STRINGS: YES
