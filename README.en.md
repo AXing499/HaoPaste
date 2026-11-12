@@ -2,7 +2,7 @@
 
 English | [简体中文](README.md)
 
-Current version: **v0.15.1**
+Current version: **v0.16.0**
 
 A native, fast, keyboard-first clipboard manager for macOS. Press `⌥⌘V` in any app to open a borderless floating panel, then search, select, and copy without breaking your flow.
 
@@ -22,11 +22,11 @@ A native, fast, keyboard-first clipboard manager for macOS. Press `⌥⌘V` in a
 
    ```bash
    make dmg
-   # dist/HaoPaste-0.15.1.dmg
-   # dist/HaoPaste-0.15.1.dmg.sha256
+   # dist/HaoPaste-0.16.0.dmg
+   # dist/HaoPaste-0.16.0.dmg.sha256
    ```
 
-2. Open `HaoPaste-0.15.1.dmg`, then drag **HaoPaste** into **Applications**.
+2. Open `HaoPaste-0.16.0.dmg`, then drag **HaoPaste** into **Applications**.
 3. If macOS says the developer cannot be verified:
    - Open **System Settings → Privacy & Security**
    - Under **Security**, find **HaoPaste**
