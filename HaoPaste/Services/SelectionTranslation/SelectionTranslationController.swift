@@ -372,7 +372,6 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
             iconPanel.orderOut(nil)
             iconPanel.alphaValue = 1
             iconButton.layer?.setAffineTransform(.identity)
-            iconButton.releaseCursor()
             isHidingIcon = false
             return
         }
@@ -394,7 +393,6 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
                 self.iconPanel.orderOut(nil)
                 self.iconPanel.alphaValue = 1
                 self.iconButton.layer?.setAffineTransform(.identity)
-                self.iconButton.releaseCursor()
                 self.isHidingIcon = false
             }
         }
@@ -741,23 +739,11 @@ private final class SelectionTranslationIconButton: NSButton {
 
     private var isHovering = false
     private var isPressed = false
-    private var isCursorPushed = false
     private var isDismissing = false
     private var trackingArea: NSTrackingArea?
 
-    deinit {
-        releaseCursor()
-    }
-
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         true
-    }
-
-    override func viewWillMove(toWindow newWindow: NSWindow?) {
-        super.viewWillMove(toWindow: newWindow)
-        if newWindow == nil {
-            releaseCursor()
-        }
     }
 
     override func viewDidChangeEffectiveAppearance() {
@@ -770,11 +756,6 @@ private final class SelectionTranslationIconButton: NSButton {
         layer?.contentsScale = window?.backingScaleFactor ?? 2
     }
 
-    override func resetCursorRects() {
-        super.resetCursorRects()
-        addCursorRect(bounds, cursor: .pointingHand)
-    }
-
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
 
@@ -783,12 +764,7 @@ private final class SelectionTranslationIconButton: NSButton {
         }
         let area = NSTrackingArea(
             rect: bounds,
-            options: [
-                .mouseEnteredAndExited,
-                .cursorUpdate,
-                .activeAlways,
-                .inVisibleRect
-            ],
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
             owner: self,
             userInfo: nil
         )
@@ -797,25 +773,11 @@ private final class SelectionTranslationIconButton: NSButton {
     }
 
     override func mouseEntered(with event: NSEvent) {
-        pushCursor()
         onHoverChanged?(true)
         setHovered(true)
     }
 
-    override func cursorUpdate(with event: NSEvent) {
-        guard !isDismissing else {
-            super.cursorUpdate(with: event)
-            return
-        }
-        if bounds.contains(convert(event.locationInWindow, from: nil)) {
-            NSCursor.pointingHand.set()
-        } else {
-            super.cursorUpdate(with: event)
-        }
-    }
-
     override func mouseExited(with event: NSEvent) {
-        releaseCursor()
         setHovered(false)
         onHoverChanged?(false)
     }
@@ -841,21 +803,8 @@ private final class SelectionTranslationIconButton: NSButton {
         isDismissing = true
         isHovering = false
         isPressed = false
-        releaseCursor()
         contentTintColor = .labelColor
         updateHalo()
-    }
-
-    func releaseCursor() {
-        guard isCursorPushed else { return }
-        NSCursor.pop()
-        isCursorPushed = false
-    }
-
-    private func pushCursor() {
-        guard !isCursorPushed else { return }
-        NSCursor.pointingHand.push()
-        isCursorPushed = true
     }
 
     func updateHalo() {
