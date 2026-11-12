@@ -10,7 +10,7 @@
 - 划词翻译卡片新增「替换原文」：将译文粘贴回来源应用，替换当前选中的文字。
 - 新增「快捷键」设置页，可统一修改呼出面板、快捷翻译、连续粘贴下一项和截图翻译四个快捷键。
 - 「替换原文」增加「替换时复制译文」开关，默认开启；关闭后只用于替换，并在粘贴完成后恢复原来的剪贴板内容。
-- 修复挂架操作条的预览、翻译、提取文字按钮因缺少锚点而无响应，以及连续粘贴只粘贴第一项、截图选择光标不是十字的问题。
+- 修复挂架操作条的预览、翻译、提取文字按钮因缺少锚点或被挂架重新抢焦点而无法弹出/立即收起；修复连续粘贴在快捷键修饰键尚未释放时漏粘贴，以及截图选择光标不是十字的问题。
 - 设置中补充说明：ad-hoc 签名版本每次更新后可能需要重新授予辅助功能和屏幕录制权限。
 - 128 个 XCTest。
 
@@ -22,7 +22,7 @@
 - Added **Replace Selection** to the selection translation card: pastes the translation back into the source app, replacing the selected text.
 - Added a **Shortcuts** settings page for the panel, quick translation, paste-stack next item, and screenshot translation shortcuts.
 - Added a **Copy translation when replacing** switch, on by default. When disabled, the translation is only used for replacement and the previous clipboard contents are restored afterwards.
-- Fixed shelf action-bar preview, translate, and extract-text buttons doing nothing because of a missing anchor, sequential paste only pasting the first item, and the screenshot region cursor not switching to a crosshair.
+- Fixed shelf action-bar preview, translate, and extract-text buttons failing because of a missing anchor or the shelf stealing key focus and immediately dismissing the detail panel. Also fixed sequential paste dropping items when the shortcut modifiers had not been released yet, and the screenshot region cursor not switching to a crosshair.
 - Clarified in Settings that ad-hoc signed builds may require re-granting Accessibility and Screen Recording permission after each update.
 - 128 XCTest cases.
 

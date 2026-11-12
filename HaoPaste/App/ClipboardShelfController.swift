@@ -386,10 +386,11 @@ final class ClipboardShelfController: NSObject {
         } else {
             wantsPointer = false
         }
-        if wantsPointer {
+        let detailVisible = isRetractBlocked?() == true
+        if wantsPointer, !detailVisible {
             activateForShelfIfNeeded()
         }
-        updatePointerCursor(wantsPointer)
+        updatePointerCursor(wantsPointer && !detailVisible)
 
         let acceptsMouse = target != nil
         if panel.ignoresMouseEvents == acceptsMouse {
@@ -398,6 +399,13 @@ final class ClipboardShelfController: NSObject {
     }
 
     private func activateForShelfIfNeeded() {
+        if isRetractBlocked?() == true {
+            return
+        }
+        if let keyWindow = NSApp.keyWindow, keyWindow !== panel {
+            return
+        }
+
         guard !NSApp.isActive else {
             panel.makeKey()
             return

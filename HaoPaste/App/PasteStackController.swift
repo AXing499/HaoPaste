@@ -108,15 +108,11 @@ final class PasteStackController: NSObject {
 
         let expectedIndex = index
         if autoPastes {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) { [weak self] in
-                guard
-                    let self,
-                    self.isActive,
-                    self.index == expectedIndex
-                else {
-                    return
-                }
-                self.activateTargetAndPaste(expectedIndex: expectedIndex)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+                self?.performAutoPaste(
+                    expectedIndex: expectedIndex,
+                    attempt: 0
+                )
             }
         }
 
@@ -134,6 +130,32 @@ final class PasteStackController: NSObject {
         }
     }
 
+    private func performAutoPaste(expectedIndex: Int, attempt: Int) {
+        guard
+            isActive,
+            index == expectedIndex,
+            PasteEventSender.isTrusted
+        else {
+            return
+        }
+
+        let modifiers = NSEvent.modifierFlags.intersection([
+            .command, .control, .option, .shift
+        ])
+        guard modifiers.isEmpty else {
+            guard attempt < 20 else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                self?.performAutoPaste(
+                    expectedIndex: expectedIndex,
+                    attempt: attempt + 1
+                )
+            }
+            return
+        }
+
+        activateTargetAndPaste(expectedIndex: expectedIndex)
+    }
+
     private func activateTargetAndPaste(expectedIndex: Int) {
         guard
             isActive,
@@ -146,13 +168,9 @@ final class PasteStackController: NSObject {
         }
 
         let frontmost = NSWorkspace.shared.frontmostApplication
-        if frontmost?.processIdentifier == targetApplication.processIdentifier {
-            PasteEventSender.sendCommandV()
-            return
-        }
-
         guard
             frontmost == nil
+                || frontmost?.processIdentifier == targetApplication.processIdentifier
                 || frontmost?.processIdentifier
                     == ProcessInfo.processInfo.processIdentifier
         else {
@@ -160,6 +178,8 @@ final class PasteStackController: NSObject {
             return
         }
 
+        // Activate even when the app is already frontmost: a nonactivating
+        // HaoPaste HUD can be the key window while another app is frontmost.
         targetApplication.activate(options: [])
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
             guard
@@ -283,7 +303,7 @@ private final class PasteStackHUDController {
 }
 
 private final class PasteStackHUDPanel: NSPanel {
-    override var canBecomeKey: Bool { true }
+    override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 }
 
