@@ -22,7 +22,7 @@ make project   # xcodegen generate
 make build     # Debug 构建
 make run       # Debug 构建并启动
 make demo      # 使用可复现示例数据启动
-make test      # 124 个 XCTest（默认英文测试环境）
+make test      # 126 个 XCTest（默认英文测试环境）
 make release   # Release 构建
 make dmg       # 生成 dist/HaoPaste-<version>.dmg
 make install   # 安装 Release 到 /Applications 或 ~/Applications
@@ -64,7 +64,7 @@ CI 不创建 Release，也不上传 DMG。
 执行内容：
 
 1. **Resolve version**：读取 tag 与 `project.yml` 的 `MARKETING_VERSION`，两者必须完全一致，否则失败
-2. **Run unit tests**：运行 124 个 XCTest
+2. **Run unit tests**：运行 126 个 XCTest
 3. **Build Release app**：生成 `.build/release/Build/Products/Release/HaoPaste.app`
 4. **Build DMG**：设置 `HAOPASTE_DMG_LAYOUT=0`，调用 `Scripts/package-dmg.sh`，生成 DMG 与 SHA-256
 5. **Read changelog**：从 `CHANGELOG.md` 提取 `## <version>` 到下一个 `##` 之间的内容；没有对应章节会直接失败
@@ -197,7 +197,7 @@ OCR、富文本预览和划词翻译卡片截图因为可选择文本的光标�
 开发命令：
 make project
 make build
-make test        # 124 个 XCTest，英文测试环境
+make test        # 126 个 XCTest，英文测试环境
 make screenshots # 更新中英文截图
 make verify-screenshots # 检查截图基线
 make dmg
@@ -218,7 +218,7 @@ make dmg
 - 中英文 UI 均无未翻译中文（英文环境）。
 - README.en.md 的截图全部是 -en.png。
 - CHANGELOG.md 有对应版本的中英双语章节。
-- 124 个测试通过。
+- 126 个测试通过。
 - Release 资产包含 DMG 和 SHA-256。
 - 不修改无关功能，不删除现有测试，不引入第三方运行时依赖。
 ```

@@ -59,4 +59,26 @@ final class SelectionTranslationLayoutTests: XCTestCase {
         XCTAssertTrue(visibleFrame.contains(frame))
         XCTAssertEqual(frame.size, NSSize(width: 32, height: 32))
     }
+
+    func testIconPrefersAboveSelection() {
+        let frame = SelectionTranslationLayout.iconFrame(
+            anchor: NSPoint(x: 800, y: 500),
+            size: 32,
+            visibleFrame: visibleFrame
+        )
+
+        XCTAssertGreaterThan(frame.minY, 500)
+        XCTAssertTrue(visibleFrame.contains(frame))
+    }
+
+    func testIconFlipsBelowNearTopEdge() {
+        let frame = SelectionTranslationLayout.iconFrame(
+            anchor: NSPoint(x: 800, y: 890),
+            size: 32,
+            visibleFrame: visibleFrame
+        )
+
+        XCTAssertLessThan(frame.maxY, 890)
+        XCTAssertTrue(visibleFrame.contains(frame))
+    }
 }
