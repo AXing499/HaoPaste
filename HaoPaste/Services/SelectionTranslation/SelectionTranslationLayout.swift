@@ -14,17 +14,16 @@ enum SelectionTranslationLayout {
         visibleFrame: NSRect
     ) -> NSRect {
         let gap: CGFloat = 3
-        var x = anchor.x + gap
+        var x = anchor.x - size / 2
         var y = anchor.y + gap
 
         // Prefer placing the icon above the selection so the speech-bubble
-        // tails point down toward the selected text. Fall back below only
-        // when there is not enough room near the top of the screen.
+        // tails point down toward the selected text. Center it on the
+        // selection end so the tails sit over the text rather than off to
+        // the side. Fall back below only when there is not enough room near
+        // the top of the screen.
         if y + size > visibleFrame.maxY - 8 {
             y = anchor.y - size - gap
-        }
-        if x + size > visibleFrame.maxX - 8 {
-            x = anchor.x - size - gap
         }
 
         x = min(max(x, visibleFrame.minX + 8), visibleFrame.maxX - size - 8)

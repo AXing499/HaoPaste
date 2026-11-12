@@ -68,6 +68,7 @@ final class SelectionTranslationLayoutTests: XCTestCase {
         )
 
         XCTAssertGreaterThan(frame.minY, 500)
+        XCTAssertEqual(frame.midX, 800, accuracy: 1)
         XCTAssertTrue(visibleFrame.contains(frame))
     }
 
