@@ -553,6 +553,9 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
                 return nil
             }
             if flags == .command, event.keyCode == 8 { // C
+                if self.cardPanel.firstResponder is NSTextView {
+                    return event
+                }
                 self.copyTranslation()
                 return nil
             }

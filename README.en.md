@@ -130,6 +130,7 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 - Select text with the mouse to show a small translate icon. Selected text is read and translated only after clicking the icon.
 - The icon stays visible while hovered, highlights and scales slightly to signal that it is clickable, and hides 2 seconds after the pointer leaves.
 - The tail points down, up, left, or right depending on where the icon sits relative to the selected text.
+- The source text in the selection translation card is editable; click **Translate** or press `⌘↩` to translate the edited text.
 - The translation card opens near the selection instead of being fixed to the screen center.
 - It never simulates `⌘C` or copies automatically; normal copy shortcuts keep working.
 - Skipped in full-screen apps, secure input, excluded apps, and HaoPaste itself.

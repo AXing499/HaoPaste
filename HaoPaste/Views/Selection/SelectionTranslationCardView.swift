@@ -18,6 +18,7 @@ struct SelectionTranslationCardView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var appeared = false
+    @State private var draftSource = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -38,12 +39,21 @@ struct SelectionTranslationCardView: View {
         .scaleEffect(appeared ? 1 : 0.96, anchor: .topLeading)
         .opacity(appeared ? 1 : 0)
         .onAppear {
+            draftSource = service.sourceText
             withAnimation(
                 reduceMotion || DebugMotion.disablesAnimations
                     ? nil
                     : Theme.spring
             ) {
                 appeared = true
+            }
+        }
+        .onChange(of: service.sourceText) { _, newValue in
+            draftSource = newValue
+        }
+        .onChange(of: service.isPresenting) { _, isPresenting in
+            if isPresenting {
+                draftSource = service.sourceText
             }
         }
     }
@@ -80,7 +90,7 @@ struct SelectionTranslationCardView: View {
             Menu {
                 ForEach(TranslationLanguage.all) { language in
                     Button(language.name) {
-                        service.setTargetLanguage(language, persist: false)
+                        selectTargetLanguage(language)
                     }
                 }
             } label: {
@@ -96,6 +106,7 @@ struct SelectionTranslationCardView: View {
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
             .fixedSize()
+            .disabled(isSourceEmpty)
 
             Button(action: onClose) {
                 Image(systemName: "xmark")
@@ -114,16 +125,7 @@ struct SelectionTranslationCardView: View {
     @ViewBuilder
     private var content: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(service.sourceText)
-                .font(.system(size: 11, design: .rounded))
-                .foregroundStyle(.secondary)
-                .lineLimit(3)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(8)
-                .background {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .fill(Color.primary.opacity(0.035))
-                }
+            sourceSection
 
             switch service.phase {
             case .consentRequired:
@@ -151,10 +153,11 @@ struct SelectionTranslationCardView: View {
 
                     HStack(spacing: 8) {
                         Button(L("重试")) {
-                            service.retry()
+                            translateDraft()
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
+                        .disabled(isSourceEmpty)
 
                         Button(L("打开翻译设置…"), action: onOpenSettings)
                             .buttonStyle(.bordered)
@@ -177,6 +180,7 @@ struct SelectionTranslationCardView: View {
                     }
                     .scrollIndicators(.never)
                 }
+                .opacity(isDirty ? 0.55 : 1)
 
             case .idle:
                 Text(L("等待翻译"))
@@ -188,6 +192,112 @@ struct SelectionTranslationCardView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var sourceSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Text(L("原文"))
+                    .font(.system(size: 9.5, weight: .medium, design: .rounded))
+                    .foregroundStyle(.tertiary)
+
+                if isDirty {
+                    Text(L("未更新"))
+                        .font(.system(size: 8.5, weight: .medium, design: .rounded))
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 5)
+                        .frame(height: 14)
+                        .background {
+                            Capsule().fill(Color.orange.opacity(0.10))
+                        }
+                }
+
+                Spacer(minLength: 4)
+
+                Button {
+                    translateDraft()
+                } label: {
+                    Label(L("翻译"), systemImage: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 9, weight: .medium, design: .rounded))
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.mini)
+                .keyboardShortcut(.return, modifiers: .command)
+                .help(L("翻译（⌘↩）"))
+                .disabled(isSourceEmpty || service.phase == .translating)
+            }
+
+            TextField("", text: $draftSource, axis: .vertical)
+                .textFieldStyle(.plain)
+                .font(.system(size: 11, design: .rounded))
+                .foregroundStyle(.primary)
+                .lineLimit(2...4)
+                .frame(
+                    maxWidth: .infinity,
+                    minHeight: 42,
+                    alignment: .topLeading
+                )
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background {
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(Color.primary.opacity(0.035))
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .strokeBorder(
+                            Color.primary.opacity(isDirty ? 0.12 : 0.05),
+                            lineWidth: Theme.hairline
+                        )
+                }
+                .accessibilityLabel(L("原文"))
+        }
+    }
+
+    private var isDirty: Bool {
+        draftSource != service.sourceText
+    }
+
+    private var isSourceEmpty: Bool {
+        draftSource.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func translateDraft() {
+        let trimmed = draftSource.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard !trimmed.isEmpty else { return }
+
+        draftSource = trimmed
+        service.sourceText = trimmed
+        service.detectedSourceID = nil
+        service.startTranslation(force: true)
+    }
+
+    private func selectTargetLanguage(_ language: TranslationLanguage) {
+        let trimmed = draftSource.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        if !trimmed.isEmpty, trimmed != service.sourceText {
+            draftSource = trimmed
+            service.sourceText = trimmed
+            service.detectedSourceID = nil
+        }
+        service.setTargetLanguage(language, persist: false)
+    }
+
+    private func grantConsentAndTranslateDraft() {
+        let trimmed = draftSource.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard !trimmed.isEmpty else { return }
+
+        if trimmed != service.sourceText {
+            draftSource = trimmed
+            service.sourceText = trimmed
+            service.detectedSourceID = nil
+        }
+        service.grantConsentAndTranslate()
     }
 
     private var consentContent: some View {
@@ -216,11 +326,12 @@ struct SelectionTranslationCardView: View {
                     .controlSize(.small)
 
                 Button(L("允许并翻译")) {
-                    service.grantConsentAndTranslate()
+                    grantConsentAndTranslateDraft()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
                 .tint(Color.accentColor)
+                .disabled(isSourceEmpty)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -248,14 +359,14 @@ struct SelectionTranslationCardView: View {
             }
             .buttonStyle(.plain)
             .help(L("保存片段"))
-            .disabled(service.resultText.isEmpty)
+            .disabled(service.resultText.isEmpty || isDirty)
 
             Button(L("复制双语")) {
                 onCopyBilingual()
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
-            .disabled(service.resultText.isEmpty)
+            .disabled(service.resultText.isEmpty || isDirty)
 
             Button(L("复制译文")) {
                 onCopyTranslation()
@@ -263,7 +374,7 @@ struct SelectionTranslationCardView: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.small)
             .tint(Color.accentColor)
-            .disabled(service.resultText.isEmpty)
+            .disabled(service.resultText.isEmpty || isDirty)
         }
         .padding(.horizontal, 12)
         .frame(height: 48)
