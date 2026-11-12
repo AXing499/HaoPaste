@@ -125,7 +125,8 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 
 - **Sequential Paste**: select multiple items in the panel and click **Paste Sequentially** at the bottom. Items are copied and pasted in order; press `⌃⌘V` for the next item. HaoPaste sends `⌘V` automatically when Accessibility is available, otherwise it asks you to paste manually.
 - **Screenshot Translation**: press `⌃⌘S` or use **Screenshot Translation** in the menu bar, then drag to select a screen area. Edit the local OCR result and click Translate. Requires Screen Recording permission.
-- **Replace Selection**: in the selection translation card, click **Replace Selection** to paste the translation back into the source app.
+- **Replace Selection**: in the selection translation card, click **Replace Selection** to paste the translation back into the source app. The translation is kept on the clipboard by default; turn this off in Settings → Smart.
+- **Shortcuts**: Settings → Shortcuts manages the panel, quick translation, paste-stack next item, and screenshot translation shortcuts.
 
 ### Selection Translation (experimental)
 

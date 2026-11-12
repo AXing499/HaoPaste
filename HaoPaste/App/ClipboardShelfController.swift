@@ -541,10 +541,21 @@ final class ClipboardShelfController: NSObject {
     }
 
     private func anchorRect(for itemID: UUID) -> NSRect? {
-        guard let target = hitTargetStore.targets.first(
-            where: { $0.kind == .card(itemID) }
-        ) else {
-            return nil
+        let target = hitTargetStore.targets.first(
+            where: {
+                $0.kind == .card(itemID)
+                    && $0.rect.width > 0
+                    && $0.rect.height > 0
+            }
+        ) ?? hitTargetStore.targets.first(
+            where: { $0.kind == .cardActions(itemID) }
+        ) ?? hitTargetStore.targets.first(
+            where: { $0.kind == .cardClip(itemID) }
+        )
+
+        guard let target else {
+            let mouse = NSEvent.mouseLocation
+            return NSRect(origin: mouse, size: .zero)
         }
 
         let rect = target.rect

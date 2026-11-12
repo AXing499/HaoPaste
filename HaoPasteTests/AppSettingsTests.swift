@@ -19,6 +19,12 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.maxUnpinnedItems, 200)
         XCTAssertEqual(settings.hotKey, .default)
         XCTAssertEqual(settings.translationHotKey, .translationDefault)
+        XCTAssertEqual(settings.pasteStackHotKey, .pasteStackNextDefault)
+        XCTAssertEqual(
+            settings.screenshotHotKey,
+            .screenshotTranslationDefault
+        )
+        XCTAssertTrue(settings.copyTranslationWhenReplacing)
         XCTAssertFalse(settings.autoTranslateLatestOnOpen)
         XCTAssertTrue(settings.shelfEnabled)
         XCTAssertEqual(settings.shelfItemLimit, 8)
@@ -30,6 +36,8 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertTrue(settings.excludedApplications.isEmpty)
         XCTAssertNil(settings.hotKeyRegistrationError)
         XCTAssertNil(settings.translationHotKeyRegistrationError)
+        XCTAssertNil(settings.pasteStackHotKeyRegistrationError)
+        XCTAssertNil(settings.screenshotHotKeyRegistrationError)
     }
 
     func testSettingsPersistence() throws {
@@ -48,6 +56,15 @@ final class AppSettingsTests: XCTestCase {
             keyCode: UInt32(kVK_ANSI_L),
             carbonModifiers: UInt32(controlKey | optionKey)
         )
+        settings.pasteStackHotKey = HotKeyConfiguration(
+            keyCode: UInt32(kVK_ANSI_B),
+            carbonModifiers: UInt32(cmdKey | controlKey)
+        )
+        settings.screenshotHotKey = HotKeyConfiguration(
+            keyCode: UInt32(kVK_ANSI_4),
+            carbonModifiers: UInt32(cmdKey | controlKey)
+        )
+        settings.copyTranslationWhenReplacing = false
         settings.autoTranslateLatestOnOpen = false
         settings.shelfEnabled = false
         settings.shelfItemLimit = 10
@@ -66,6 +83,9 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertFalse(reloaded.capturesImages)
         XCTAssertEqual(reloaded.hotKey.displayString, "⌥⌘K")
         XCTAssertEqual(reloaded.translationHotKey.displayString, "⌃⌥L")
+        XCTAssertEqual(reloaded.pasteStackHotKey.displayString, "⌃⌘B")
+        XCTAssertEqual(reloaded.screenshotHotKey.displayString, "⌃⌘4")
+        XCTAssertFalse(reloaded.copyTranslationWhenReplacing)
         XCTAssertFalse(reloaded.autoTranslateLatestOnOpen)
         XCTAssertFalse(reloaded.shelfEnabled)
         XCTAssertEqual(reloaded.shelfItemLimit, 10)

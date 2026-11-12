@@ -13,11 +13,11 @@ final class PasteStackController: NSObject {
     private let manager: ClipboardManager
     private let hud = PasteStackHUDController()
 
+    private(set) var isActive = false
     private var items: [ClipboardItem] = []
     private var index = 0
-    private var isActive = false
-    private var hotKey: GlobalHotKey?
-    private var activeShortcut = HotKeyConfiguration.pasteStackNextDefault
+    private var targetApplication: NSRunningApplication?
+    private var shortcutDisplay = HotKeyConfiguration.pasteStackNextDefault.displayString
     private var hideHUDTask: DispatchWorkItem?
 
     init(manager: ClipboardManager) {
@@ -27,17 +27,22 @@ final class PasteStackController: NSObject {
 
     // MARK: - Lifecycle
 
-    func start(items: [ClipboardItem]) {
+    func start(
+        items: [ClipboardItem],
+        targetApplication: NSRunningApplication?,
+        shortcutDisplay: String
+    ) {
         guard !items.isEmpty else { return }
 
         stop()
         self.items = items
+        self.targetApplication = targetApplication
+        self.shortcutDisplay = shortcutDisplay
         index = 0
         isActive = true
         hideHUDTask?.cancel()
         hideHUDTask = nil
 
-        registerHotKey()
         pasteCurrentItem()
     }
 
@@ -45,7 +50,7 @@ final class PasteStackController: NSObject {
         hideHUDTask?.cancel()
         hideHUDTask = nil
         isActive = false
-        hotKey = nil
+        targetApplication = nil
         items = []
         index = 0
         hud.hide()
@@ -54,7 +59,7 @@ final class PasteStackController: NSObject {
     private func finish() {
         let count = items.count
         isActive = false
-        hotKey = nil
+        targetApplication = nil
         items = []
         index = 0
 
@@ -67,40 +72,9 @@ final class PasteStackController: NSObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.4, execute: task)
     }
 
-    // MARK: - Hotkey
-
-    private func registerHotKey() {
-        let candidates: [HotKeyConfiguration] = [
-            .pasteStackNextDefault,
-            .pasteStackNextFallback
-        ]
-
-        for configuration in candidates {
-            do {
-                hotKey = try GlobalHotKey(
-                    keyCode: configuration.keyCode,
-                    modifiers: configuration.carbonModifiers,
-                    id: 3
-                ) { [weak self] in
-                    DispatchQueue.main.async {
-                        self?.advance()
-                    }
-                }
-                activeShortcut = configuration
-                return
-            } catch {
-                NSLog(
-                    "HaoPaste: failed to register paste stack hotkey \(configuration.displayString): \(error)"
-                )
-            }
-        }
-
-        activeShortcut = .pasteStackNextDefault
-    }
-
     // MARK: - Queue
 
-    private func advance() {
+    func advance() {
         guard isActive else { return }
 
         if index + 1 < items.count {
@@ -125,7 +99,7 @@ final class PasteStackController: NSObject {
         hud.show(
             current: index + 1,
             total: items.count,
-            shortcut: activeShortcut.displayString,
+            shortcut: shortcutDisplay,
             autoPastes: autoPastes,
             animated: index == 0
         ) { [weak self] in
@@ -142,7 +116,7 @@ final class PasteStackController: NSObject {
                 else {
                     return
                 }
-                PasteEventSender.sendCommandV()
+                self.activateTargetAndPaste(expectedIndex: expectedIndex)
             }
         }
 
@@ -157,6 +131,45 @@ final class PasteStackController: NSObject {
                 }
                 self.finish()
             }
+        }
+    }
+
+    private func activateTargetAndPaste(expectedIndex: Int) {
+        guard
+            isActive,
+            index == expectedIndex,
+            PasteEventSender.isTrusted,
+            let targetApplication,
+            !targetApplication.isTerminated
+        else {
+            return
+        }
+
+        let frontmost = NSWorkspace.shared.frontmostApplication
+        if frontmost?.processIdentifier == targetApplication.processIdentifier {
+            PasteEventSender.sendCommandV()
+            return
+        }
+
+        guard
+            frontmost == nil
+                || frontmost?.processIdentifier
+                    == ProcessInfo.processInfo.processIdentifier
+        else {
+            // The user switched to another app; do not steal focus.
+            return
+        }
+
+        targetApplication.activate(options: [])
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+            guard
+                let self,
+                self.isActive,
+                self.index == expectedIndex
+            else {
+                return
+            }
+            PasteEventSender.sendCommandV()
         }
     }
 }

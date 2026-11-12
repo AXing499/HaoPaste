@@ -8,6 +8,9 @@
 - 连续粘贴在辅助功能可用时自动发送 `⌘V`；未授权时只复制到剪贴板，并提示手动按 `⌘V`，不会强制要求权限。
 - 新增「截图翻译」：通过 `⌃⌘S` 或菜单栏入口拖拽框选屏幕区域，本地 OCR 后可编辑文字并点击「翻译」；需要屏幕录制权限。
 - 划词翻译卡片新增「替换原文」：将译文粘贴回来源应用，替换当前选中的文字。
+- 新增「快捷键」设置页，可统一修改呼出面板、快捷翻译、连续粘贴下一项和截图翻译四个快捷键。
+- 「替换原文」增加「替换时复制译文」开关，默认开启；关闭后只用于替换，并在粘贴完成后恢复原来的剪贴板内容。
+- 修复挂架操作条的预览、翻译、提取文字按钮因缺少锚点而无响应，以及连续粘贴只粘贴第一项、截图选择光标不是十字的问题。
 - 设置中补充说明：ad-hoc 签名版本每次更新后可能需要重新授予辅助功能和屏幕录制权限。
 - 128 个 XCTest。
 
@@ -17,6 +20,9 @@
 - Sequential Paste sends `⌘V` automatically when Accessibility is available. Without permission it only copies each item and shows a manual `⌘V` hint instead of requiring permission.
 - Added **Screenshot Translation**: press `⌃⌘S` or use the menu bar entry, drag to select a screen area, edit the local OCR result, then click Translate. Requires Screen Recording permission.
 - Added **Replace Selection** to the selection translation card: pastes the translation back into the source app, replacing the selected text.
+- Added a **Shortcuts** settings page for the panel, quick translation, paste-stack next item, and screenshot translation shortcuts.
+- Added a **Copy translation when replacing** switch, on by default. When disabled, the translation is only used for replacement and the previous clipboard contents are restored afterwards.
+- Fixed shelf action-bar preview, translate, and extract-text buttons doing nothing because of a missing anchor, sequential paste only pasting the first item, and the screenshot region cursor not switching to a crosshair.
 - Clarified in Settings that ad-hoc signed builds may require re-granting Accessibility and Screen Recording permission after each update.
 - 128 XCTest cases.
 

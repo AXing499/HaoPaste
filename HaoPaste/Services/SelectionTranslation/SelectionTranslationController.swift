@@ -607,7 +607,17 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
 
         let translation = service.resultText
         let target = previousApplication
-        guard manager.copyTextToPasteboard(translation) else { return }
+        let shouldCopy = settings.copyTranslationWhenReplacing
+        let snapshot = shouldCopy
+            ? nil
+            : PasteboardSnapshot(pasteboard: .general)
+
+        guard manager.writeTextToPasteboard(
+            translation,
+            captureInHistory: shouldCopy
+        ) else { return }
+        let translationChangeCount = NSPasteboard.general.changeCount
+
         hideCard()
 
         guard
@@ -615,6 +625,10 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
             !target.isTerminated,
             PasteEventSender.isTrusted
         else {
+            if let snapshot {
+                snapshot.restore(to: .general)
+                manager.synchronizePasteboardChangeCount()
+            }
             NSSound.beep()
             return
         }
@@ -624,9 +638,27 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
                 NSWorkspace.shared.frontmostApplication?.processIdentifier
                     == target.processIdentifier
             else {
+                if let snapshot {
+                    snapshot.restore(to: .general)
+                    self.manager.synchronizePasteboardChangeCount()
+                }
                 return
             }
+
             PasteEventSender.sendCommandV()
+
+            if let snapshot {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.50) {
+                    guard
+                        NSPasteboard.general.changeCount
+                            == translationChangeCount
+                    else {
+                        return
+                    }
+                    snapshot.restore(to: .general)
+                    self.manager.synchronizePasteboardChangeCount()
+                }
+            }
         }
     }
 

@@ -177,8 +177,20 @@ final class ClipboardManager {
 
     /// Writes text produced inside HaoPaste (OCR, translation, snippets and
     /// other derived actions) and keeps it in history, just like a normal copy.
+    func synchronizePasteboardChangeCount() {
+        monitor.synchronizeChangeCount()
+    }
+
     @discardableResult
     func copyTextToPasteboard(_ text: String) -> Bool {
+        writeTextToPasteboard(text, captureInHistory: true)
+    }
+
+    @discardableResult
+    func writeTextToPasteboard(
+        _ text: String,
+        captureInHistory: Bool
+    ) -> Bool {
         let pasteboard = monitor.pasteboard
         pasteboard.clearContents()
         let didWrite = pasteboard.setString(text, forType: .string)
@@ -189,7 +201,9 @@ final class ClipboardManager {
             return false
         }
 
-        captureGeneratedText(text)
+        if captureInHistory {
+            captureGeneratedText(text)
+        }
         return true
     }
 

@@ -114,7 +114,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         screenshotItem.title = L(
             "截图翻译（%@）",
-            HotKeyConfiguration.screenshotTranslationDefault.displayString
+            settings.screenshotHotKey.displayString
         )
         screenshotItem.action = #selector(captureScreenshot)
         screenshotItem.keyEquivalent = ""
@@ -200,7 +200,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         )
         screenshotItem.title = L(
             "截图翻译（%@）",
-            HotKeyConfiguration.screenshotTranslationDefault.displayString
+            settings.screenshotHotKey.displayString
         )
         shelfItem.title = shelfController?.isShowing == true
             ? L("收起剪贴板挂架")

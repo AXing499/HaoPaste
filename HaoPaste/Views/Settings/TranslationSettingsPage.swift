@@ -127,6 +127,26 @@ struct TranslationSettingsPage: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 11)
+
+                SettingsDivider()
+
+                SettingsRow(
+                    L("替换原文时复制译文"),
+                    subtitle: L(
+                        "开启后译文保留在剪贴板；关闭后仅用于替换，并恢复原来的剪贴板内容"
+                    )
+                ) {
+                    Toggle(
+                        "",
+                        isOn: $appSettings.copyTranslationWhenReplacing
+                    )
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .tint(Color.accentColor)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
             }
 
             SettingsDivider()
@@ -151,7 +171,7 @@ struct TranslationSettingsPage: View {
                 )
             ) {
                 Text(
-                    HotKeyConfiguration.screenshotTranslationDefault.displayString
+                    appSettings.screenshotHotKey.displayString
                 )
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(.secondary)

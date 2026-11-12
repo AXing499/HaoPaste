@@ -552,3 +552,13 @@
 "无法截取屏幕。请检查「屏幕录制」权限。" = "Unable to capture the screen. Check Screen Recording permission.";
 "无法裁剪截图区域。" = "Unable to crop the captured area.";
 "打开系统设置" = "Open System Settings";
+"无法注册连续粘贴快捷键 %@：%@" = "Unable to register the sequential paste shortcut %@: %@";
+"无法注册截图翻译快捷键 %@：%@" = "Unable to register the screenshot translation shortcut %@: %@";
+"呼出、翻译、连续粘贴与截图翻译" = "Panel, translation, paste stack and screenshot translation";
+"从任意应用打开 HaoPaste 主面板" = "Open the HaoPaste panel from any app";
+"翻译当前剪贴板中的文本" = "Translate the current clipboard text";
+"开始连续粘贴后，切换到队列中的下一项" = "Advance to the next item after starting Sequential Paste";
+"框选屏幕区域，本地识别文字后翻译" = "Select a screen area, recognize text locally, then translate";
+"快捷键使用全局 Carbon 注册；如果组合被其他应用占用，会自动恢复上一个可用快捷键并显示提示。" = "Shortcuts are registered globally with Carbon. If a combination is already in use, HaoPaste restores the previous working shortcut and shows a message.";
+"替换原文时复制译文" = "Copy translation when replacing";
+"开启后译文保留在剪贴板；关闭后仅用于替换，并恢复原来的剪贴板内容" = "When enabled, the translation stays on the clipboard. When disabled, it is only used for replacement and the previous clipboard contents are restored.";

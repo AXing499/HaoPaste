@@ -106,6 +106,8 @@ render_zh --render-selection "$OUTPUT_DIR/screenshot-selection-translation.png"
 # Settings
 render_en --render-settings "$OUTPUT_DIR/screenshot-settings-en.png"
 render_zh --render-settings "$OUTPUT_DIR/screenshot-settings.png"
+HAOPASTE_RENDER_SETTINGS_TAB=shortcuts render_en --render-settings "$OUTPUT_DIR/screenshot-settings-shortcuts-en.png"
+HAOPASTE_RENDER_SETTINGS_TAB=shortcuts render_zh --render-settings "$OUTPUT_DIR/screenshot-settings-shortcuts.png"
 HAOPASTE_RENDER_SETTINGS_TAB=intelligence render_en --render-settings "$OUTPUT_DIR/screenshot-settings-intelligence-en.png"
 HAOPASTE_RENDER_SETTINGS_TAB=intelligence render_zh --render-settings "$OUTPUT_DIR/screenshot-settings-intelligence.png"
 

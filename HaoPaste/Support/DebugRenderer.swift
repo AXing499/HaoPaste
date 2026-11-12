@@ -349,6 +349,7 @@ enum DebugRenderer {
         let tabName = ProcessInfo.processInfo.environment["HAOPASTE_RENDER_SETTINGS_TAB"] ?? "general"
         let tab: SettingsTab
         switch tabName {
+        case "shortcuts": tab = .shortcuts
         case "history": tab = .history
         case "snippets": tab = .snippets
         case "intelligence": tab = .intelligence

@@ -12,6 +12,7 @@ final class ScreenshotSelectionController {
     private var window: ScreenshotSelectionWindow?
     private var completion: ((NSRect, NSScreen) -> Void)?
     private var cancellation: (() -> Void)?
+    private var isCursorPushed = false
 
     var isSelecting: Bool {
         window != nil
@@ -65,6 +66,9 @@ final class ScreenshotSelectionController {
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         window.makeFirstResponder(view)
+
+        NSCursor.crosshair.push()
+        isCursorPushed = true
     }
 
     func cancel() {
@@ -74,6 +78,10 @@ final class ScreenshotSelectionController {
     }
 
     private func finish() {
+        if isCursorPushed {
+            NSCursor.pop()
+            isCursorPushed = false
+        }
         window?.orderOut(nil)
         window?.contentView = nil
         window = nil
@@ -90,6 +98,7 @@ private final class ScreenshotSelectionWindow: NSWindow {
 private final class ScreenshotSelectionView: NSView {
     private var startPoint: NSPoint?
     private var selectionRect = NSRect.zero
+    private var trackingArea: NSTrackingArea?
     private let onComplete: (NSRect) -> Void
     private let onCancel: () -> Void
 
@@ -113,6 +122,26 @@ private final class ScreenshotSelectionView: NSView {
     override func resetCursorRects() {
         super.resetCursorRects()
         addCursorRect(bounds, cursor: .crosshair)
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+
+        if let trackingArea {
+            removeTrackingArea(trackingArea)
+        }
+        let area = NSTrackingArea(
+            rect: bounds,
+            options: [.cursorUpdate, .activeAlways, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(area)
+        trackingArea = area
+    }
+
+    override func cursorUpdate(with event: NSEvent) {
+        NSCursor.crosshair.set()
     }
 
     override func mouseDown(with event: NSEvent) {

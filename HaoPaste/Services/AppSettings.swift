@@ -51,6 +51,10 @@ final class AppSettings {
         static let excludedApplications = "settings.excludedApplications"
         static let translationHotKeyCode = "settings.translationHotKeyCode"
         static let translationHotKeyModifiers = "settings.translationHotKeyModifiers"
+        static let pasteStackHotKeyCode = "settings.pasteStackHotKeyCode"
+        static let pasteStackHotKeyModifiers = "settings.pasteStackHotKeyModifiers"
+        static let screenshotHotKeyCode = "settings.screenshotHotKeyCode"
+        static let screenshotHotKeyModifiers = "settings.screenshotHotKeyModifiers"
         static let autoTranslateLatestOnOpen = "settings.autoTranslateLatestOnOpen"
         static let autoTranslateDefaultOffMigrated = "settings.autoTranslateDefaultOffMigrated"
         static let trashRetentionDays = "settings.trashRetentionDays"
@@ -60,6 +64,7 @@ final class AppSettings {
         static let panelCopyBehavior = "settings.panelCopyBehavior"
         static let selectionTranslationEnabled = "settings.selectionTranslationEnabled"
         static let copyPlainTextOnly = "settings.copyPlainTextOnly"
+        static let copyTranslationWhenReplacing = "settings.copyTranslationWhenReplacing"
         static let shelfEnabled = "settings.shelfEnabled"
         static let shelfItemLimit = "settings.shelfItemLimit"
         static let shelfEdge = "settings.shelfEdge"
@@ -122,6 +127,44 @@ final class AppSettings {
         }
     }
 
+    var pasteStackHotKey: HotKeyConfiguration {
+        didSet {
+            guard oldValue != pasteStackHotKey else { return }
+
+            defaults.set(
+                Int(pasteStackHotKey.keyCode),
+                forKey: Keys.pasteStackHotKeyCode
+            )
+            defaults.set(
+                Int(pasteStackHotKey.carbonModifiers),
+                forKey: Keys.pasteStackHotKeyModifiers
+            )
+
+            if !isRevertingPasteStackHotKey {
+                onPasteStackHotKeyChange?(pasteStackHotKey)
+            }
+        }
+    }
+
+    var screenshotHotKey: HotKeyConfiguration {
+        didSet {
+            guard oldValue != screenshotHotKey else { return }
+
+            defaults.set(
+                Int(screenshotHotKey.keyCode),
+                forKey: Keys.screenshotHotKeyCode
+            )
+            defaults.set(
+                Int(screenshotHotKey.carbonModifiers),
+                forKey: Keys.screenshotHotKeyModifiers
+            )
+
+            if !isRevertingScreenshotHotKey {
+                onScreenshotHotKeyChange?(screenshotHotKey)
+            }
+        }
+    }
+
     var autoTranslateLatestOnOpen: Bool {
         didSet {
             guard oldValue != autoTranslateLatestOnOpen else { return }
@@ -169,6 +212,16 @@ final class AppSettings {
             defaults.set(
                 copyPlainTextOnly,
                 forKey: Keys.copyPlainTextOnly
+            )
+        }
+    }
+
+    var copyTranslationWhenReplacing: Bool {
+        didSet {
+            guard oldValue != copyTranslationWhenReplacing else { return }
+            defaults.set(
+                copyTranslationWhenReplacing,
+                forKey: Keys.copyTranslationWhenReplacing
             )
         }
     }
@@ -259,6 +312,8 @@ final class AppSettings {
 
     private(set) var hotKeyRegistrationError: String?
     private(set) var translationHotKeyRegistrationError: String?
+    private(set) var pasteStackHotKeyRegistrationError: String?
+    private(set) var screenshotHotKeyRegistrationError: String?
 
     private(set) var launchAtLoginEnabled: Bool
     private(set) var launchAtLoginRequiresApproval: Bool
@@ -267,6 +322,8 @@ final class AppSettings {
     @ObservationIgnored var onHistoryLimitChange: ((Int) -> Void)?
     @ObservationIgnored var onHotKeyChange: ((HotKeyConfiguration) -> Void)?
     @ObservationIgnored var onTranslationHotKeyChange: ((HotKeyConfiguration) -> Void)?
+    @ObservationIgnored var onPasteStackHotKeyChange: ((HotKeyConfiguration) -> Void)?
+    @ObservationIgnored var onScreenshotHotKeyChange: ((HotKeyConfiguration) -> Void)?
     @ObservationIgnored var onShelfEnabledChange: ((Bool) -> Void)?
     @ObservationIgnored var onShelfEdgeChange: ((ClipboardShelfEdge) -> Void)?
     @ObservationIgnored var onTrashRetentionChange: ((Int) -> Void)?
@@ -275,6 +332,8 @@ final class AppSettings {
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var isRevertingHotKey = false
     @ObservationIgnored private var isRevertingTranslationHotKey = false
+    @ObservationIgnored private var isRevertingPasteStackHotKey = false
+    @ObservationIgnored private var isRevertingScreenshotHotKey = false
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -310,6 +369,34 @@ final class AppSettings {
         self.translationHotKey = storedTranslationHotKey.isValid
             ? storedTranslationHotKey
             : .translationDefault
+
+        let storedPasteStackKeyCode = defaults.integer(
+            forKey: Keys.pasteStackHotKeyCode
+        )
+        let storedPasteStackModifiers = defaults.integer(
+            forKey: Keys.pasteStackHotKeyModifiers
+        )
+        let storedPasteStackHotKey = HotKeyConfiguration(
+            keyCode: UInt32(clamping: storedPasteStackKeyCode),
+            carbonModifiers: UInt32(clamping: storedPasteStackModifiers)
+        )
+        self.pasteStackHotKey = storedPasteStackHotKey.isValid
+            ? storedPasteStackHotKey
+            : .pasteStackNextDefault
+
+        let storedScreenshotKeyCode = defaults.integer(
+            forKey: Keys.screenshotHotKeyCode
+        )
+        let storedScreenshotModifiers = defaults.integer(
+            forKey: Keys.screenshotHotKeyModifiers
+        )
+        let storedScreenshotHotKey = HotKeyConfiguration(
+            keyCode: UInt32(clamping: storedScreenshotKeyCode),
+            carbonModifiers: UInt32(clamping: storedScreenshotModifiers)
+        )
+        self.screenshotHotKey = storedScreenshotHotKey.isValid
+            ? storedScreenshotHotKey
+            : .screenshotTranslationDefault
 
         // Auto-translation used to default on. Turn it off once for existing
         // installs as well as fresh ones, then respect the user's choice.
@@ -347,6 +434,13 @@ final class AppSettings {
         self.copyPlainTextOnly = defaults.bool(
             forKey: Keys.copyPlainTextOnly
         )
+        if defaults.object(forKey: Keys.copyTranslationWhenReplacing) == nil {
+            self.copyTranslationWhenReplacing = true
+        } else {
+            self.copyTranslationWhenReplacing = defaults.bool(
+                forKey: Keys.copyTranslationWhenReplacing
+            )
+        }
 
         if defaults.object(forKey: Keys.updateFeedURL) != nil {
             self.updateFeedURL = defaults.string(
@@ -430,6 +524,36 @@ final class AppSettings {
 
     func resetTranslationHotKeyToDefault() {
         translationHotKey = .translationDefault
+    }
+
+    func setPasteStackHotKeyRegistrationError(_ message: String?) {
+        pasteStackHotKeyRegistrationError = message
+    }
+
+    func revertPasteStackHotKey(to configuration: HotKeyConfiguration) {
+        guard pasteStackHotKey != configuration else { return }
+        isRevertingPasteStackHotKey = true
+        pasteStackHotKey = configuration
+        isRevertingPasteStackHotKey = false
+    }
+
+    func resetPasteStackHotKeyToDefault() {
+        pasteStackHotKey = .pasteStackNextDefault
+    }
+
+    func setScreenshotHotKeyRegistrationError(_ message: String?) {
+        screenshotHotKeyRegistrationError = message
+    }
+
+    func revertScreenshotHotKey(to configuration: HotKeyConfiguration) {
+        guard screenshotHotKey != configuration else { return }
+        isRevertingScreenshotHotKey = true
+        screenshotHotKey = configuration
+        isRevertingScreenshotHotKey = false
+    }
+
+    func resetScreenshotHotKeyToDefault() {
+        screenshotHotKey = .screenshotTranslationDefault
     }
 
     // MARK: - Launch at login

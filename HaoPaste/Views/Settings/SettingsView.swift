@@ -12,6 +12,7 @@ import UniformTypeIdentifiers
 
 enum SettingsTab: String, CaseIterable, Identifiable {
     case general
+    case shortcuts
     case history
     case snippets
     case intelligence
@@ -23,6 +24,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .general: return L("通用")
+        case .shortcuts: return L("快捷键")
         case .history: return L("历史")
         case .snippets: return L("片段列表")
         case .intelligence: return L("智能")
@@ -34,6 +36,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     var subtitle: String {
         switch self {
         case .general: return L("启动、快捷键与监听")
+        case .shortcuts: return L("呼出、翻译、连续粘贴与截图翻译")
         case .history: return L("记录容量、存储位置与清理")
         case .snippets: return L("常用文本，一键复制")
         case .intelligence: return L("翻译引擎、语言与图片文字")
@@ -45,6 +48,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     var symbolName: String {
         switch self {
         case .general: return "slider.horizontal.3"
+        case .shortcuts: return "keyboard"
         case .history: return "clock.arrow.circlepath"
         case .snippets: return "text.quote"
         case .intelligence: return "character.bubble"
@@ -222,6 +226,8 @@ struct SettingsView: View {
                 switch selectedTab {
                 case .general:
                     generalPage
+                case .shortcuts:
+                    shortcutsPage
                 case .history:
                     historyPage
                 case .snippets:
@@ -459,25 +465,6 @@ struct SettingsView: View {
 
         SettingsCard(L("翻译")) {
             SettingsRow(
-                L("快捷翻译剪贴板"),
-                subtitle: L("在任意应用复制文本后按下快捷键，直接打开翻译卡片")
-            ) {
-                ShortcutRecorderView(
-                    configuration: settings.translationHotKey,
-                    registrationError: settings.translationHotKeyRegistrationError,
-                    onRecord: { configuration in
-                        settings.translationHotKey = configuration
-                    },
-                    onReset: {
-                        settings.resetTranslationHotKeyToDefault()
-                    },
-                    resetConfiguration: .translationDefault
-                )
-            }
-
-            SettingsDivider()
-
-            SettingsRow(
                 L("打开面板时翻译最新记录"),
                 subtitle: L("默认关闭；仅对与目标语言不同的最新文本自动执行；每条记录只自动翻译一次，图片不会自动翻译")
             ) {
@@ -501,6 +488,79 @@ struct SettingsView: View {
                     .tint(Color.accentColor)
             }
         }
+    }
+
+    @ViewBuilder
+    private var shortcutsPage: some View {
+        SettingsCard(L("全局快捷键")) {
+            SettingsRow(
+                L("呼出主面板"),
+                subtitle: L("从任意应用打开 HaoPaste 主面板")
+            ) {
+                ShortcutRecorderView(
+                    configuration: settings.hotKey,
+                    registrationError: settings.hotKeyRegistrationError,
+                    onRecord: { settings.hotKey = $0 },
+                    onReset: { settings.resetHotKeyToDefault() },
+                    resetConfiguration: .default
+                )
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                L("快捷翻译剪贴板"),
+                subtitle: L("翻译当前剪贴板中的文本")
+            ) {
+                ShortcutRecorderView(
+                    configuration: settings.translationHotKey,
+                    registrationError: settings.translationHotKeyRegistrationError,
+                    onRecord: { settings.translationHotKey = $0 },
+                    onReset: { settings.resetTranslationHotKeyToDefault() },
+                    resetConfiguration: .translationDefault
+                )
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                L("连续粘贴下一项"),
+                subtitle: L("开始连续粘贴后，切换到队列中的下一项")
+            ) {
+                ShortcutRecorderView(
+                    configuration: settings.pasteStackHotKey,
+                    registrationError: settings.pasteStackHotKeyRegistrationError,
+                    onRecord: { settings.pasteStackHotKey = $0 },
+                    onReset: { settings.resetPasteStackHotKeyToDefault() },
+                    resetConfiguration: .pasteStackNextDefault
+                )
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                L("截图翻译"),
+                subtitle: L("框选屏幕区域，本地识别文字后翻译")
+            ) {
+                ShortcutRecorderView(
+                    configuration: settings.screenshotHotKey,
+                    registrationError: settings.screenshotHotKeyRegistrationError,
+                    onRecord: { settings.screenshotHotKey = $0 },
+                    onReset: { settings.resetScreenshotHotKeyToDefault() },
+                    resetConfiguration: .screenshotTranslationDefault
+                )
+            }
+        }
+
+        Text(
+            L(
+                "快捷键使用全局 Carbon 注册；如果组合被其他应用占用，会自动恢复上一个可用快捷键并显示提示。"
+            )
+        )
+        .font(.system(size: 9.5, design: .rounded))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.horizontal, 4)
     }
 
     @ViewBuilder

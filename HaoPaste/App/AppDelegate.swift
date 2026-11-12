@@ -37,7 +37,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var activeHotKeyConfiguration: HotKeyConfiguration?
     private var translationHotKey: GlobalHotKey?
     private var activeTranslationHotKeyConfiguration: HotKeyConfiguration?
+    private var pasteStackHotKey: GlobalHotKey?
+    private var activePasteStackHotKeyConfiguration: HotKeyConfiguration?
     private var screenshotHotKey: GlobalHotKey?
+    private var activeScreenshotHotKeyConfiguration: HotKeyConfiguration?
 
     private var isRunningUnitTests: Bool {
         let environment = ProcessInfo.processInfo.environment
@@ -127,7 +130,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             _ = self.panelController.state.clearMultiSelection()
             self.panelController.hide(restoreFocus: true)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
-                self.pasteStackController.start(items: items)
+                let frontmost = NSWorkspace.shared.frontmostApplication
+                let target: NSRunningApplication? = frontmost?.processIdentifier
+                    == ProcessInfo.processInfo.processIdentifier
+                    ? nil
+                    : frontmost
+                self.pasteStackController.start(
+                    items: items,
+                    targetApplication: target,
+                    shortcutDisplay: self.settings.pasteStackHotKey.displayString
+                )
             }
         }
 
@@ -209,7 +221,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusBarController.onScreenshotTranslation = { [weak self] in
             self?.screenshotTranslationController.beginCapture()
         }
-        installScreenshotHotKey()
         shelfController.onVisibilityChanged = { [weak self] in
             self?.statusBarController?.refreshShortcutDisplay()
         }
@@ -282,6 +293,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.applyTranslationHotKey(configuration)
         }
         applyTranslationHotKey(settings.translationHotKey)
+
+        settings.onPasteStackHotKeyChange = { [weak self] configuration in
+            self?.applyPasteStackHotKey(configuration)
+        }
+        applyPasteStackHotKey(settings.pasteStackHotKey)
+
+        settings.onScreenshotHotKeyChange = { [weak self] configuration in
+            self?.applyScreenshotHotKey(configuration)
+        }
+        applyScreenshotHotKey(settings.screenshotHotKey)
 
         NotificationCenter.default.addObserver(
             forName: .haopasteOpenTranslationSettings,
@@ -598,24 +619,105 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func installScreenshotHotKey() {
-        screenshotHotKey = nil
-        let configuration = HotKeyConfiguration.screenshotTranslationDefault
+    private func applyPasteStackHotKey(_ configuration: HotKeyConfiguration) {
+        let fallback = activePasteStackHotKeyConfiguration
+            ?? .pasteStackNextDefault
 
         do {
-            screenshotHotKey = try GlobalHotKey(
-                keyCode: configuration.keyCode,
-                modifiers: configuration.carbonModifiers,
-                id: 4
-            ) { [weak self] in
-                DispatchQueue.main.async {
-                    self?.screenshotTranslationController?.beginCapture()
-                }
-            }
+            try installPasteStackHotKey(configuration)
+            activePasteStackHotKeyConfiguration = configuration
+            settings.setPasteStackHotKeyRegistrationError(nil)
         } catch {
-            NSLog(
-                "HaoPaste: failed to register screenshot translation hotkey \(configuration.displayString): \(error)"
+            var message = L(
+                "无法注册连续粘贴快捷键 %@：%@",
+                configuration.displayString,
+                error.localizedDescription
             )
+
+            if configuration != fallback {
+                do {
+                    try installPasteStackHotKey(fallback)
+                    activePasteStackHotKeyConfiguration = fallback
+                    settings.revertPasteStackHotKey(to: fallback)
+                    message += L(" 已恢复为 %@。", fallback.displayString)
+                } catch {
+                    activePasteStackHotKeyConfiguration = nil
+                    message += L(" 原快捷键也无法注册。")
+                }
+            } else {
+                activePasteStackHotKeyConfiguration = nil
+            }
+
+            settings.setPasteStackHotKeyRegistrationError(message)
+            NSLog("HaoPaste: \(message)")
+        }
+
+        statusBarController?.refreshShortcutDisplay()
+    }
+
+    private func installPasteStackHotKey(
+        _ configuration: HotKeyConfiguration
+    ) throws {
+        pasteStackHotKey = nil
+        pasteStackHotKey = try GlobalHotKey(
+            keyCode: configuration.keyCode,
+            modifiers: configuration.carbonModifiers,
+            id: 5
+        ) { [weak self] in
+            DispatchQueue.main.async {
+                self?.pasteStackController?.advance()
+            }
+        }
+    }
+
+    private func applyScreenshotHotKey(_ configuration: HotKeyConfiguration) {
+        let fallback = activeScreenshotHotKeyConfiguration
+            ?? .screenshotTranslationDefault
+
+        do {
+            try installScreenshotHotKey(configuration)
+            activeScreenshotHotKeyConfiguration = configuration
+            settings.setScreenshotHotKeyRegistrationError(nil)
+        } catch {
+            var message = L(
+                "无法注册截图翻译快捷键 %@：%@",
+                configuration.displayString,
+                error.localizedDescription
+            )
+
+            if configuration != fallback {
+                do {
+                    try installScreenshotHotKey(fallback)
+                    activeScreenshotHotKeyConfiguration = fallback
+                    settings.revertScreenshotHotKey(to: fallback)
+                    message += L(" 已恢复为 %@。", fallback.displayString)
+                } catch {
+                    activeScreenshotHotKeyConfiguration = nil
+                    message += L(" 原快捷键也无法注册。")
+                }
+            } else {
+                activeScreenshotHotKeyConfiguration = nil
+            }
+
+            settings.setScreenshotHotKeyRegistrationError(message)
+            NSLog("HaoPaste: \(message)")
+        }
+
+        statusBarController?.refreshShortcutDisplay()
+    }
+
+    private func installScreenshotHotKey(
+        _ configuration: HotKeyConfiguration
+    ) throws {
+        screenshotHotKey = nil
+        screenshotHotKey = try GlobalHotKey(
+            keyCode: configuration.keyCode,
+            modifiers: configuration.carbonModifiers,
+            id: 4
+        ) { [weak self] in
+            DispatchQueue.main.async {
+                self?.screenshotTranslationController?.beginCapture()
+            }
         }
     }
 
