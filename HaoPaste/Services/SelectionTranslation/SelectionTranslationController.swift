@@ -622,7 +622,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
 
     private func configureIconPanel() {
         iconPanel.isFloatingPanel = true
-        iconPanel.level = .floating
+        iconPanel.level = .popUpMenu
         iconPanel.backgroundColor = .clear
         iconPanel.isOpaque = false
         iconPanel.hasShadow = false
@@ -640,7 +640,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
 
     private func configureCardPanel() {
         cardPanel.isFloatingPanel = true
-        cardPanel.level = .floating
+        cardPanel.level = .popUpMenu
         cardPanel.backgroundColor = .clear
         cardPanel.isOpaque = false
         cardPanel.hasShadow = true
