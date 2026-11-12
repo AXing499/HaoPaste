@@ -222,35 +222,25 @@ struct SelectionTranslationCardView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.mini)
-                .keyboardShortcut(.return, modifiers: .command)
-                .help(L("翻译（⌘↩）"))
+                .help(L("翻译（回车）"))
                 .disabled(isSourceEmpty || service.phase == .translating)
             }
 
-            TextField("", text: $draftSource, axis: .vertical)
-                .textFieldStyle(.plain)
-                .font(.system(size: 11, design: .rounded))
-                .foregroundStyle(.primary)
-                .lineLimit(2...4)
-                .frame(
-                    maxWidth: .infinity,
-                    minHeight: 42,
-                    alignment: .topLeading
-                )
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .background {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .fill(Color.primary.opacity(0.035))
-                }
-                .overlay {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .strokeBorder(
-                            Color.primary.opacity(isDirty ? 0.12 : 0.05),
-                            lineWidth: Theme.hairline
-                        )
-                }
-                .accessibilityLabel(L("原文"))
+            TranslationSourceEditor(text: $draftSource) { source in
+                translateDraft(source)
+            }
+            .frame(height: 58)
+            .background {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(Color.primary.opacity(0.035))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .strokeBorder(
+                        Color.primary.opacity(isDirty ? 0.12 : 0.05),
+                        lineWidth: Theme.hairline
+                    )
+            }
         }
     }
 
@@ -262,8 +252,10 @@ struct SelectionTranslationCardView: View {
         draftSource.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    private func translateDraft() {
-        let trimmed = draftSource.trimmingCharacters(
+    private func translateDraft(_ source: String? = nil) {
+        guard service.phase != .translating else { return }
+
+        let trimmed = (source ?? draftSource).trimmingCharacters(
             in: .whitespacesAndNewlines
         )
         guard !trimmed.isEmpty else { return }

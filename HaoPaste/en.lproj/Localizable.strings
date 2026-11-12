@@ -522,4 +522,4 @@
 "选中文本后显示翻译图标；默认关闭，启用需要辅助功能权限。" = "Show a translate icon after you select text. Off by default; requires Accessibility permission.";
 "如果系统设置中已勾选 HaoPaste 但仍显示此提示，请先移除 HaoPaste，再重新添加当前版本。" = "If HaoPaste is already enabled in System Settings but this warning remains, remove HaoPaste from the list and add the current build again.";
 "未更新" = "Not updated";
-"翻译（⌘↩）" = "Translate (⌘↩)";
+"翻译（回车）" = "Translate (Return)";

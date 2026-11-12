@@ -38,7 +38,7 @@
 ### 中文
 
 - 划词图标改为自绘的方向性翻译气泡：保持 A / 文 正向，并根据图标相对选区的位置让气泡尾巴朝向下、上、左或右；优先显示在选区上方，空间不足时依次回退到下方、右侧或左侧。
-- 划词翻译卡片中的原文现在可以直接编辑；修改后点击「翻译」或按 `⌘↩` 重新翻译。原文未提交修改时译文会淡化，复制按钮暂时禁用。
+- 划词翻译卡片中的原文现在可以直接编辑；修改后点击「翻译」或按回车重新翻译，`Shift+回车` 换行。原文未提交修改时译文会淡化，复制按钮暂时禁用。
 - 调整图标比例，加宽 A 气泡、缩短尾巴，并修正点击图标偶发不弹出翻译的问题：忽略图标区域内的外部点击、开卡时短暂抑制重新检测选区，并把图标与卡片提升到 pop-up 窗口层级，避免被其他应用的选区弹窗拦截。
 - 移除无效的手型光标尝试；保留悬停高亮与轻微缩放反馈。
 - 新增方向性图标与四向布局测试；128 个 XCTest。
@@ -46,7 +46,7 @@
 ### English
 
 - Replaced the fixed-tail SF Symbol with a custom directional translate glyph: the A / 文 bubbles stay upright while the tail points down, up, left, or right based on the icon's position relative to the selection. The icon prefers above, then below, right, and left.
-- The source text in the selection translation card is now editable. Edit it and click **Translate** or press `⌘↩` to translate again; while changes are unsubmitted, the translation dims and copy actions are disabled.
+- The source text in the selection translation card is now editable. Edit it and click **Translate** or press Return to translate again; press `Shift+Return` to insert a newline. While changes are unsubmitted, the translation dims and copy actions are disabled.
 - Rebalanced the icon proportions, widened the A bubble, shortened the tail, and fixed an occasional failure where clicking the icon did not open translation: clicks inside the icon are no longer treated as outside interactions, selection checks are briefly suppressed while the card opens, and the icon/card now use a pop-up window level so other apps' selection popovers cannot intercept the click.
 - Removed the ineffective pointing-hand cursor attempt; hover highlight and slight scaling remain.
 - Added directional icon and four-way placement tests; 128 XCTest cases.

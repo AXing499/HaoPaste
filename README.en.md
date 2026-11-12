@@ -2,7 +2,7 @@
 
 English | [简体中文](README.md)
 
-Current version: **v0.15.0**
+Current version: **v0.15.1**
 
 A native, fast, keyboard-first clipboard manager for macOS. Press `⌥⌘V` in any app to open a borderless floating panel, then search, select, and copy without breaking your flow.
 
@@ -22,11 +22,11 @@ A native, fast, keyboard-first clipboard manager for macOS. Press `⌥⌘V` in a
 
    ```bash
    make dmg
-   # dist/HaoPaste-0.15.0.dmg
-   # dist/HaoPaste-0.15.0.dmg.sha256
+   # dist/HaoPaste-0.15.1.dmg
+   # dist/HaoPaste-0.15.1.dmg.sha256
    ```
 
-2. Open `HaoPaste-0.15.0.dmg`, then drag **HaoPaste** into **Applications**.
+2. Open `HaoPaste-0.15.1.dmg`, then drag **HaoPaste** into **Applications**.
 3. If macOS says the developer cannot be verified:
    - Open **System Settings → Privacy & Security**
    - Under **Security**, find **HaoPaste**
@@ -130,7 +130,7 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 - Select text with the mouse to show a small translate icon. Selected text is read and translated only after clicking the icon.
 - The icon stays visible while hovered, highlights and scales slightly to signal that it is clickable, and hides 2 seconds after the pointer leaves.
 - The tail points down, up, left, or right depending on where the icon sits relative to the selected text.
-- The source text in the selection translation card is editable; click **Translate** or press `⌘↩` to translate the edited text.
+- The source text in the selection translation card is editable; click **Translate** or press Return to translate the edited text, and press `Shift+Return` for a newline.
 - The translation card opens near the selection instead of being fixed to the screen center.
 - It never simulates `⌘C` or copies automatically; normal copy shortcuts keep working.
 - Skipped in full-screen apps, secure input, excluded apps, and HaoPaste itself.

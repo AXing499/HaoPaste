@@ -125,6 +125,7 @@
 		EC684CD410ECA9CF74EE45F0 /* SearchMatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FC01E5172C577ED5FFD5C5B /* SearchMatcherTests.swift */; };
 		EDE5A96F1DF0C19D388CCD72 /* SelectionTranslationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF73B2CFFFB6BF30217E7CB2 /* SelectionTranslationController.swift */; };
 		EFAAB6EB24DE9EEFDA0D0540 /* HexColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F605FCEA14CB6C5977C2054D /* HexColorTests.swift */; };
+		EFB24B2CC237781954699124 /* TranslationSourceEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C471E4FCFB7D99959DC4762A /* TranslationSourceEditor.swift */; };
 		FD2C2F599672ABB55B443551 /* ClipboardShelfEdge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5C9CAF7BEE3014E591DEF0 /* ClipboardShelfEdge.swift */; };
 		FDFCD58A297154C4FA4FF14F /* TrashRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97B73B6BCCF27E02FFF3701E /* TrashRowView.swift */; };
 		FE0837DBE5C8EB3F1F4FE1DE /* ClipboardShelfTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D29C2063644AC35E074DFE /* ClipboardShelfTests.swift */; };
@@ -240,6 +241,7 @@
 		BDF66D43027DD3C8296502CB /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		BFA2F1875382F3291DA009F6 /* GlobalHotKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKey.swift; sourceTree = "<group>"; };
 		C42070CBC8845F7FD3FB3B2C /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.stringsdict"; sourceTree = "<group>"; };
+		C471E4FCFB7D99959DC4762A /* TranslationSourceEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationSourceEditor.swift; sourceTree = "<group>"; };
 		CC0F8074AAF9C700AE18D1DA /* SnippetManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetManager.swift; sourceTree = "<group>"; };
 		CD4C980B3A0787F7C3D72EAC /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		CFA771B119A707127242BC5E /* ShelfOCRPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShelfOCRPanelController.swift; sourceTree = "<group>"; };
@@ -363,6 +365,7 @@
 			isa = PBXGroup;
 			children = (
 				95C7C9C535A6635A0DD6B315 /* SelectionTranslationCardView.swift */,
+				C471E4FCFB7D99959DC4762A /* TranslationSourceEditor.swift */,
 			);
 			path = Selection;
 			sourceTree = "<group>";
@@ -724,6 +727,7 @@
 				75949B9AD640632A24248B1B /* TranslationService.swift in Sources */,
 				6FAA4415368644F900831C9B /* TranslationSettingsPage.swift in Sources */,
 				81FF8C61FFE3B43C4AE7E690 /* TranslationSettingsStore.swift in Sources */,
+				EFB24B2CC237781954699124 /* TranslationSourceEditor.swift in Sources */,
 				FDFCD58A297154C4FA4FF14F /* TrashRowView.swift in Sources */,
 				EC42B65071431852352FB591 /* TrashedClipboardItem.swift in Sources */,
 				1D2A23B6D42F0D55C6E03975 /* UpdateChecker.swift in Sources */,
