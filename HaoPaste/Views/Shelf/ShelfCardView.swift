@@ -601,29 +601,28 @@ private struct ShelfActionButton: View {
     let action: () -> Void
 
     var body: some View {
-        Image(systemName: symbol)
-            .font(.system(size: 9.5, weight: .semibold, design: .rounded))
-            .foregroundStyle(tint)
-            .frame(width: 19, height: 19)
-            .background {
-                Circle()
-                    .fill(.regularMaterial)
-                    .allowsHitTesting(false)
-            }
-            .overlay {
-                Circle()
-                    .strokeBorder(Theme.hairlineColor, lineWidth: 0.5)
-                    .allowsHitTesting(false)
-            }
-            .contentShape(Circle())
-            .onTapGesture(perform: action)
-            .shadow(color: Color.black.opacity(0.12), radius: 2, y: 1)
-            .accessibilityElement()
-            .accessibilityLabel(label)
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAction {
-                action()
-            }
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                .foregroundStyle(tint)
+                .frame(width: 19, height: 19)
+                .background {
+                    Circle()
+                        .fill(.regularMaterial)
+                        .allowsHitTesting(false)
+                }
+                .overlay {
+                    Circle()
+                        .strokeBorder(Theme.hairlineColor, lineWidth: 0.5)
+                        .allowsHitTesting(false)
+                }
+                .contentShape(Circle())
+                .shadow(color: Color.black.opacity(0.12), radius: 2, y: 1)
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .help(label)
+        .accessibilityLabel(label)
     }
 }
 
