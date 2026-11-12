@@ -50,36 +50,63 @@ final class SelectionTranslationLayoutTests: XCTestCase {
     }
 
     func testIconStaysInsideVisibleFrame() {
-        let frame = SelectionTranslationLayout.iconFrame(
+        let placement = SelectionTranslationLayout.iconPlacement(
             anchor: NSPoint(x: 1_435, y: 5),
             size: 32,
             visibleFrame: visibleFrame
         )
 
-        XCTAssertTrue(visibleFrame.contains(frame))
-        XCTAssertEqual(frame.size, NSSize(width: 32, height: 32))
+        XCTAssertTrue(visibleFrame.contains(placement.frame))
+        XCTAssertEqual(
+            placement.frame.size,
+            NSSize(width: 32, height: 32)
+        )
     }
 
-    func testIconPrefersAboveSelection() {
-        let frame = SelectionTranslationLayout.iconFrame(
+    func testIconPrefersAboveSelectionAndPointsDown() {
+        let placement = SelectionTranslationLayout.iconPlacement(
             anchor: NSPoint(x: 800, y: 500),
             size: 32,
             visibleFrame: visibleFrame
         )
 
-        XCTAssertGreaterThan(frame.minY, 500)
-        XCTAssertEqual(frame.midX, 800, accuracy: 1)
-        XCTAssertTrue(visibleFrame.contains(frame))
+        XCTAssertGreaterThan(placement.frame.minY, 500)
+        XCTAssertEqual(placement.frame.midX, 800, accuracy: 1)
+        XCTAssertEqual(placement.direction, .down)
+        XCTAssertTrue(visibleFrame.contains(placement.frame))
     }
 
-    func testIconFlipsBelowNearTopEdge() {
-        let frame = SelectionTranslationLayout.iconFrame(
+    func testIconFlipsBelowAndPointsUpNearTopEdge() {
+        let placement = SelectionTranslationLayout.iconPlacement(
             anchor: NSPoint(x: 800, y: 890),
             size: 32,
             visibleFrame: visibleFrame
         )
 
-        XCTAssertLessThan(frame.maxY, 890)
-        XCTAssertTrue(visibleFrame.contains(frame))
+        XCTAssertLessThan(placement.frame.maxY, 890)
+        XCTAssertEqual(placement.direction, .up)
+        XCTAssertTrue(visibleFrame.contains(placement.frame))
+    }
+
+    func testIconUsesRightSideAndPointsLeftWhenVerticalSpaceIsTight() {
+        let placement = SelectionTranslationLayout.iconPlacement(
+            anchor: NSPoint(x: 800, y: 30),
+            size: 32,
+            visibleFrame: NSRect(x: 0, y: 0, width: 1_440, height: 60)
+        )
+
+        XCTAssertGreaterThan(placement.frame.minX, 800)
+        XCTAssertEqual(placement.direction, .left)
+    }
+
+    func testIconUsesLeftSideAndPointsRightWhenRightSpaceIsTight() {
+        let placement = SelectionTranslationLayout.iconPlacement(
+            anchor: NSPoint(x: 1_435, y: 30),
+            size: 32,
+            visibleFrame: NSRect(x: 0, y: 0, width: 1_440, height: 60)
+        )
+
+        XCTAssertLessThan(placement.frame.maxX, 1_435)
+        XCTAssertEqual(placement.direction, .right)
     }
 }

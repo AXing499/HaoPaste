@@ -7,29 +7,106 @@
 
 import AppKit
 
+struct SelectionTranslationIconPlacement {
+    let frame: NSRect
+    let direction: SelectionTranslationIconDirection
+}
+
 enum SelectionTranslationLayout {
     static func iconFrame(
         anchor: NSPoint,
         size: CGFloat,
         visibleFrame: NSRect
     ) -> NSRect {
-        let gap: CGFloat = 3
-        var x = anchor.x - size / 2
-        var y = anchor.y + gap
+        iconPlacement(
+            anchor: anchor,
+            size: size,
+            visibleFrame: visibleFrame
+        ).frame
+    }
 
-        // Prefer placing the icon above the selection so the speech-bubble
-        // tails point down toward the selected text. Center it on the
-        // selection end so the tails sit over the text rather than off to
-        // the side. Fall back below only when there is not enough room near
-        // the top of the screen.
-        if y + size > visibleFrame.maxY - 8 {
-            y = anchor.y - size - gap
+    static func iconPlacement(
+        anchor: NSPoint,
+        size: CGFloat,
+        visibleFrame: NSRect
+    ) -> SelectionTranslationIconPlacement {
+        let gap: CGFloat = 3
+        let margin: CGFloat = 8
+        let bounds = visibleFrame.insetBy(dx: margin, dy: margin)
+        let centeredX = anchor.x - size / 2
+        let centeredY = anchor.y - size / 2
+
+        let candidates: [(NSRect, SelectionTranslationIconDirection)] = [
+            (
+                NSRect(
+                    x: centeredX,
+                    y: anchor.y + gap,
+                    width: size,
+                    height: size
+                ),
+                .down
+            ),
+            (
+                NSRect(
+                    x: centeredX,
+                    y: anchor.y - size - gap,
+                    width: size,
+                    height: size
+                ),
+                .up
+            ),
+            (
+                NSRect(
+                    x: anchor.x + gap,
+                    y: centeredY,
+                    width: size,
+                    height: size
+                ),
+                .left
+            ),
+            (
+                NSRect(
+                    x: anchor.x - size - gap,
+                    y: centeredY,
+                    width: size,
+                    height: size
+                ),
+                .right
+            )
+        ]
+
+        for (frame, direction) in candidates {
+            let integral = frame.integral
+            if bounds.contains(integral) {
+                return SelectionTranslationIconPlacement(
+                    frame: integral,
+                    direction: direction
+                )
+            }
         }
 
-        x = min(max(x, visibleFrame.minX + 8), visibleFrame.maxX - size - 8)
-        y = min(max(y, visibleFrame.minY + 8), visibleFrame.maxY - size - 8)
-
-        return NSRect(x: x, y: y, width: size, height: size).integral
+        let fallback = candidates.max { lhs, rhs in
+            let left = lhs.0.intersection(bounds)
+            let right = rhs.0.intersection(bounds)
+            return left.width * left.height < right.width * right.height
+        } ?? candidates[0]
+        let frame = fallback.0
+        let clamped = NSRect(
+            x: min(
+                max(frame.minX, bounds.minX),
+                bounds.maxX - size
+            ),
+            y: min(
+                max(frame.minY, bounds.minY),
+                bounds.maxY - size
+            ),
+            width: size,
+            height: size
+        ).integral
+        return SelectionTranslationIconPlacement(
+            frame: clamped,
+            direction: fallback.1
+        )
     }
 
     static func cardFrame(

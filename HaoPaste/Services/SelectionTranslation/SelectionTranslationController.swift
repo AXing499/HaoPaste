@@ -274,14 +274,16 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
         iconButton.prepareForShow()
         iconButton.layer?.contentsScale = screen.backingScaleFactor
         iconPanel.contentView?.layer?.contentsScale = screen.backingScaleFactor
-        iconPanel.setFrame(
-            SelectionTranslationLayout.iconFrame(
-                anchor: anchor,
-                size: iconSize,
-                visibleFrame: screen.visibleFrame
-            ),
-            display: false
+
+        let placement = SelectionTranslationLayout.iconPlacement(
+            anchor: anchor,
+            size: iconSize,
+            visibleFrame: screen.visibleFrame
         )
+        iconButton.image = SelectionTranslationIconRenderer.image(
+            for: placement.direction
+        )
+        iconPanel.setFrame(placement.frame, display: false)
 
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         iconPanel.alphaValue = reduceMotion ? 1 : 0
@@ -673,15 +675,7 @@ final class SelectionTranslationController: NSObject, NSWindowDelegate {
         iconButton.layer?.contentsScale = NSScreen.main?.backingScaleFactor ?? 2
         iconButton.layer?.shadowOffset = .zero
 
-        let symbol = NSImage(
-            systemSymbolName: "translate",
-            accessibilityDescription: L("翻译选中文本")
-        )
-        let configuration = NSImage.SymbolConfiguration(
-            pointSize: 13.5,
-            weight: .semibold
-        )
-        iconButton.image = symbol?.withSymbolConfiguration(configuration)
+        iconButton.image = SelectionTranslationIconRenderer.image(for: .down)
         iconButton.contentTintColor = .labelColor
         iconButton.updateHalo()
 

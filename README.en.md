@@ -129,6 +129,7 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 - Requires Accessibility permission.
 - Select text with the mouse to show a small translate icon. Selected text is read and translated only after clicking the icon.
 - The icon stays visible while hovered, highlights and scales slightly to signal that it is clickable, and hides 2 seconds after the pointer leaves.
+- The tail points down, up, left, or right depending on where the icon sits relative to the selected text.
 - The translation card opens near the selection instead of being fixed to the screen center.
 - It never simulates `⌘C` or copies automatically; normal copy shortcuts keep working.
 - Skipped in full-screen apps, secure input, excluded apps, and HaoPaste itself.
@@ -243,7 +244,7 @@ Requirements: macOS 14+ and Xcode 15+ (the project is verified with Xcode 26.5).
 # Development
 make run       # debug build and launch
 make demo      # launch with reproducible sample data
-make test      # run 126 XCTest cases
+make test      # run 128 XCTest cases
 
 # Release
 make release   # release build
@@ -259,7 +260,7 @@ HaoPaste stays in the menu bar after launch. Press `⌥⌘V` to open the panel. 
 
 ## Quality and tests
 
-- **126 XCTest cases** cover content classification, shortcut models, history models, settings persistence, privacy exclusions, files and rich text, color parsing, Pinyin / fuzzy search, snippets, preview / drag, multi-select / merge, translation engines / fallback / consent, quick translation / auto-translate policy, shelf layout / scrolling / filtering / hit testing / action bar, OCR / batch recognition / cache, deduplication / trimming, storage I/O, and backup import / export.
+- **128 XCTest cases** cover content classification, shortcut models, history models, settings persistence, privacy exclusions, files and rich text, color parsing, Pinyin / fuzzy search, snippets, preview / drag, multi-select / merge, translation engines / fallback / consent, quick translation / auto-translate policy, shelf layout / scrolling / filtering / hit testing / action bar, OCR / batch recognition / cache, deduplication / trimming, storage I/O, and backup import / export.
 - The test host skips the menu bar, clipboard polling, and global hotkey registration so tests do not affect normal use.
 - GitHub Actions: `.github/workflows/ci.yml` runs tests and a Release build; `.github/workflows/release.yml` runs tests, builds the DMG, creates the GitHub Release, and uploads assets when a `v*` tag is pushed.
 - Run with `make test`.

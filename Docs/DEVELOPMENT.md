@@ -259,7 +259,7 @@ xcodebuild \
   test
 ```
 
-当前 126 个测试覆盖：
+当前 128 个测试覆盖：
 
 - 内容分类器：URL / HEX / JSON / 代码 / SQL / 普通文本边界。
 - `HotKeyConfiguration`：默认值、修饰符、显示顺序、校验。

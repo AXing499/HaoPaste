@@ -105,6 +105,7 @@
 		C142C3D4EFC5C1486AE773FD /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D679CEC15FCA55365C23A9A /* Theme.swift */; };
 		C3B6D9A029A0B03D2FDB20A4 /* OCRRecognitionLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BF4EDD2FE3C94F64362050E /* OCRRecognitionLanguage.swift */; };
 		C5CBF2508DCEBDD381431C82 /* PanelViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 374885024B24FF652467CDF8 /* PanelViewState.swift */; };
+		C698118AC47DCDB8209F22E8 /* SelectionTranslationIconRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D297ED96DD2924F9E1BB2F /* SelectionTranslationIconRenderer.swift */; };
 		C89E89E2A4320756E5F0DD62 /* ClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331DB1B0F0174C1657E57FB7 /* ClipboardItem.swift */; };
 		D07AD9812F77BBCDA218BABE /* QuickTranslationSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9340568EE96D24D6404C0A44 /* QuickTranslationSupport.swift */; };
 		D3B0E66990B5C9DA15DEA4D7 /* SnippetManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD696C2D203B232367BEB258 /* SnippetManagerTests.swift */; };
@@ -187,6 +188,7 @@
 		5289EA112A4CAEB7A571453A /* TranslationPaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationPaneView.swift; sourceTree = "<group>"; };
 		53E93AE344502A179E1336E0 /* SelectionTranslationAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionTranslationAccess.swift; sourceTree = "<group>"; };
 		557E9EE1C130D3CE18E9D7D4 /* HaoPasteApplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HaoPasteApplication.swift; sourceTree = "<group>"; };
+		56D297ED96DD2924F9E1BB2F /* SelectionTranslationIconRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionTranslationIconRenderer.swift; sourceTree = "<group>"; };
 		5BC1C303F14427FE1AE11BAE /* GoogleUnofficialProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleUnofficialProvider.swift; sourceTree = "<group>"; };
 		5C1E8E5926BF16805D508CA9 /* ClipboardShelfController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardShelfController.swift; sourceTree = "<group>"; };
 		5F5C9CAF7BEE3014E591DEF0 /* ClipboardShelfEdge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardShelfEdge.swift; sourceTree = "<group>"; };
@@ -371,6 +373,7 @@
 				4F643416D350AFB6A365B61A /* SelectionTextReader.swift */,
 				53E93AE344502A179E1336E0 /* SelectionTranslationAccess.swift */,
 				FF73B2CFFFB6BF30217E7CB2 /* SelectionTranslationController.swift */,
+				56D297ED96DD2924F9E1BB2F /* SelectionTranslationIconRenderer.swift */,
 				1005B23803106259D2D06CA9 /* SelectionTranslationLayout.swift */,
 			);
 			path = SelectionTranslation;
@@ -695,6 +698,7 @@
 				70914D39B1A2E6F54A1A68CD /* SelectionTranslationAccess.swift in Sources */,
 				070EE95DC7AE7C692D731A76 /* SelectionTranslationCardView.swift in Sources */,
 				EDE5A96F1DF0C19D388CCD72 /* SelectionTranslationController.swift in Sources */,
+				C698118AC47DCDB8209F22E8 /* SelectionTranslationIconRenderer.swift in Sources */,
 				4B60169BA8EBA1E4A77B7E8A /* SelectionTranslationLayout.swift in Sources */,
 				727CAB1FD63A945CA7721E19 /* SettingsView.swift in Sources */,
 				3A3D96E4E6D9E6F892A0C81F /* SettingsWindowController.swift in Sources */,
@@ -891,7 +895,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 49;
+				CURRENT_PROJECT_VERSION = 50;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -911,7 +915,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.15.0;
+				MARKETING_VERSION = 0.15.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -958,7 +962,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 49;
+				CURRENT_PROJECT_VERSION = 50;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -972,7 +976,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.15.0;
+				MARKETING_VERSION = 0.15.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

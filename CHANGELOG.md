@@ -11,12 +11,11 @@
 - 设置中增加辅助功能权限说明与授权入口，并对 ad-hoc 重装后的旧权限给出提示。
 - 划词图标改为无底色、无边框的更小 `translate` 图形，改用原生符号渲染以提升 Retina 清晰度；扩大透明点击区域，避免悬停缩放被裁剪，并增加回弹出现 / 消失、悬停和按压反馈。
 - 划词图标在鼠标悬停时暂停自动消失，移开鼠标后 2 秒再消失；悬停时高亮并轻微放大，明确表示可以点击。受 macOS 非激活浮层限制，不显示手型光标。
-- 划词图标优先显示在选区上方，让气泡尾巴自然朝向选中的文字；顶部空间不足时再回退到下方。
 - 图片条目的快捷操作改为「提取文字」；识图窗口内再点击「翻译」，不再默认识图后自动翻译。
 - 划词卡片、预览、识图、批量识图与翻译弹框统一使用一致的不透明系统表面，划词卡片与识图弹框颜色完全一致；划词卡片改用系统原生窗口阴影，四周边缘更平滑。
 - 扩大 Accessibility 选区读取范围，兼容更多 Chromium / Electron 和文档类应用。
 - 设置页与划词翻译改为无提示凭证检查，避免打开设置或划词时反复弹出钥匙串密码框。
-- 新增划词卡片截图与布局测试；126 个 XCTest。
+- 新增划词卡片截图与布局测试；124 个 XCTest。
 
 ### English
 
@@ -27,12 +26,26 @@
 - Added Accessibility permission guidance and a shortcut to System Settings, including guidance for stale ad-hoc approvals.
 - Switched the selection icon to a smaller, chrome-free native `translate` glyph rendered as a native symbol for sharper Retina output; enlarged the transparent hit area so hover scaling never clips, and added spring appearance / dismissal, hover, and press feedback.
 - The translation icon now stays visible while the pointer hovers over it and disappears 2 seconds after the pointer leaves; it highlights and scales slightly to signal that it is clickable. A pointing-hand cursor is not shown because macOS does not apply cursor changes from inactive non-activating panels.
-- The selection icon now prefers to sit above the selection so its speech-bubble tails point toward the text, falling back below only when there is not enough room near the top edge.
 - Changed the image quick action to **Extract Text**; translation is now a separate action in the OCR window instead of running automatically after recognition.
 - Unified the selection card, preview, OCR, batch OCR, and translation panes on the same opaque system surface, so the selection card and OCR pane match exactly; the selection card now uses the native window shadow for smooth edges.
 - Expanded Accessibility selection lookup for more Chromium / Electron and document apps.
 - Changed settings and selection translation to use non-prompting credential checks, avoiding repeated Keychain password dialogs.
-- Added selection-card screenshots and placement tests; 126 XCTest cases.
+- Added selection-card screenshots and placement tests; 124 XCTest cases.
+
+
+## 0.15.1 — 2026-11-12
+
+### 中文
+
+- 划词图标改为自绘的方向性翻译气泡：保持 A / 文 正向，并根据图标相对选区的位置让气泡尾巴朝向下、上、左或右；优先显示在选区上方，空间不足时依次回退到下方、右侧或左侧。
+- 移除无效的手型光标尝试；保留悬停高亮与轻微缩放反馈。
+- 新增方向性图标与四向布局测试；128 个 XCTest。
+
+### English
+
+- Replaced the fixed-tail SF Symbol with a custom directional translate glyph: the A / 文 bubbles stay upright while the tail points down, up, left, or right based on the icon's position relative to the selection. The icon prefers above, then below, right, and left.
+- Removed the ineffective pointing-hand cursor attempt; hover highlight and slight scaling remain.
+- Added directional icon and four-way placement tests; 128 XCTest cases.
 
 
 ## 0.14.2 — 2026-11-11
