@@ -362,6 +362,7 @@ struct ClipboardShelfView: View {
                     edge: edge,
                     onSelect: {
                         interaction.scrollOffset = 0
+                        interaction.hoveredItemID = nil
                     }
                 )
                 .id(interaction.glassRefreshToken)

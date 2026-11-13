@@ -477,15 +477,20 @@ final class ClipboardShelfController: NSObject {
 
         let windowPoint = panel.convertPoint(fromScreen: mouse)
         let local = shelfHostingView.convert(windowPoint, from: nil)
-        let flipped = CGPoint(
+        // NSHostingView is flipped (origin at the top-left), which is the
+        // same coordinate space used by the SwiftUI hit-target preferences.
+        let point = CGPoint(
             x: local.x,
-            y: shelfHostingView.bounds.height - local.y
+            y: shelfHostingView.isFlipped
+                ? local.y
+                : shelfHostingView.bounds.height - local.y
         )
 
         let target = ClipboardShelfLayout.hitTarget(
-            at: flipped,
+            at: point,
             in: hitTargetStore.targets
         )
+
         let detailHit = overlayDetailFrame?.contains(mouse) ?? false
 
         let hoveredID: UUID?
@@ -503,19 +508,20 @@ final class ClipboardShelfController: NSObject {
             interaction.hoveredItemID = hoveredID
         }
 
-        let wantsPointer: Bool
+        let wantsPointer = !detailHit && target != nil
+        let activatesShelf: Bool
         if !detailHit, let kind = target?.kind {
             switch kind {
             case .cardClip, .cardActions, .filterBar:
-                wantsPointer = true
+                activatesShelf = true
             case .card:
-                wantsPointer = false
+                activatesShelf = false
             }
         } else {
-            wantsPointer = false
+            activatesShelf = false
         }
         let detailVisible = isRetractBlocked?() == true
-        if wantsPointer, !detailVisible {
+        if activatesShelf, !detailVisible {
             activateForShelfIfNeeded()
         }
         updatePointerCursor(wantsPointer && !detailVisible)
