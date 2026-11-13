@@ -533,8 +533,24 @@ final class ClipboardShelfController: NSObject {
         }
 
         let acceptsMouse = target != nil || detailHit
-        if panel.ignoresMouseEvents == acceptsMouse {
+        let wasIgnoringMouse = panel.ignoresMouseEvents
+        if wasIgnoringMouse == acceptsMouse {
             panel.ignoresMouseEvents = !acceptsMouse
+        }
+        // The pointer can enter the shelf while the panel is still ignoring
+        // mouse events. That movement event is lost, so update the cursor on
+        // the acceptance transition instead of waiting for another movement.
+        if wasIgnoringMouse, acceptsMouse, !detailHit {
+            NSCursor.pointingHand.set()
+            // AppKit resets cursor rects as the window starts accepting mouse
+            // events; reassert once after that reset so a stationary entry
+            // into the filter bar still shows the hand.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
+                [weak self] in
+                self?.refreshShelfCursor()
+            }
+        } else if !wasIgnoringMouse, !acceptsMouse {
+            NSCursor.arrow.set()
         }
     }
 
@@ -804,7 +820,8 @@ final class ClipboardShelfController: NSObject {
             else {
                 return event
             }
-            DispatchQueue.main.async { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
+                [weak self] in
                 self?.refreshShelfCursor()
             }
             return event
