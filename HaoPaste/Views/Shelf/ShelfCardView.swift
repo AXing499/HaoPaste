@@ -330,7 +330,7 @@ struct ShelfCardView: View {
     private var bodyContent: some View {
         ZStack {
             GlassSurfaceBackground(
-                shape: bodyShape,
+                cornerRadius: 11,
                 fallback: .material
             )
             .allowsHitTesting(false)

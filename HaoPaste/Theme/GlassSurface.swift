@@ -4,6 +4,10 @@
 //
 //  macOS 26 Liquid Glass with a deterministic material fallback.
 //
+//  The glass view is created through the Objective-C runtime so the project
+//  still builds with older Xcode/SDK combinations and gets the native glass
+//  effect when the app runs on macOS 26.
+//
 
 import AppKit
 import SwiftUI
@@ -23,9 +27,9 @@ enum DebugGlass {
     }
 }
 
-struct GlassSurfaceBackground<S: Shape>: View {
-    let shape: S
-    var tint: Color?
+struct GlassSurfaceBackground: View {
+    let cornerRadius: CGFloat
+    var tint: NSColor?
     var fallback: GlassSurfaceFallback = .material
 
     @AppStorage(AppSettings.liquidGlassDefaultsKey)
@@ -35,14 +39,24 @@ struct GlassSurfaceBackground<S: Shape>: View {
     @Environment(\.colorSchemeContrast)
     private var contrast
 
+    private var usesGlass: Bool {
+        guard enabled,
+              !reduceTransparency,
+              contrast != .increased,
+              !DebugGlass.disablesGlass,
+              NSClassFromString("NSGlassEffectView") != nil
+        else {
+            return false
+        }
+        return true
+    }
+
     var body: some View {
-        if #available(macOS 26.0, *),
-           enabled,
-           !reduceTransparency,
-           contrast != .increased,
-           !DebugGlass.disablesGlass {
-            Color.clear
-                .glassEffect(.regular.tint(tint), in: shape)
+        if usesGlass {
+            AppKitGlassBackground(
+                cornerRadius: cornerRadius,
+                tint: tint
+            )
         } else {
             fallbackView
         }
@@ -52,26 +66,54 @@ struct GlassSurfaceBackground<S: Shape>: View {
     private var fallbackView: some View {
         switch fallback {
         case .material:
-            shape.fill(.regularMaterial)
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(.regularMaterial)
         case .popover:
             ZStack {
                 Theme.popoverBackground
-                shape.fill(.regularMaterial)
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(.regularMaterial)
             }
-            .clipShape(shape)
+            .clipShape(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            )
         }
     }
 }
 
+private struct AppKitGlassBackground: NSViewRepresentable {
+    let cornerRadius: CGFloat
+    let tint: NSColor?
+
+    func makeNSView(context: Context) -> NSView {
+        guard let glassClass = NSClassFromString("NSGlassEffectView") as? NSView.Type else {
+            return NSView()
+        }
+        let view = glassClass.init(frame: .zero)
+        configure(view)
+        return view
+    }
+
+    func updateNSView(_ view: NSView, context: Context) {
+        configure(view)
+    }
+
+    private func configure(_ view: NSView) {
+        view.setValue(cornerRadius, forKey: "cornerRadius")
+        view.setValue(tint, forKey: "tintColor")
+        view.setValue(0, forKey: "style")
+    }
+}
+
 extension View {
-    func glassSurfaceBackground<S: Shape>(
-        _ shape: S,
-        tint: Color? = nil,
+    func glassSurfaceBackground(
+        cornerRadius: CGFloat,
+        tint: NSColor? = nil,
         fallback: GlassSurfaceFallback = .material
     ) -> some View {
         background {
             GlassSurfaceBackground(
-                shape: shape,
+                cornerRadius: cornerRadius,
                 tint: tint,
                 fallback: fallback
             )

@@ -35,8 +35,8 @@ struct SelectionTranslationCardView: View {
         }
         .frame(width: 400, height: 340)
         .glassSurfaceBackground(
-            cardShape,
-            tint: Color(nsColor: .windowBackgroundColor).opacity(0.18),
+            cornerRadius: 13,
+            tint: NSColor.windowBackgroundColor.withAlphaComponent(0.18),
             fallback: .popover
         )
         .clipShape(cardShape)

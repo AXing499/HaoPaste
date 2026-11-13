@@ -42,7 +42,7 @@ final class AppSettings {
     static let defaultShelfCardFallDuration: Double = 0.75
     static let defaultUpdateFeedURL =
         "https://api.github.com/repos/AXing499/HaoPaste/releases/latest"
-    static let liquidGlassDefaultsKey = "settings.liquidGlassEnabled"
+    nonisolated static let liquidGlassDefaultsKey = "settings.liquidGlassEnabled"
 
     private enum Keys {
         static let maxUnpinnedItems = "settings.maxUnpinnedItems"

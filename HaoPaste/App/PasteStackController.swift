@@ -364,8 +364,8 @@ private struct PasteStackHUDView: View {
         .padding(.horizontal, 12)
         .frame(width: 300, height: 58)
         .glassSurfaceBackground(
-            hudShape,
-            tint: Color(nsColor: .windowBackgroundColor).opacity(0.16),
+            cornerRadius: 14,
+            tint: NSColor.windowBackgroundColor.withAlphaComponent(0.16),
             fallback: .popover
         )
         .clipShape(hudShape)
