@@ -40,7 +40,6 @@ final class ClipboardShelfController: NSObject {
     private var isRevealed = false
     private var isHiding = false
     private var isRevealing = false
-    private var isPointerHandPushed = false
     private var activationRestoreApp: NSRunningApplication?
     private var manualOpen = false
     private var manualVisited = false
@@ -223,6 +222,11 @@ final class ClipboardShelfController: NSObject {
         self.panel = ClipboardShelfPanel(contentView: container)
 
         super.init()
+
+        hitTargetStore.onChange = { [weak hostingView] targets in
+            hostingView?.interactiveRects = targets.map(\.rect)
+        }
+        hostingView.interactiveRects = hitTargetStore.targets.map(\.rect)
 
         actionRelay.onPreview = { [weak self] item in
             guard let self else { return }
@@ -471,7 +475,6 @@ final class ClipboardShelfController: NSObject {
         guard isRevealed, !isHiding, !isRevealing else {
             panel.ignoresMouseEvents = true
             interaction.hoveredItemID = nil
-            releasePointerCursor()
             return
         }
 
@@ -508,7 +511,6 @@ final class ClipboardShelfController: NSObject {
             interaction.hoveredItemID = hoveredID
         }
 
-        let wantsPointer = !detailHit && target != nil
         let activatesShelf: Bool
         if !detailHit, let kind = target?.kind {
             switch kind {
@@ -524,7 +526,6 @@ final class ClipboardShelfController: NSObject {
         if activatesShelf, !detailVisible {
             activateForShelfIfNeeded()
         }
-        updatePointerCursor(wantsPointer && !detailVisible)
 
         let acceptsMouse = target != nil || detailHit
         if panel.ignoresMouseEvents == acceptsMouse {
@@ -596,26 +597,6 @@ final class ClipboardShelfController: NSObject {
         app.activate(options: [])
     }
 
-    private func updatePointerCursor(_ wantsPointer: Bool) {
-        if wantsPointer {
-            if !isPointerHandPushed {
-                NSCursor.pointingHand.push()
-                isPointerHandPushed = true
-            }
-            // Re-assert on every tick: the nonactivating panel can have its
-            // cursor reset by AppKit cursor rects while the pointer moves.
-            NSCursor.pointingHand.set()
-        } else if isPointerHandPushed {
-            NSCursor.pop()
-            isPointerHandPushed = false
-        }
-    }
-
-    private func releasePointerCursor() {
-        guard isPointerHandPushed else { return }
-        NSCursor.pop()
-        isPointerHandPushed = false
-    }
 
     // MARK: - Reveal / retract
 
@@ -690,7 +671,6 @@ final class ClipboardShelfController: NSObject {
     private func hide() {
         guard isRevealed, !isHiding else { return }
 
-        releasePointerCursor()
         onWillHide?()
         resetOverlayState()
         isRevealed = false
@@ -880,7 +860,10 @@ final class ClipboardShelfController: NSObject {
 }
 
 private final class ShelfHitTargetStore {
-    var targets: [ShelfHitTarget] = []
+    var onChange: (([ShelfHitTarget]) -> Void)?
+    var targets: [ShelfHitTarget] = [] {
+        didSet { onChange?(targets) }
+    }
 }
 
 private final class ShelfActionRelay {
@@ -915,9 +898,21 @@ private final class ShelfOverlayHost: NSView {
 
 private final class ShelfHostingView<Content: View>: NSHostingView<Content> {
     var onScrollWheel: ((NSEvent) -> Bool)?
+    var interactiveRects: [NSRect] = [] {
+        didSet {
+            window?.invalidateCursorRects(for: self)
+        }
+    }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         true
+    }
+
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        for rect in interactiveRects {
+            addCursorRect(rect, cursor: .pointingHand)
+        }
     }
 
     override func scrollWheel(with event: NSEvent) {
