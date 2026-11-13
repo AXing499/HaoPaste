@@ -34,6 +34,7 @@ final class ClipboardShelfController: NSObject {
     private var mouseTimer: Timer?
     private var pollInterval: TimeInterval?
     private var menuClickMonitors: [Any] = []
+    private var mouseMoveMonitor: Any?
     private var spaceChangeObserver: NSObjectProtocol?
     private var screenChangeObserver: NSObjectProtocol?
 
@@ -258,6 +259,7 @@ final class ClipboardShelfController: NSObject {
         }
 
         installMenuBarClickMonitors()
+        installShelfCursorMonitor()
         observeSpaceAndScreenChanges()
 
         if settings.shelfEnabled {
@@ -269,6 +271,9 @@ final class ClipboardShelfController: NSObject {
         mouseTimer?.invalidate()
         for monitor in menuClickMonitors {
             NSEvent.removeMonitor(monitor)
+        }
+        if let mouseMoveMonitor {
+            NSEvent.removeMonitor(mouseMoveMonitor)
         }
         if let spaceChangeObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(spaceChangeObserver)
@@ -786,6 +791,47 @@ final class ClipboardShelfController: NSObject {
     }
 
     // MARK: - Menu bar clicks
+
+    private func installShelfCursorMonitor() {
+        mouseMoveMonitor = NSEvent.addLocalMonitorForEvents(
+            matching: [.mouseMoved, .leftMouseDragged]
+        ) { [weak self] event in
+            guard let self,
+                  self.isRevealed,
+                  !self.isHiding,
+                  event.window === self.panel,
+                  self.overlayContentView == nil
+            else {
+                return event
+            }
+            DispatchQueue.main.async { [weak self] in
+                self?.refreshShelfCursor()
+            }
+            return event
+        }
+    }
+
+    private func refreshShelfCursor() {
+        guard isRevealed, !isHiding else { return }
+        let mouse = NSEvent.mouseLocation
+        let windowPoint = panel.convertPoint(fromScreen: mouse)
+        let local = shelfHostingView.convert(windowPoint, from: nil)
+        let point = CGPoint(
+            x: local.x,
+            y: shelfHostingView.isFlipped
+                ? local.y
+                : shelfHostingView.bounds.height - local.y
+        )
+        let target = ClipboardShelfLayout.hitTarget(
+            at: point,
+            in: hitTargetStore.targets
+        )
+        if target != nil {
+            NSCursor.pointingHand.set()
+        } else {
+            NSCursor.arrow.set()
+        }
+    }
 
     private func installMenuBarClickMonitors() {
         let handler: (NSEvent?) -> Void = { [weak self] _ in

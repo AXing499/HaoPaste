@@ -142,6 +142,7 @@ struct PreviewOverlayView: View {
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
+            .pointingHandCursor()
             .focusable(false)
             .help(L("关闭预览（esc）"))
         }
@@ -440,6 +441,7 @@ struct PreviewOverlayView: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .pointingHandCursor()
         .focusable(false)
         .help(L("复制并关闭（↵）"))
     }
@@ -471,6 +473,7 @@ struct PreviewOverlayView: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .pointingHandCursor()
         .focusable(false)
         .disabled(!isEnabled)
         .help(title)

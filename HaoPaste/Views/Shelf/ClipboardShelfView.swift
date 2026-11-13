@@ -948,6 +948,7 @@ private struct ShelfFilterBar: View {
                 .allowsHitTesting(false)
         }
         .shadow(color: Color.black.opacity(0.16), radius: 10, x: 0, y: 4)
+        .pointingHandCursor()
         .animation(animates ? Theme.gentleSpring : nil, value: countLabel)
     }
 
@@ -966,3 +967,5 @@ private struct ShelfFilterBar: View {
         return L("%d 条", totalCount)
     }
 }
+
+

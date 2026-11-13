@@ -138,6 +138,7 @@ struct TranslationPaneView: View {
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
+            .pointingHandCursor()
             .focusable(false)
             .help(L("关闭翻译（esc）"))
         }
@@ -173,6 +174,7 @@ struct TranslationPaneView: View {
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
             .fixedSize()
+            .pointingHandCursor()
 
             Spacer(minLength: 8)
 
@@ -198,6 +200,7 @@ struct TranslationPaneView: View {
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
             .fixedSize()
+            .pointingHandCursor()
             .help(L("选择翻译引擎"))
         }
     }
@@ -422,6 +425,7 @@ struct TranslationPaneView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
+                .pointingHandCursor()
 
                 Button(L("允许并翻译")) {
                     service.grantConsentAndTranslate()
@@ -429,6 +433,7 @@ struct TranslationPaneView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
                 .tint(Color.accentColor)
+                .pointingHandCursor()
             }
             .padding(.top, 2)
         }
@@ -457,6 +462,7 @@ struct TranslationPaneView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
+            .pointingHandCursor()
 
             if service.availableProviderIDs.isEmpty {
                 Button(L("打开翻译设置…")) {
@@ -471,6 +477,7 @@ struct TranslationPaneView: View {
                 }
                 .buttonStyle(.link)
                 .font(.system(size: 11, design: .rounded))
+                .pointingHandCursor()
             }
         }
         .padding(24)
@@ -549,6 +556,7 @@ struct TranslationPaneView: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .pointingHandCursor()
         .focusable(false)
         .disabled(service.resultText.isEmpty)
         .opacity(service.resultText.isEmpty ? 0.45 : 1)
@@ -582,6 +590,7 @@ struct TranslationPaneView: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .pointingHandCursor()
         .focusable(false)
         .disabled(!isEnabled)
         .help(title)

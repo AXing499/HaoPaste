@@ -145,6 +145,7 @@ struct OCRPaneView: View {
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
+            .pointingHandCursor()
             .focusable(false)
             .help(L("关闭识图（esc）"))
         }
@@ -252,6 +253,7 @@ struct OCRPaneView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
+            .pointingHandCursor()
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -278,6 +280,7 @@ struct OCRPaneView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
+            .pointingHandCursor()
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -341,6 +344,7 @@ struct OCRPaneView: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .pointingHandCursor()
         .focusable(false)
         .disabled(service.text.isEmpty)
         .opacity(service.text.isEmpty ? 0.45 : 1)
@@ -374,6 +378,7 @@ struct OCRPaneView: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .pointingHandCursor()
         .focusable(false)
         .disabled(!isEnabled)
         .help(title)

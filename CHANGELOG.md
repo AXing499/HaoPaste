@@ -11,6 +11,7 @@
 - 修复主面板玻璃行卡片左右边缘的暗边，让圆角过渡更平滑。
 - 修复挂架命中区域上下颠倒导致的光标跳动、点击穿透和筛选后悬停卡住；卡片主体也使用手型光标。
 - 改用 AppKit cursor rect 管理挂架光标，移除计时器反复强制设置光标造成的快速闪动。
+- 筛选栏直接移入时显示手型光标；预览 / 翻译 / OCR 弹层的关闭、复制、翻译等按钮也统一为手型光标。
 - 挂架筛选条保持紧凑宽度，通过更大的玻璃背板裁切实现通透效果；选中项使用半透明强调色；挂架操作条改为玻璃。
 - 设置 → 通用 → 外观新增「Liquid Glass 效果」开关，默认开启；关闭后回退到现有轻量磨砂材质，降低 GPU 占用。
 - 新增「玻璃通透度」三档设置：磨砂 / 标准 / 通透，默认通透；可调整玻璃的磨砂程度和透明感。
@@ -31,6 +32,7 @@
 - Fixed dark edge bands on the glass history cards for smoother rounded edges.
 - Fixed inverted shelf hit testing that caused cursor flicker, click-through, and stuck hover after filtering; card bodies now use the pointing-hand cursor.
 - Switched shelf cursors to AppKit cursor rects, removing timer-driven cursor reassertion that caused rapid flicker.
+- The filter bar now shows the pointing hand when entered directly, and popup close/copy/translate buttons use the pointing hand cursor.
 - The shelf filter keeps its compact width and uses a larger clipped glass backing for a clearer glass look; the selected pill is translucent, and the shelf action bar uses glass.
 - Added a **Liquid Glass Effect** switch in Settings → General → Appearance, on by default. Turning it off falls back to the existing lightweight frosted material and reduces GPU usage.
 - Added a three-level **Glass Transparency** setting: Frosted, Standard, and Clear (default). It controls how frosted or transparent the glass surfaces appear.
