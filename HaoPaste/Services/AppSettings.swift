@@ -72,6 +72,7 @@ final class AppSettings {
         static let liquidGlassTransparency =
             AppSettings.liquidGlassTransparencyDefaultsKey
         static let shelfEnabled = "settings.shelfEnabled"
+        static let shelfActivatesOnReveal = "settings.shelfActivatesOnReveal"
         static let shelfItemLimit = "settings.shelfItemLimit"
         static let shelfEdge = "settings.shelfEdge"
         static let appLanguage = AppLanguage.preferenceKey
@@ -300,6 +301,16 @@ final class AppSettings {
         }
     }
 
+    var shelfActivatesOnReveal: Bool {
+        didSet {
+            guard oldValue != shelfActivatesOnReveal else { return }
+            defaults.set(
+                shelfActivatesOnReveal,
+                forKey: Keys.shelfActivatesOnReveal
+            )
+        }
+    }
+
     var shelfEdge: ClipboardShelfEdge {
         didSet {
             guard oldValue != shelfEdge else { return }
@@ -494,6 +505,14 @@ final class AppSettings {
             self.shelfEnabled = true
         } else {
             self.shelfEnabled = defaults.bool(forKey: Keys.shelfEnabled)
+        }
+
+        if defaults.object(forKey: Keys.shelfActivatesOnReveal) == nil {
+            self.shelfActivatesOnReveal = true
+        } else {
+            self.shelfActivatesOnReveal = defaults.bool(
+                forKey: Keys.shelfActivatesOnReveal
+            )
         }
 
         let storedShelfLimit = defaults.integer(forKey: Keys.shelfItemLimit)

@@ -402,6 +402,30 @@ struct SettingsView: View {
                     .tint(Color.accentColor)
             }
 
+            if #available(macOS 26.0, *) {
+                SettingsDivider()
+
+                SettingsRow(
+                    L("展开时激活 HaoPaste"),
+                    subtitle: L(
+                        "启用 Liquid Glass 时，展开瞬间激活 HaoPaste，让玻璃立即使用活跃外观；会短暂接管键盘焦点，收起后自动恢复原应用"
+                    )
+                ) {
+                    Toggle(
+                        "",
+                        isOn: $settings.shelfActivatesOnReveal
+                    )
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .tint(Color.accentColor)
+                    .disabled(
+                        !settings.shelfEnabled
+                            || !settings.liquidGlassEnabled
+                    )
+                }
+            }
+
             SettingsDivider()
 
             SettingsRow(

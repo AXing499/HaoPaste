@@ -402,6 +402,21 @@ final class ClipboardShelfController: NSObject {
         }
     }
 
+    /// Liquid Glass uses a subdued material while its app is not active.
+    /// Activating the shelf on reveal gives the glass its active appearance
+    /// immediately; the previous app is restored when the shelf hides.
+    private func activateForGlassIfNeeded() {
+        guard #available(macOS 26.0, *),
+              settings.shelfActivatesOnReveal,
+              settings.liquidGlassEnabled,
+              !NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency,
+              !NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
+        else {
+            return
+        }
+        activateForShelfIfNeeded()
+    }
+
     private func activateForShelfIfNeeded() {
         if isRetractBlocked?() == true {
             return
@@ -481,6 +496,8 @@ final class ClipboardShelfController: NSObject {
         interaction.hoveredItemID = nil
         interaction.scrollOffset = 0
         startMouseTracking(interval: Timing.visiblePollInterval)
+
+        activateForGlassIfNeeded()
 
         if reduceMotion {
             isRevealing = false

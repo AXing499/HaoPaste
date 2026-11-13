@@ -29,6 +29,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.glassTransparency, .clear)
         XCTAssertFalse(settings.autoTranslateLatestOnOpen)
         XCTAssertTrue(settings.shelfEnabled)
+        XCTAssertTrue(settings.shelfActivatesOnReveal)
         XCTAssertEqual(settings.shelfItemLimit, 8)
         XCTAssertEqual(settings.trashRetentionDays, 7)
         XCTAssertEqual(settings.shelfCardFallDuration, 0.75)
@@ -71,6 +72,7 @@ final class AppSettingsTests: XCTestCase {
         settings.glassTransparency = .frosted
         settings.autoTranslateLatestOnOpen = false
         settings.shelfEnabled = false
+        settings.shelfActivatesOnReveal = false
         settings.shelfItemLimit = 10
         settings.shelfEdge = .left
         settings.trashRetentionDays = 30
@@ -94,6 +96,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(reloaded.glassTransparency, .frosted)
         XCTAssertFalse(reloaded.autoTranslateLatestOnOpen)
         XCTAssertFalse(reloaded.shelfEnabled)
+        XCTAssertFalse(reloaded.shelfActivatesOnReveal)
         XCTAssertEqual(reloaded.shelfItemLimit, 10)
         XCTAssertEqual(reloaded.shelfEdge, .left)
         XCTAssertEqual(reloaded.trashRetentionDays, 30)
