@@ -42,10 +42,12 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
         imageURL: URL,
         translateAfterRecognition: Bool,
         anchor: NSRect,
-        edge: ClipboardShelfEdge
+        edge: ClipboardShelfEdge,
+        keepShelfKey: Bool = false
     ) {
         self.anchor = anchor
         self.edge = edge
+        panel.allowsKey = !keepShelfKey
 
         service.onAutoTranslate = { [weak self] text, title in
             guard let self,
@@ -101,9 +103,13 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
         )
         panel.setFrame(target, display: false)
         panel.alphaValue = 0
-        NSApp.activate()
-        panel.makeKeyAndOrderFront(nil)
-        panel.orderFrontRegardless()
+        if keepShelfKey {
+            panel.orderFrontRegardless()
+        } else {
+            NSApp.activate()
+            panel.makeKeyAndOrderFront(nil)
+            panel.orderFrontRegardless()
+        }
 
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.16

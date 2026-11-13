@@ -570,5 +570,3 @@
 "标准" = "Standard";
 "通透" = "Clear";
 "磨砂更稳重，通透更接近系统玻璃；仅影响 Liquid Glass 区域" = "Frosted is more solid; Clear is closer to system glass. Applies only to Liquid Glass surfaces.";
-"展开时激活 HaoPaste" = "Activate on Shelf Reveal";
-"启用 Liquid Glass 时，展开瞬间激活 HaoPaste，让玻璃立即使用活跃外观；会短暂接管键盘焦点，收起后自动恢复原应用" = "With Liquid Glass on, activate HaoPaste as the shelf appears so glass uses its active appearance immediately. Briefly takes keyboard focus and restores the previous app when hidden.";

@@ -59,6 +59,12 @@ final class ClipboardShelfController: NSObject {
         isRevealed
     }
 
+    /// Detail panels presented from the shelf can keep the shelf as the key
+    /// window, which preserves Liquid Glass's active appearance.
+    var isKeyForDetailPresentation: Bool {
+        isRevealed && !isHiding && panel.isKeyWindow
+    }
+
     var currentEdge: ClipboardShelfEdge {
         settings.shelfEdge
     }
@@ -413,7 +419,6 @@ final class ClipboardShelfController: NSObject {
     /// immediately; the previous app is restored when the shelf hides.
     private func activateForGlassIfNeeded() {
         guard #available(macOS 26.0, *),
-              settings.shelfActivatesOnReveal,
               settings.liquidGlassEnabled,
               !NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency,
               !NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast

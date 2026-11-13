@@ -114,7 +114,8 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         text: String,
         title: String,
         anchor: NSRect,
-        edge: ClipboardShelfEdge
+        edge: ClipboardShelfEdge,
+        keepShelfKey: Bool = false
     ) {
         show(
             text: text,
@@ -122,7 +123,8 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
             anchor: anchor,
             edge: edge,
             source: .shelf,
-            animated: true
+            animated: true,
+            keepShelfKey: keepShelfKey
         )
     }
 
@@ -152,8 +154,10 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         anchor: NSRect?,
         edge: ClipboardShelfEdge?,
         source: PresentationSource,
-        animated: Bool
+        animated: Bool,
+        keepShelfKey: Bool = false
     ) {
+        panel.allowsKey = !keepShelfKey
         onWillPresent?(source)
         presentationSource = source
 
@@ -184,9 +188,13 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         )
 
         service.present(text: text, title: title)
-        NSApp.activate()
-        panel.makeKeyAndOrderFront(nil)
-        panel.orderFrontRegardless()
+        if keepShelfKey {
+            panel.orderFrontRegardless()
+        } else {
+            NSApp.activate()
+            panel.makeKeyAndOrderFront(nil)
+            panel.orderFrontRegardless()
+        }
 
         installKeyMonitor()
         installMouseMonitor()
@@ -520,6 +528,8 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
 }
 
 private final class QuickTranslationPanel: NSPanel {
-    override var canBecomeKey: Bool { true }
+    var allowsKey = true
+
+    override var canBecomeKey: Bool { allowsKey }
     override var canBecomeMain: Bool { false }
 }

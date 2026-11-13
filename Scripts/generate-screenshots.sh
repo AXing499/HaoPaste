@@ -32,7 +32,6 @@ SETTINGS_SUITE="com.hao.HaoPaste.screenshots.$$"
 defaults write "$SETTINGS_SUITE" "settings.selectionTranslationEnabled" -bool false
 defaults write "$SETTINGS_SUITE" "settings.liquidGlassEnabled" -bool true
 defaults write "$SETTINGS_SUITE" "settings.liquidGlassTransparency" -string clear
-defaults write "$SETTINGS_SUITE" "settings.shelfActivatesOnReveal" -bool true
 defaults write "$SETTINGS_SUITE" "settings.shelfItemLimit" -int 10
 
 cleanup() {

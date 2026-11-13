@@ -8,6 +8,10 @@
 import AppKit
 
 final class ShelfDetailPanel: NSPanel {
+    /// Shelf-presented detail panels stay non-key so the shelf keeps the
+    /// active Liquid Glass appearance behind them.
+    var allowsKey = true
+
     init() {
         super.init(
             contentRect: .zero,
@@ -34,6 +38,6 @@ final class ShelfDetailPanel: NSPanel {
         acceptsMouseMovedEvents = true
     }
 
-    override var canBecomeKey: Bool { true }
+    override var canBecomeKey: Bool { allowsKey }
     override var canBecomeMain: Bool { false }
 }

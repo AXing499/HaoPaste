@@ -43,10 +43,12 @@ final class ShelfPreviewPanelController: NSObject, NSWindowDelegate {
     func present(
         item: ClipboardItem,
         anchor: NSRect,
-        edge: ClipboardShelfEdge
+        edge: ClipboardShelfEdge,
+        keepShelfKey: Bool = false
     ) {
         self.anchor = anchor
         self.edge = edge
+        panel.allowsKey = !keepShelfKey
 
         let imageURL = manager.imageURL(for: item)
         let richText = manager.richText(for: item)
@@ -126,9 +128,13 @@ final class ShelfPreviewPanelController: NSObject, NSWindowDelegate {
         )
         panel.setFrame(target, display: false)
         panel.alphaValue = 0
-        NSApp.activate()
-        panel.makeKeyAndOrderFront(nil)
-        panel.orderFrontRegardless()
+        if keepShelfKey {
+            panel.orderFrontRegardless()
+        } else {
+            NSApp.activate()
+            panel.makeKeyAndOrderFront(nil)
+            panel.orderFrontRegardless()
+        }
 
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.16

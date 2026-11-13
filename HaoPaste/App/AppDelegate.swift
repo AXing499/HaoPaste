@@ -248,15 +248,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         shelfController.onPreviewItem = { [weak self] item, anchor in
             guard let self, let anchor else { return }
+            let keepShelfKey =
+                self.shelfController.isKeyForDetailPresentation
             self.shelfPreviewController.present(
                 item: item,
                 anchor: anchor,
-                edge: self.shelfController.currentEdge
+                edge: self.shelfController.currentEdge,
+                keepShelfKey: keepShelfKey
             )
         }
         shelfController.onTranslateItem = { [weak self] item, anchor in
             guard let self, let anchor else { return }
             let edge = self.shelfController.currentEdge
+            let keepShelfKey =
+                self.shelfController.isKeyForDetailPresentation
             if item.type == .image {
                 guard let imageURL = self.manager.imageURL(for: item) else {
                     return
@@ -266,14 +271,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     imageURL: imageURL,
                     translateAfterRecognition: false,
                     anchor: anchor,
-                    edge: edge
+                    edge: edge,
+                    keepShelfKey: keepShelfKey
                 )
             } else {
                 self.quickTranslationController.translate(
                     text: item.content,
                     title: item.displayTitle,
                     anchor: anchor,
-                    edge: edge
+                    edge: edge,
+                    keepShelfKey: keepShelfKey
                 )
             }
         }
