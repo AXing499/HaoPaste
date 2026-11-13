@@ -312,9 +312,11 @@ struct ShelfCardView: View {
         .padding(.horizontal, 6)
         .padding(.vertical, 3.5)
         .background {
-            Capsule()
-                .fill(.regularMaterial)
-                .allowsHitTesting(false)
+            GlassSurfaceBackground(
+                cornerRadius: 13,
+                fallback: .material
+            )
+            .allowsHitTesting(false)
         }
         .overlay {
             Capsule()

@@ -315,7 +315,7 @@ final class ClipboardShelfTests: XCTestCase {
                 height: 1_050,
                 cardHeights: heights
             ),
-            318,
+            330,
             accuracy: 0.5
         )
         XCTAssertEqual(
@@ -326,7 +326,7 @@ final class ClipboardShelfTests: XCTestCase {
                     count: 6
                 )
             ),
-            0,
+            10,
             accuracy: 0.5
         )
         XCTAssertEqual(

@@ -5,6 +5,7 @@
 ### 中文
 
 - 在 macOS 26 上为挂架卡片、筛选条、划词翻译卡片和连续粘贴 HUD 接入系统 Liquid Glass 材质。
+- 主面板改为玻璃外壳，搜索 / 筛选 / 底栏位于玻璃上，历史列表放入磨砂内容区以保证阅读性；挂架筛选条升级为更大的玻璃胶囊，选中项使用半透明强调色；挂架操作条改为玻璃。
 - 设置 → 通用 → 外观新增「Liquid Glass 效果」开关，默认开启；关闭后回退到现有轻量磨砂材质，降低 GPU 占用。
 - 新增「玻璃通透度」三档设置：磨砂 / 标准 / 通透，默认通透；可调整玻璃的磨砂程度和透明感。
 - 自动尊重「减弱透明度」与「提高对比度」辅助功能设置。
@@ -18,6 +19,7 @@
 ### English
 
 - Adopted system Liquid Glass on macOS 26 for shelf cards, the filter bar, the selection translation card, and the paste-stack HUD.
+- The main panel now uses a glass shell with search, filters, and footer on glass, while the history list sits in a frosted content well for readability. The shelf filter is a larger glass capsule with a translucent selected pill, and the shelf action bar uses glass.
 - Added a **Liquid Glass Effect** switch in Settings → General → Appearance, on by default. Turning it off falls back to the existing lightweight frosted material and reduces GPU usage.
 - Added a three-level **Glass Transparency** setting: Frosted, Standard, and Clear (default). It controls how frosted or transparent the glass surfaces appear.
 - Automatically respects Reduce Transparency and Increase Contrast accessibility settings.

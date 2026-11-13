@@ -120,6 +120,13 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 header
                 contentList
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background {
+                        Theme.cardShape
+                            .fill(.regularMaterial)
+                    }
+                    .clipShape(Theme.cardShape)
                 PanelFooterView(
                     isPaused: manager.isMonitoringPaused,
                     itemCount: isSnippetMode
@@ -431,7 +438,7 @@ struct ContentView: View {
         .frame(height: 40)
         .background {
             Capsule(style: .continuous)
-                .fill(Color.primary.opacity(isSearchFocused ? 0.065 : 0.05))
+                .fill(.regularMaterial)
         }
         .overlay {
             Capsule(style: .continuous)
@@ -695,8 +702,11 @@ struct ContentView: View {
 
     private var panelBackground: some View {
         ZStack {
-            Rectangle()
-                .fill(.regularMaterial)
+            GlassSurfaceBackground(
+                cornerRadius: Theme.panelCornerRadius,
+                fallback: .material
+            )
+            .allowsHitTesting(false)
 
             LinearGradient(
                 colors: [

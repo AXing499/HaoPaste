@@ -358,6 +358,7 @@ struct ClipboardShelfView: View {
                     filter: $filter,
                     visibleCount: count,
                     totalCount: filtered.count,
+                    edge: edge,
                     onSelect: {
                         interaction.scrollOffset = 0
                     }
@@ -835,6 +836,7 @@ private struct ShelfFilterBar: View {
     @Binding var filter: ClipboardShelfFilter
     let visibleCount: Int
     let totalCount: Int
+    let edge: ClipboardShelfEdge
     let onSelect: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -847,29 +849,50 @@ private struct ShelfFilterBar: View {
         HStack(spacing: 3) {
             ForEach(ClipboardShelfFilter.allCases) { option in
                 Text(option.title)
-                    .font(.system(size: 10.5, weight: .semibold, design: .rounded))
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(
                         filter == option
                             ? Color.white
                             : Color.secondary
                     )
-                    .padding(.horizontal, 9)
-                    .frame(height: 22)
+                    .padding(.horizontal, 12)
+                    .frame(height: 30)
                     .background {
-                        Capsule()
-                            .fill(
-                                filter == option
-                                    ? Color.accentColor
-                                    : Color.clear
-                            )
-                            .shadow(
-                                color: filter == option
-                                    ? Color.accentColor.opacity(0.24)
-                                    : .clear,
-                                radius: 4,
-                                x: 0,
-                                y: 1
-                            )
+                        ZStack {
+                            Capsule()
+                                .fill(
+                                    filter == option
+                                        ? LinearGradient(
+                                            colors: [
+                                                Color.accentColor.opacity(0.92),
+                                                Color.accentColor.opacity(0.72)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                        : LinearGradient(
+                                            colors: [.clear, .clear],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                )
+                                .shadow(
+                                    color: filter == option
+                                        ? Color.accentColor.opacity(0.28)
+                                        : .clear,
+                                    radius: 5,
+                                    x: 0,
+                                    y: 1
+                                )
+
+                            Capsule()
+                                .strokeBorder(
+                                    Color.white.opacity(
+                                        filter == option ? 0.24 : 0
+                                    ),
+                                    lineWidth: 0.6
+                                )
+                        }
                     }
                     .contentShape(Capsule())
                     .onTapGesture {
@@ -893,18 +916,35 @@ private struct ShelfFilterBar: View {
                 .padding(.leading, 4)
                 .padding(.trailing, 2)
         }
-        .padding(.horizontal, 5)
+        .padding(.horizontal, 12)
+        .frame(minWidth: edge.isSide ? 190 : 300)
         .frame(height: ClipboardShelfLayout.filterBarHeight)
         .background {
-            GlassSurfaceBackground(cornerRadius: ClipboardShelfLayout.filterBarHeight / 2, fallback: .material)
+            ZStack {
+                GlassSurfaceBackground(
+                    cornerRadius: ClipboardShelfLayout.filterBarHeight / 2,
+                    fallback: .material
+                )
                 .allowsHitTesting(false)
+            }
         }
         .overlay {
             Capsule()
-                .strokeBorder(Theme.hairlineColor, lineWidth: Theme.hairline)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.35),
+                            Theme.hairlineColor,
+                            Color.black.opacity(0.08)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: 0.7
+                )
                 .allowsHitTesting(false)
         }
-        .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 3)
+        .shadow(color: Color.black.opacity(0.16), radius: 10, x: 0, y: 4)
         .animation(animates ? Theme.gentleSpring : nil, value: countLabel)
     }
 
