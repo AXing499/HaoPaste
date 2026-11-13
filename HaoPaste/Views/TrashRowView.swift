@@ -99,10 +99,28 @@ struct TrashRowView: View {
         .padding(.vertical, 8)
         .frame(minHeight: 60)
         .background {
-            Theme.cardShape
-                .fill(
-                    Color.primary.opacity(isHovering ? 0.055 : 0.03)
-                )
+            ZStack {
+                GeometryReader { proxy in
+                    GlassSurfaceBackground(
+                        cornerRadius: 40,
+                        fallback: .material
+                    )
+                    .frame(
+                        width: proxy.size.width,
+                        height: max(96, proxy.size.height)
+                    )
+                    .position(
+                        x: proxy.size.width / 2,
+                        y: proxy.size.height / 2
+                    )
+                }
+
+                Theme.cardShape
+                    .fill(
+                        Color.primary.opacity(isHovering ? 0.055 : 0.03)
+                    )
+            }
+            .clipShape(Theme.cardShape)
         }
         .overlay {
             Theme.cardShape

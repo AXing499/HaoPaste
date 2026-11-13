@@ -88,12 +88,25 @@ struct SnippetRowView: View {
         .pointingHandCursor()
         .background {
             ZStack {
-                Theme.cardShape
-                    .fill(.regularMaterial)
+                GeometryReader { proxy in
+                    GlassSurfaceBackground(
+                        cornerRadius: 40,
+                        fallback: .material
+                    )
+                    .frame(
+                        width: proxy.size.width,
+                        height: max(96, proxy.size.height)
+                    )
+                    .position(
+                        x: proxy.size.width / 2,
+                        y: proxy.size.height / 2
+                    )
+                }
 
                 Theme.cardShape
                     .fill(backgroundColor)
             }
+            .clipShape(Theme.cardShape)
         }
         .overlay {
             Theme.cardShape
