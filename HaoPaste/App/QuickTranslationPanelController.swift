@@ -260,6 +260,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
                 let self,
                 self.panel.isVisible,
                 self.panel.isKeyWindow
+                    || self.presentationSource == .shelf
             else {
                 return event
             }
