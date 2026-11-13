@@ -17,6 +17,34 @@ enum GlassSurfaceFallback {
     case popover
 }
 
+enum GlassTransparency: String, CaseIterable, Identifiable, Sendable {
+    case frosted
+    case standard
+    case clear
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .frosted: return L("磨砂")
+        case .standard: return L("标准")
+        case .clear: return L("通透")
+        }
+    }
+
+    var usesClearStyle: Bool {
+        self == .clear
+    }
+
+    var tintFactor: CGFloat {
+        switch self {
+        case .frosted: return 1
+        case .standard: return 0.62
+        case .clear: return 0.24
+        }
+    }
+}
+
 enum DebugGlass {
     static var disablesGlass: Bool {
         let environment = ProcessInfo.processInfo.environment
@@ -34,10 +62,23 @@ struct GlassSurfaceBackground: View {
 
     @AppStorage(AppSettings.liquidGlassDefaultsKey)
     private var enabled = true
+    @AppStorage(AppSettings.liquidGlassTransparencyDefaultsKey)
+    private var transparencyRaw = GlassTransparency.clear.rawValue
     @Environment(\.accessibilityReduceTransparency)
     private var reduceTransparency
     @Environment(\.colorSchemeContrast)
     private var contrast
+
+    private var transparency: GlassTransparency {
+        GlassTransparency(rawValue: transparencyRaw) ?? .clear
+    }
+
+    private var adjustedTint: NSColor? {
+        guard let tint else { return nil }
+        return tint.withAlphaComponent(
+            tint.alphaComponent * transparency.tintFactor
+        )
+    }
 
     private var usesGlass: Bool {
         guard enabled,
@@ -55,7 +96,8 @@ struct GlassSurfaceBackground: View {
         if usesGlass {
             AppKitGlassBackground(
                 cornerRadius: cornerRadius,
-                tint: tint
+                tint: adjustedTint,
+                style: transparency.usesClearStyle ? 1 : 0
             )
         } else {
             fallbackView
@@ -84,6 +126,7 @@ struct GlassSurfaceBackground: View {
 private struct AppKitGlassBackground: NSViewRepresentable {
     let cornerRadius: CGFloat
     let tint: NSColor?
+    let style: Int
 
     func makeNSView(context: Context) -> NSView {
         guard let glassClass = NSClassFromString("NSGlassEffectView") as? NSView.Type else {
@@ -101,7 +144,7 @@ private struct AppKitGlassBackground: NSViewRepresentable {
     private func configure(_ view: NSView) {
         view.setValue(cornerRadius, forKey: "cornerRadius")
         view.setValue(tint, forKey: "tintColor")
-        view.setValue(0, forKey: "style")
+        view.setValue(style, forKey: "style")
     }
 }
 

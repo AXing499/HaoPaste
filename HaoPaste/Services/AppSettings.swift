@@ -43,6 +43,8 @@ final class AppSettings {
     static let defaultUpdateFeedURL =
         "https://api.github.com/repos/AXing499/HaoPaste/releases/latest"
     nonisolated static let liquidGlassDefaultsKey = "settings.liquidGlassEnabled"
+    nonisolated static let liquidGlassTransparencyDefaultsKey =
+        "settings.liquidGlassTransparency"
 
     private enum Keys {
         static let maxUnpinnedItems = "settings.maxUnpinnedItems"
@@ -67,6 +69,8 @@ final class AppSettings {
         static let copyPlainTextOnly = "settings.copyPlainTextOnly"
         static let copyTranslationWhenReplacing = "settings.copyTranslationWhenReplacing"
         static let liquidGlassEnabled = AppSettings.liquidGlassDefaultsKey
+        static let liquidGlassTransparency =
+            AppSettings.liquidGlassTransparencyDefaultsKey
         static let shelfEnabled = "settings.shelfEnabled"
         static let shelfItemLimit = "settings.shelfItemLimit"
         static let shelfEdge = "settings.shelfEdge"
@@ -232,6 +236,16 @@ final class AppSettings {
         didSet {
             guard oldValue != liquidGlassEnabled else { return }
             defaults.set(liquidGlassEnabled, forKey: Keys.liquidGlassEnabled)
+        }
+    }
+
+    var glassTransparency: GlassTransparency {
+        didSet {
+            guard oldValue != glassTransparency else { return }
+            defaults.set(
+                glassTransparency.rawValue,
+                forKey: Keys.liquidGlassTransparency
+            )
         }
     }
 
@@ -456,6 +470,12 @@ final class AppSettings {
             self.liquidGlassEnabled = defaults.bool(
                 forKey: Keys.liquidGlassEnabled
             )
+        }
+        if let raw = defaults.string(forKey: Keys.liquidGlassTransparency),
+           let value = GlassTransparency(rawValue: raw) {
+            self.glassTransparency = value
+        } else {
+            self.glassTransparency = .clear
         }
 
         if defaults.object(forKey: Keys.updateFeedURL) != nil {

@@ -316,6 +316,25 @@ struct SettingsView: View {
                     .controlSize(.small)
                     .tint(Color.accentColor)
                 }
+
+                SettingsDivider()
+
+                SettingsRow(
+                    L("玻璃通透度"),
+                    subtitle: L(
+                        "磨砂更稳重，通透更接近系统玻璃；仅影响 Liquid Glass 区域"
+                    )
+                ) {
+                    Picker("", selection: $settings.glassTransparency) {
+                        ForEach(GlassTransparency.allCases) { option in
+                            Text(option.title).tag(option)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: 210)
+                    .disabled(!settings.liquidGlassEnabled)
+                }
             }
         }
 
