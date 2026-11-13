@@ -18,6 +18,15 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
     private var anchor: NSRect?
     private var edge: ClipboardShelfEdge = .top
     private var keepsShelfKey = false
+    private var isOverlayVisible = false
+
+    var presentInShelfOverlay: ((
+        AnyView,
+        CGSize,
+        NSRect,
+        ClipboardShelfEdge
+    ) -> Void)?
+    var dismissShelfOverlay: (() -> Void)?
 
     var onTranslateText: ((
         String,
@@ -28,7 +37,7 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
     var onSaveSnippet: ((String) -> Void)?
 
     var isVisible: Bool {
-        panel.isVisible
+        isOverlayVisible || panel.isVisible
     }
 
     init(manager: ClipboardManager, service: OCRService) {
@@ -53,13 +62,13 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
 
         service.onAutoTranslate = { [weak self] text, title in
             guard let self,
-                  self.panel.isVisible,
+                  self.isVisible,
                   let anchor = self.anchor
             else {
                 return
             }
-            self.onTranslateText?(text, title, anchor, self.edge)
             self.hide()
+            self.onTranslateText?(text, title, anchor, self.edge)
         }
         service.present(
             item: item,
@@ -78,8 +87,8 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
                 let title = source.isEmpty
                     ? L("图片文字")
                     : L("图片文字 · %@", source)
-                self.onTranslateText?(text, title, anchor, self.edge)
                 self.hide()
+                self.onTranslateText?(text, title, anchor, self.edge)
             },
             onSaveSnippet: { [weak self] text in
                 self?.onSaveSnippet?(text)
@@ -90,6 +99,12 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
             showsScrim: false
         )
         .frame(width: panelSize.width, height: panelSize.height)
+
+        if keepShelfKey, let presentInShelfOverlay {
+            presentInShelfOverlay(AnyView(view), panelSize, anchor, edge)
+            isOverlayVisible = true
+            return
+        }
 
         let hostingView = NSHostingView(rootView: view)
         hostingView.sizingOptions = []
@@ -123,6 +138,12 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
     }
 
     func hide() {
+        if isOverlayVisible {
+            isOverlayVisible = false
+            service.close()
+            dismissShelfOverlay?()
+            return
+        }
         guard panel.isVisible else { return }
         service.close()
         panel.orderOut(nil)

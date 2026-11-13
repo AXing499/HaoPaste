@@ -59,14 +59,17 @@ struct TranslationPaneView: View {
 
             bodyContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.regularMaterial)
 
             divider
 
             footer
         }
         .frame(width: 640, height: 480)
-        .background(.regularMaterial)
-        .background(Theme.popoverBackground)
+        .glassSurfaceBackground(
+            cornerRadius: 14,
+            fallback: .popover
+        )
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)

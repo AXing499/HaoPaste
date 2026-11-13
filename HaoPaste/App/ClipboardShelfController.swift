@@ -25,6 +25,11 @@ final class ClipboardShelfController: NSObject {
     private let manager: ClipboardManager
     private let settings: AppSettings
     private let panel: ClipboardShelfPanel
+    private let shelfHostingView: NSView
+    private let overlayHost: ShelfOverlayHost
+    private var overlayContentView: NSView?
+    private var overlayDetailFrame: NSRect?
+    private var shelfFrameWithoutOverlay: NSRect?
 
     private var mouseTimer: Timer?
     private var pollInterval: TimeInterval?
@@ -67,6 +72,81 @@ final class ClipboardShelfController: NSObject {
 
     var currentEdge: ClipboardShelfEdge {
         settings.shelfEdge
+    }
+
+    /// Present a detail surface in the shelf's own key window. This keeps
+    /// Liquid Glass active while the popup is open.
+    func presentOverlay(
+        _ content: AnyView,
+        size: CGSize,
+        anchor: NSRect,
+        edge: ClipboardShelfEdge
+    ) {
+        dismissOverlay()
+
+        let shelfFrame = panel.frame
+        let detailFrame = ClipboardShelfLayout.centeredDetailFrame(
+            size: size,
+            anchor: anchor
+        )
+        let union = shelfFrame.union(detailFrame)
+        shelfFrameWithoutOverlay = shelfFrame
+        overlayDetailFrame = detailFrame
+
+        let localShelf = NSRect(
+            x: shelfFrame.minX - union.minX,
+            y: shelfFrame.minY - union.minY,
+            width: shelfFrame.width,
+            height: shelfFrame.height
+        )
+        let localDetail = NSRect(
+            x: detailFrame.minX - union.minX,
+            y: detailFrame.minY - union.minY,
+            width: detailFrame.width,
+            height: detailFrame.height
+        )
+
+        shelfHostingView.autoresizingMask = []
+        shelfHostingView.frame = localShelf
+        overlayHost.frame = NSRect(origin: .zero, size: union.size)
+        panel.setFrame(union, display: false)
+
+        let overlay = NSHostingView(rootView: content)
+        overlay.sizingOptions = []
+        overlay.frame = localDetail
+        overlay.autoresizingMask = []
+        overlay.wantsLayer = true
+        overlay.layer?.backgroundColor = NSColor.clear.cgColor
+        overlayHost.addSubview(overlay)
+        overlayContentView = overlay
+
+        panel.ignoresMouseEvents = false
+        panel.makeKey()
+        forcePanelDisplay()
+    }
+
+    func dismissOverlay() {
+        guard let overlayContentView else { return }
+        overlayContentView.removeFromSuperview()
+        self.overlayContentView = nil
+        overlayDetailFrame = nil
+
+        if let shelfFrame = shelfFrameWithoutOverlay {
+            shelfFrameWithoutOverlay = nil
+            shelfHostingView.frame = NSRect(origin: .zero, size: shelfFrame.size)
+            shelfHostingView.autoresizingMask = [.width, .height]
+            overlayHost.frame = NSRect(origin: .zero, size: shelfFrame.size)
+            panel.setFrame(shelfFrame, display: false)
+            forcePanelDisplay()
+        }
+    }
+
+    private var shelfScreenFrame: NSRect {
+        let windowRect = shelfHostingView.convert(
+            shelfHostingView.bounds,
+            to: nil
+        )
+        return panel.convertToScreen(windowRect)
     }
 
     private var edge: ClipboardShelfEdge {
@@ -115,7 +195,20 @@ final class ClipboardShelfController: NSObject {
         hostingView.wantsLayer = true
         hostingView.layer?.backgroundColor = NSColor.clear.cgColor
 
-        self.panel = ClipboardShelfPanel(contentView: hostingView)
+        let container = NSView(frame: .zero)
+        container.wantsLayer = true
+        container.layer?.backgroundColor = NSColor.clear.cgColor
+        container.addSubview(hostingView)
+
+        let overlayHost = ShelfOverlayHost(frame: .zero)
+        overlayHost.autoresizingMask = [.width, .height]
+        overlayHost.wantsLayer = true
+        overlayHost.layer?.backgroundColor = NSColor.clear.cgColor
+        container.addSubview(overlayHost)
+
+        self.shelfHostingView = hostingView
+        self.overlayHost = overlayHost
+        self.panel = ClipboardShelfPanel(contentView: container)
 
         super.init()
 
@@ -370,29 +463,35 @@ final class ClipboardShelfController: NSObject {
             return
         }
 
-        let local = panel.convertPoint(fromScreen: mouse)
+        let windowPoint = panel.convertPoint(fromScreen: mouse)
+        let local = shelfHostingView.convert(windowPoint, from: nil)
         let flipped = CGPoint(
             x: local.x,
-            y: panel.frame.height - local.y
+            y: shelfHostingView.bounds.height - local.y
         )
 
         let target = ClipboardShelfLayout.hitTarget(
             at: flipped,
             in: hitTargetStore.targets
         )
+        let detailHit = overlayDetailFrame?.contains(mouse) ?? false
         let hoveredID: UUID?
-        switch target?.kind {
-        case let .card(id), let .cardClip(id), let .cardActions(id):
-            hoveredID = id
-        case .filterBar, .none:
+        if detailHit {
             hoveredID = nil
+        } else {
+            switch target?.kind {
+            case let .card(id), let .cardClip(id), let .cardActions(id):
+                hoveredID = id
+            case .filterBar, .none:
+                hoveredID = nil
+            }
         }
         if interaction.hoveredItemID != hoveredID {
             interaction.hoveredItemID = hoveredID
         }
 
         let wantsPointer: Bool
-        if let kind = target?.kind {
+        if !detailHit, let kind = target?.kind {
             switch kind {
             case .cardClip, .cardActions, .filterBar:
                 wantsPointer = true
@@ -408,7 +507,7 @@ final class ClipboardShelfController: NSObject {
         }
         updatePointerCursor(wantsPointer && !detailVisible)
 
-        let acceptsMouse = target != nil
+        let acceptsMouse = target != nil || detailHit
         if panel.ignoresMouseEvents == acceptsMouse {
             panel.ignoresMouseEvents = !acceptsMouse
         }
@@ -503,6 +602,7 @@ final class ClipboardShelfController: NSObject {
 
     private func reveal(on screen: NSScreen) {
         guard !isHiding else { return }
+        dismissOverlay()
 
         placePanel(on: screen)
         let target = ClipboardShelfLayout.panelFrame(on: screen, edge: edge)
@@ -573,6 +673,7 @@ final class ClipboardShelfController: NSObject {
 
         releasePointerCursor()
         onWillHide?()
+        dismissOverlay()
         isRevealed = false
         isHiding = true
         isRevealing = false
@@ -639,9 +740,10 @@ final class ClipboardShelfController: NSObject {
         }
 
         let rect = target.rect
+        let shelfFrame = shelfScreenFrame
         return NSRect(
-            x: panel.frame.minX + rect.minX,
-            y: panel.frame.maxY - rect.maxY,
+            x: shelfFrame.minX + rect.minX,
+            y: shelfFrame.maxY - rect.maxY,
             width: rect.width,
             height: rect.height
         )
@@ -756,6 +858,20 @@ private final class ShelfActionRelay {
 
 /// The shelf is shown while another app is active, so the first click must
 /// reach the card instead of being consumed by window activation.
+/// Transparent host for shelf detail content. Returning nil when no child is
+/// hit lets clicks fall through to the shelf or the desktop.
+private final class ShelfOverlayHost: NSView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        for subview in subviews.reversed() {
+            let local = convert(point, to: subview)
+            if let hit = subview.hitTest(local) {
+                return hit
+            }
+        }
+        return nil
+    }
+}
+
 private final class ShelfHostingView<Content: View>: NSHostingView<Content> {
     var onScrollWheel: ((NSEvent) -> Bool)?
 

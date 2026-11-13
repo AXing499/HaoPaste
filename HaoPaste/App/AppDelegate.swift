@@ -202,6 +202,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settings: settings
         )
 
+        shelfPreviewController.presentInShelfOverlay = {
+            [weak self] view, size, anchor, edge in
+            self?.shelfController?.presentOverlay(
+                view,
+                size: size,
+                anchor: anchor,
+                edge: edge
+            )
+        }
+        shelfPreviewController.dismissShelfOverlay = { [weak self] in
+            self?.shelfController?.dismissOverlay()
+        }
+        shelfOCRController.presentInShelfOverlay = {
+            [weak self] view, size, anchor, edge in
+            self?.shelfController?.presentOverlay(
+                view,
+                size: size,
+                anchor: anchor,
+                edge: edge
+            )
+        }
+        shelfOCRController.dismissShelfOverlay = { [weak self] in
+            self?.shelfController?.dismissOverlay()
+        }
+        quickTranslationController.presentInShelfOverlay = {
+            [weak self] view, size, anchor, edge in
+            self?.shelfController?.presentOverlay(
+                view,
+                size: size,
+                anchor: anchor,
+                edge: edge
+            )
+        }
+        quickTranslationController.dismissShelfOverlay = { [weak self] in
+            self?.shelfController?.dismissOverlay()
+        }
+
         #if DEBUG
         let selectionCredentials: TranslationCredentialStoring = isRendering
             ? InMemoryTranslationCredentialStore()
@@ -490,7 +527,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 text: text,
                 title: title,
                 anchor: anchor,
-                edge: edge
+                edge: edge,
+                keepShelfKey: self?.shelfController
+                    .isKeyForDetailPresentation ?? false
             )
         }
 
@@ -504,7 +543,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 imageURL: imageURL,
                 translateAfterRecognition: false,
                 anchor: anchor,
-                edge: edge
+                edge: edge,
+                keepShelfKey: self?.shelfController
+                    .isKeyForDetailPresentation ?? false
             )
         }
         shelfOCRController.onSaveSnippet = { [weak self] text in

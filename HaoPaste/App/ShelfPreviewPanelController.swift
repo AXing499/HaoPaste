@@ -17,6 +17,15 @@ final class ShelfPreviewPanelController: NSObject, NSWindowDelegate {
     private var anchor: NSRect?
     private var edge: ClipboardShelfEdge = .top
     private var keepsShelfKey = false
+    private var isOverlayVisible = false
+
+    var presentInShelfOverlay: ((
+        AnyView,
+        CGSize,
+        NSRect,
+        ClipboardShelfEdge
+    ) -> Void)?
+    var dismissShelfOverlay: (() -> Void)?
 
     var onTranslateText: ((
         String,
@@ -32,7 +41,7 @@ final class ShelfPreviewPanelController: NSObject, NSWindowDelegate {
     ) -> Void)?
 
     var isVisible: Bool {
-        panel.isVisible
+        isOverlayVisible || panel.isVisible
     }
 
     init(manager: ClipboardManager) {
@@ -116,6 +125,12 @@ final class ShelfPreviewPanelController: NSObject, NSWindowDelegate {
         )
         .frame(width: panelSize.width, height: panelSize.height)
 
+        if keepShelfKey, let presentInShelfOverlay {
+            presentInShelfOverlay(AnyView(view), panelSize, anchor, edge)
+            isOverlayVisible = true
+            return
+        }
+
         let hostingView = NSHostingView(rootView: view)
         hostingView.sizingOptions = []
         hostingView.frame = NSRect(origin: .zero, size: panelSize)
@@ -148,6 +163,11 @@ final class ShelfPreviewPanelController: NSObject, NSWindowDelegate {
     }
 
     func hide() {
+        if isOverlayVisible {
+            isOverlayVisible = false
+            dismissShelfOverlay?()
+            return
+        }
         guard panel.isVisible else { return }
         panel.orderOut(nil)
         panel.alphaValue = 1

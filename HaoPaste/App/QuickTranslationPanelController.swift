@@ -17,8 +17,16 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
     private let panel: QuickTranslationPanel
 
     var isVisible: Bool {
-        panel.isVisible
+        isOverlayVisible || panel.isVisible
     }
+
+    var presentInShelfOverlay: ((
+        AnyView,
+        CGSize,
+        NSRect,
+        ClipboardShelfEdge
+    ) -> Void)?
+    var dismissShelfOverlay: (() -> Void)?
 
     private var keyMonitor: Any?
     private var mouseMonitor: Any?
@@ -27,6 +35,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
     private var previousApplication: NSRunningApplication?
     private var isHiding = false
     private var keepsShelfKey = false
+    private var isOverlayVisible = false
 
     enum PresentationSource {
         case hotKey
@@ -38,7 +47,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
     private(set) var presentationSource: PresentationSource = .hotKey
 
     var isVisibleFromShelf: Bool {
-        panel.isVisible && presentationSource == .shelf
+        isVisible && presentationSource == .shelf
     }
 
     private let cardSize = NSSize(width: 640, height: 480)
@@ -90,7 +99,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
             return
         }
 
-        if panel.isVisible {
+        if isVisible {
             show(
                 text: text,
                 title: L("剪贴板翻译"),
@@ -142,7 +151,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
     }
 
     func toggle() {
-        if panel.isVisible {
+        if isVisible {
             hide()
         } else {
             translateClipboard()
@@ -190,6 +199,26 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         )
 
         service.present(text: text, title: title)
+
+        if keepShelfKey,
+           source == .shelf,
+           let anchor,
+           let edge,
+           let presentInShelfOverlay {
+            presentInShelfOverlay(
+                AnyView(makeContent()),
+                windowSize,
+                anchor,
+                edge
+            )
+            isOverlayVisible = true
+            isHiding = false
+            installKeyMonitor()
+            installGlobalMouseMonitor()
+            installDeactivationObserver()
+            return
+        }
+
         if keepShelfKey {
             panel.orderFrontRegardless()
         } else {
@@ -216,6 +245,18 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
     }
 
     func hide() {
+        if isOverlayVisible {
+            isOverlayVisible = false
+            isHiding = true
+            service.close()
+            removeMonitors()
+            dismissShelfOverlay?()
+            isHiding = false
+            presentationSource = .hotKey
+            previousApplication = nil
+            return
+        }
+
         guard panel.isVisible, !isHiding else { return }
 
         isHiding = true
@@ -260,9 +301,8 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard
                 let self,
-                self.panel.isVisible,
-                self.panel.isKeyWindow
-                    || self.presentationSource == .shelf
+                self.isVisible,
+                self.panel.isKeyWindow || self.isOverlayVisible
             else {
                 return event
             }
@@ -463,8 +503,8 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         panel.delegate = self
     }
 
-    private func installContent() {
-        let rootView = TranslationPaneView(
+    private func makeContent() -> some View {
+        TranslationPaneView(
             service: service,
             onCopyTranslation: { [weak self] text in
                 self?.copyTextAndHide(text)
@@ -488,8 +528,10 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
             }
         )
         .frame(width: windowSize.width, height: windowSize.height)
+    }
 
-        let hostingView = NSHostingView(rootView: rootView)
+    private func installContent() {
+        let hostingView = NSHostingView(rootView: makeContent())
         hostingView.frame = NSRect(origin: .zero, size: windowSize)
         hostingView.autoresizingMask = [.width, .height]
         hostingView.wantsLayer = true

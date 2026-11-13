@@ -59,6 +59,7 @@ struct PreviewOverlayView: View {
 
             bodyContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.regularMaterial)
 
             Rectangle()
                 .fill(Color.primary.opacity(0.06))
@@ -67,8 +68,10 @@ struct PreviewOverlayView: View {
             footer
         }
         .frame(width: 620, height: 452)
-        .background(.regularMaterial)
-        .background(Theme.popoverBackground)
+        .glassSurfaceBackground(
+            cornerRadius: 14,
+            fallback: .popover
+        )
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
