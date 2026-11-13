@@ -60,7 +60,6 @@ struct OCRPaneView: View {
             divider
             bodyContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(.regularMaterial)
             divider
             footer
         }

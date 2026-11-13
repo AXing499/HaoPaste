@@ -59,7 +59,6 @@ struct TranslationPaneView: View {
 
             bodyContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(.regularMaterial)
 
             divider
 

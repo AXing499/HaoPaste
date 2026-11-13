@@ -94,8 +94,8 @@ struct SnippetRowView: View {
                         fallback: .material
                     )
                     .frame(
-                        width: proxy.size.width,
-                        height: max(96, proxy.size.height)
+                        width: proxy.size.width + 48,
+                        height: max(96, proxy.size.height + 32)
                     )
                     .position(
                         x: proxy.size.width / 2,

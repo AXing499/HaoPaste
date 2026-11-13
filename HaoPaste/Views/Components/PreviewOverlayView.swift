@@ -59,7 +59,6 @@ struct PreviewOverlayView: View {
 
             bodyContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(.regularMaterial)
 
             Rectangle()
                 .fill(Color.primary.opacity(0.06))
@@ -406,6 +405,7 @@ struct PreviewOverlayView: View {
 
                 primaryCopyButton
             }
+            .layoutPriority(1)
         }
         .padding(.horizontal, 16)
         .frame(height: 54)

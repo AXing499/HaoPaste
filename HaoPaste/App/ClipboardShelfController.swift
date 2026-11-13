@@ -111,7 +111,7 @@ final class ClipboardShelfController: NSObject {
         overlayHost.frame = NSRect(origin: .zero, size: union.size)
         panel.setFrame(union, display: false)
 
-        let overlay = NSHostingView(rootView: content)
+        let overlay = ShelfOverlayHostingView(rootView: content)
         overlay.sizingOptions = []
         overlay.frame = localDetail
         overlay.autoresizingMask = []
@@ -123,22 +123,25 @@ final class ClipboardShelfController: NSObject {
         panel.ignoresMouseEvents = false
         panel.makeKey()
         forcePanelDisplay()
+
     }
 
     func dismissOverlay() {
-        guard let overlayContentView else { return }
-        overlayContentView.removeFromSuperview()
-        self.overlayContentView = nil
+        resetOverlayState()
+    }
+
+    private func resetOverlayState() {
+        overlayContentView?.removeFromSuperview()
+        overlayContentView = nil
         overlayDetailFrame = nil
 
-        if let shelfFrame = shelfFrameWithoutOverlay {
-            shelfFrameWithoutOverlay = nil
-            shelfHostingView.frame = NSRect(origin: .zero, size: shelfFrame.size)
-            shelfHostingView.autoresizingMask = [.width, .height]
-            overlayHost.frame = NSRect(origin: .zero, size: shelfFrame.size)
-            panel.setFrame(shelfFrame, display: false)
-            forcePanelDisplay()
-        }
+        guard let shelfFrame = shelfFrameWithoutOverlay else { return }
+        shelfFrameWithoutOverlay = nil
+        shelfHostingView.frame = NSRect(origin: .zero, size: shelfFrame.size)
+        shelfHostingView.autoresizingMask = [.width, .height]
+        overlayHost.frame = NSRect(origin: .zero, size: shelfFrame.size)
+        panel.setFrame(shelfFrame, display: false)
+        forcePanelDisplay()
     }
 
     private var shelfScreenFrame: NSRect {
@@ -475,6 +478,7 @@ final class ClipboardShelfController: NSObject {
             in: hitTargetStore.targets
         )
         let detailHit = overlayDetailFrame?.contains(mouse) ?? false
+
         let hoveredID: UUID?
         if detailHit {
             hoveredID = nil
@@ -602,7 +606,7 @@ final class ClipboardShelfController: NSObject {
 
     private func reveal(on screen: NSScreen) {
         guard !isHiding else { return }
-        dismissOverlay()
+        resetOverlayState()
 
         placePanel(on: screen)
         let target = ClipboardShelfLayout.panelFrame(on: screen, edge: edge)
@@ -673,7 +677,7 @@ final class ClipboardShelfController: NSObject {
 
         releasePointerCursor()
         onWillHide?()
-        dismissOverlay()
+        resetOverlayState()
         isRevealed = false
         isHiding = true
         isRevealing = false
@@ -750,6 +754,9 @@ final class ClipboardShelfController: NSObject {
     }
 
     private func placePanel(on screen: NSScreen) {
+        if shelfFrameWithoutOverlay != nil {
+            resetOverlayState()
+        }
         let frame = ClipboardShelfLayout.panelFrame(on: screen, edge: edge)
         if panel.frame != frame {
             panel.setFrame(frame, display: false)
@@ -858,17 +865,23 @@ private final class ShelfActionRelay {
 
 /// The shelf is shown while another app is active, so the first click must
 /// reach the card instead of being consumed by window activation.
+/// The shelf is shown while another app can still be active, so the detail
+/// hosting view must accept the first click just like the shelf cards do.
+private final class ShelfOverlayHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+        true
+    }
+}
+
 /// Transparent host for shelf detail content. Returning nil when no child is
 /// hit lets clicks fall through to the shelf or the desktop.
 private final class ShelfOverlayHost: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? {
-        for subview in subviews.reversed() {
-            let local = convert(point, to: subview)
-            if let hit = subview.hitTest(local) {
-                return hit
-            }
-        }
-        return nil
+        guard let superview else { return nil }
+        // `point` is in the superview's coordinates. The subview hit test
+        // expects a point in this host's coordinates.
+        let local = convert(point, from: superview)
+        return subviews.reversed().lazy.compactMap { $0.hitTest(local) }.first
     }
 }
 
