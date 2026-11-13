@@ -315,6 +315,10 @@ private struct PasteStackHUDView: View {
     let isFinished: Bool
     let onStop: () -> Void
 
+    private var hudShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+    }
+
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: isFinished ? "checkmark.circle.fill" : "list.number")
@@ -359,12 +363,18 @@ private struct PasteStackHUDView: View {
         }
         .padding(.horizontal, 12)
         .frame(width: 300, height: 58)
-        .background(.regularMaterial)
-        .background(Theme.popoverBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .glassSurfaceBackground(
+            hudShape,
+            tint: Color(nsColor: .windowBackgroundColor).opacity(0.16),
+            fallback: .popover
+        )
+        .clipShape(hudShape)
         .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.10), lineWidth: Theme.hairline)
+            hudShape
+                .strokeBorder(
+                    Color.primary.opacity(0.10),
+                    lineWidth: Theme.hairline
+                )
         }
     }
 

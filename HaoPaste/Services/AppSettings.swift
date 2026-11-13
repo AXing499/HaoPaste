@@ -42,6 +42,7 @@ final class AppSettings {
     static let defaultShelfCardFallDuration: Double = 0.75
     static let defaultUpdateFeedURL =
         "https://api.github.com/repos/AXing499/HaoPaste/releases/latest"
+    static let liquidGlassDefaultsKey = "settings.liquidGlassEnabled"
 
     private enum Keys {
         static let maxUnpinnedItems = "settings.maxUnpinnedItems"
@@ -65,6 +66,7 @@ final class AppSettings {
         static let selectionTranslationEnabled = "settings.selectionTranslationEnabled"
         static let copyPlainTextOnly = "settings.copyPlainTextOnly"
         static let copyTranslationWhenReplacing = "settings.copyTranslationWhenReplacing"
+        static let liquidGlassEnabled = AppSettings.liquidGlassDefaultsKey
         static let shelfEnabled = "settings.shelfEnabled"
         static let shelfItemLimit = "settings.shelfItemLimit"
         static let shelfEdge = "settings.shelfEdge"
@@ -223,6 +225,13 @@ final class AppSettings {
                 copyTranslationWhenReplacing,
                 forKey: Keys.copyTranslationWhenReplacing
             )
+        }
+    }
+
+    var liquidGlassEnabled: Bool {
+        didSet {
+            guard oldValue != liquidGlassEnabled else { return }
+            defaults.set(liquidGlassEnabled, forKey: Keys.liquidGlassEnabled)
         }
     }
 
@@ -439,6 +448,13 @@ final class AppSettings {
         } else {
             self.copyTranslationWhenReplacing = defaults.bool(
                 forKey: Keys.copyTranslationWhenReplacing
+            )
+        }
+        if defaults.object(forKey: Keys.liquidGlassEnabled) == nil {
+            self.liquidGlassEnabled = true
+        } else {
+            self.liquidGlassEnabled = defaults.bool(
+                forKey: Keys.liquidGlassEnabled
             )
         }
 

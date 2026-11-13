@@ -25,6 +25,7 @@ final class AppSettingsTests: XCTestCase {
             .screenshotTranslationDefault
         )
         XCTAssertTrue(settings.copyTranslationWhenReplacing)
+        XCTAssertTrue(settings.liquidGlassEnabled)
         XCTAssertFalse(settings.autoTranslateLatestOnOpen)
         XCTAssertTrue(settings.shelfEnabled)
         XCTAssertEqual(settings.shelfItemLimit, 8)
@@ -65,6 +66,7 @@ final class AppSettingsTests: XCTestCase {
             carbonModifiers: UInt32(cmdKey | controlKey)
         )
         settings.copyTranslationWhenReplacing = false
+        settings.liquidGlassEnabled = false
         settings.autoTranslateLatestOnOpen = false
         settings.shelfEnabled = false
         settings.shelfItemLimit = 10
@@ -86,6 +88,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(reloaded.pasteStackHotKey.displayString, "⌃⌘B")
         XCTAssertEqual(reloaded.screenshotHotKey.displayString, "⌃⌘4")
         XCTAssertFalse(reloaded.copyTranslationWhenReplacing)
+        XCTAssertFalse(reloaded.liquidGlassEnabled)
         XCTAssertFalse(reloaded.autoTranslateLatestOnOpen)
         XCTAssertFalse(reloaded.shelfEnabled)
         XCTAssertEqual(reloaded.shelfItemLimit, 10)

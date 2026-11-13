@@ -21,6 +21,10 @@ struct SelectionTranslationCardView: View {
     @State private var appeared = false
     @State private var draftSource = ""
 
+    private var cardShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: 13, style: .continuous)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             header
@@ -30,12 +34,18 @@ struct SelectionTranslationCardView: View {
             footer
         }
         .frame(width: 400, height: 340)
-        .background(.regularMaterial)
-        .background(Theme.popoverBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .glassSurfaceBackground(
+            cardShape,
+            tint: Color(nsColor: .windowBackgroundColor).opacity(0.18),
+            fallback: .popover
+        )
+        .clipShape(cardShape)
         .overlay {
-            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.10), lineWidth: Theme.hairline)
+            cardShape
+                .strokeBorder(
+                    Color.primary.opacity(0.10),
+                    lineWidth: Theme.hairline
+                )
         }
         .scaleEffect(appeared ? 1 : 0.96, anchor: .topLeading)
         .opacity(appeared ? 1 : 0)

@@ -299,6 +299,27 @@ struct SettingsView: View {
             }
         }
 
+        if #available(macOS 26.0, *) {
+            SettingsCard(L("外观")) {
+                SettingsRow(
+                    L("Liquid Glass 效果"),
+                    subtitle: L(
+                        "使用 macOS 26 的系统玻璃材质；关闭后使用轻量磨砂材质，可降低 GPU 占用"
+                    )
+                ) {
+                    Toggle(
+                        "",
+                        isOn: $settings.liquidGlassEnabled
+                    )
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .tint(Color.accentColor)
+                }
+            }
+        }
+
+
         SettingsCard(L("启动")) {
             SettingsRow(
                 L("登录时自动启动"),

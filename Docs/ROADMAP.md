@@ -521,6 +521,14 @@ HaoPaste 的长期定位是「Mac 上最快、最安心的剪贴板工作台」�
 - [x] 设置中补充 ad-hoc 更新后的授权说明
 - [x] 128 个 XCTest
 
+### v0.17.0「Liquid Glass」待发布
+
+- [x] macOS 26 Liquid Glass：挂架卡片、筛选条、划词卡片、连续粘贴 HUD
+- [x] 设置 → 外观中的 Liquid Glass 开关与磨砂材质回退
+- [x] 尊重减弱透明度 / 提高对比度
+- [x] 截图渲染固定使用回退材质
+- [x] 128 个 XCTest
+
 ### v0.14 后续打磨
 
 - [ ] 挂架 UI smoke test

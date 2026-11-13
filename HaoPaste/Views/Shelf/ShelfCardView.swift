@@ -329,8 +329,11 @@ struct ShelfCardView: View {
 
     private var bodyContent: some View {
         ZStack {
-            bodyShape
-                .fill(.regularMaterial)
+            GlassSurfaceBackground(
+                shape: bodyShape,
+                fallback: .material
+            )
+            .allowsHitTesting(false)
 
             bodyShape
                 .fill(

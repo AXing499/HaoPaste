@@ -420,8 +420,8 @@ struct ClipboardShelfView: View {
         .padding(.horizontal, 12)
         .frame(height: 28)
         .background {
-            Capsule()
-                .fill(.regularMaterial)
+            GlassSurfaceBackground(shape: Capsule(), fallback: .material)
+                .allowsHitTesting(false)
         }
         .overlay {
             Capsule()
@@ -889,8 +889,7 @@ private struct ShelfFilterBar: View {
         .padding(.horizontal, 5)
         .frame(height: ClipboardShelfLayout.filterBarHeight)
         .background {
-            Capsule()
-                .fill(.regularMaterial)
+            GlassSurfaceBackground(shape: Capsule(), fallback: .material)
                 .allowsHitTesting(false)
         }
         .overlay {
