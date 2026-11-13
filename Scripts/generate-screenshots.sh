@@ -26,31 +26,28 @@ fi
 EN_STORE="$(mktemp -d "${TMPDIR:-/tmp}/haopaste-shots-en.XXXXXX")"
 ZH_STORE="$(mktemp -d "${TMPDIR:-/tmp}/haopaste-shots-zh.XXXXXX")"
 
-# Keep documentation screenshots on the default-off state regardless of the
-# developer's current app preferences.
-DEFAULTS_DOMAIN="com.hao.HaoPaste"
-SELECTION_SETTING_KEY="settings.selectionTranslationEnabled"
-ORIGINAL_SELECTION_SETTING="$(
-    defaults read "$DEFAULTS_DOMAIN" "$SELECTION_SETTING_KEY" 2>/dev/null || true
-)"
-defaults write "$DEFAULTS_DOMAIN" "$SELECTION_SETTING_KEY" -bool false
+# Keep documentation screenshots deterministic regardless of the developer's
+# current app preferences by isolating the settings used by render processes.
+SETTINGS_SUITE="com.hao.HaoPaste.screenshots.$$"
+defaults write "$SETTINGS_SUITE" "settings.selectionTranslationEnabled" -bool false
+defaults write "$SETTINGS_SUITE" "settings.liquidGlassEnabled" -bool true
+defaults write "$SETTINGS_SUITE" "settings.liquidGlassTransparency" -string clear
+defaults write "$SETTINGS_SUITE" "settings.shelfItemLimit" -int 10
 
 cleanup() {
     rm -rf "$EN_STORE" "$ZH_STORE"
-    if [[ "$ORIGINAL_SELECTION_SETTING" == "1" ]]; then
-        defaults write "$DEFAULTS_DOMAIN" "$SELECTION_SETTING_KEY" -bool true
-    else
-        defaults delete "$DEFAULTS_DOMAIN" "$SELECTION_SETTING_KEY" 2>/dev/null || true
-    fi
+    defaults delete "$SETTINGS_SUITE" 2>/dev/null || true
 }
 trap cleanup EXIT
 
 render_en() {
-    "$APP" --storage "$EN_STORE" --language en -AppleLanguages '(en)' "$@"
+    "$APP" --storage "$EN_STORE" --settings-suite "$SETTINGS_SUITE" \
+        --language en -AppleLanguages '(en)' "$@"
 }
 
 render_zh() {
-    "$APP" --storage "$ZH_STORE" --language zh-Hans -AppleLanguages '(zh-Hans)' "$@"
+    "$APP" --storage "$ZH_STORE" --settings-suite "$SETTINGS_SUITE" \
+        --language zh-Hans -AppleLanguages '(zh-Hans)' "$@"
 }
 
 # Main panel

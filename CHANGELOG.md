@@ -9,6 +9,7 @@
 - 新增「玻璃通透度」三档设置：磨砂 / 标准 / 通透，默认通透；可调整玻璃的磨砂程度和透明感。
 - 自动尊重「减弱透明度」与「提高对比度」辅助功能设置。
 - 旧版 macOS 自动使用现有材质，不影响兼容性；截图渲染固定使用回退材质以保证基线稳定。
+- 修复挂架首次出现时玻璃材质未立即生效、需要移动鼠标才刷新的问题。
 - 128 个 XCTest。
 
 ### English
@@ -18,6 +19,7 @@
 - Added a three-level **Glass Transparency** setting: Frosted, Standard, and Clear (default). It controls how frosted or transparent the glass surfaces appear.
 - Automatically respects Reduce Transparency and Increase Contrast accessibility settings.
 - Older macOS versions keep the existing material automatically; screenshot rendering uses the fallback for stable baselines.
+- Fixed the first shelf reveal keeping a stale material render until the pointer moved.
 - 128 XCTest cases.
 
 

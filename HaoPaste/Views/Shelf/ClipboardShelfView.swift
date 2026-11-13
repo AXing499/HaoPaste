@@ -392,6 +392,10 @@ struct ClipboardShelfView: View {
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .environment(
+            \.glassRefreshToken,
+            interaction.glassRefreshToken
+        )
     }
 
     private func flashScrollHint() {

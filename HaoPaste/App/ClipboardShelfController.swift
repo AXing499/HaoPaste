@@ -16,6 +16,10 @@ final class ClipboardShelfController: NSObject {
         static let hiddenPollInterval: TimeInterval = 1.0 / 10.0
         static let revealDelay: TimeInterval = 0.25
         static let retractDelay: TimeInterval = 0.5
+        /// Rebuild glass once the revealed panel has actually entered the
+        /// screen. Before that the window is still outside the display and
+        /// glass can keep a stale material render until the next hover update.
+        static let revealGlassRefreshDelay: TimeInterval = 0.10
     }
 
     private let manager: ClipboardManager
@@ -480,6 +484,7 @@ final class ClipboardShelfController: NSObject {
 
         if reduceMotion {
             isRevealing = false
+            refreshGlassSurfaces()
         } else {
             isRevealing = true
             NSAnimationContext.runAnimationGroup { context in
@@ -489,11 +494,36 @@ final class ClipboardShelfController: NSObject {
                 )
                 panel.animator().setFrame(target, display: true)
             } completionHandler: { [weak self] in
-                self?.isRevealing = false
+                guard let self else { return }
+                self.isRevealing = false
+                self.forcePanelDisplay()
+            }
+
+            DispatchQueue.main.asyncAfter(
+                deadline: .now() + Timing.revealGlassRefreshDelay
+            ) { [weak self] in
+                self?.refreshGlassSurfaces()
             }
         }
 
         onVisibilityChanged?()
+    }
+
+    /// A panel laid out offscreen can keep a stale material rendering of the
+    /// glass surfaces. Recreating them once the shelf is on screen makes the
+    /// first reveal match the settled appearance without requiring hover.
+    private func refreshGlassSurfaces() {
+        guard isRevealed, !isHiding else { return }
+        interaction.glassRefreshToken &+= 1
+        forcePanelDisplay()
+    }
+
+    private func forcePanelDisplay() {
+        guard isRevealed, !isHiding else { return }
+        panel.contentView?.needsLayout = true
+        panel.contentView?.layoutSubtreeIfNeeded()
+        panel.contentView?.needsDisplay = true
+        panel.displayIfNeeded()
     }
 
     private func hide() {

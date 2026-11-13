@@ -49,6 +49,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             || NSClassFromString("XCTestCase") != nil
     }
 
+    #if DEBUG
+    /// Screenshot rendering runs with an isolated defaults suite so committed
+    /// images do not depend on the developer's current app preferences.
+    private static func settingsSuiteName() -> String? {
+        let arguments = CommandLine.arguments
+        guard let index = arguments.firstIndex(of: "--settings-suite"),
+              arguments.indices.contains(index + 1) else {
+            return nil
+        }
+        return arguments[index + 1]
+    }
+    #endif
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Unit tests run in the host application. Do not create the status item,
         // start pasteboard polling or register a global hotkey in that mode.
@@ -57,7 +70,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         configureMainMenu()
 
+        #if DEBUG
+        if let suiteName = Self.settingsSuiteName(),
+           let suite = UserDefaults(suiteName: suiteName) {
+            settings = AppSettings(defaults: suite)
+        } else {
+            settings = AppSettings()
+        }
+        #else
         settings = AppSettings()
+        #endif
         settings.refreshLaunchAtLoginStatus()
         snippetManager = SnippetManager()
         #if DEBUG

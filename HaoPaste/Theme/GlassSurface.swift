@@ -55,6 +55,19 @@ enum DebugGlass {
     }
 }
 
+private struct GlassRefreshTokenKey: EnvironmentKey {
+    static let defaultValue = 0
+}
+
+extension EnvironmentValues {
+    /// Changing this value recreates the AppKit glass view. The shelf bumps it
+    /// while revealing so glass is rebuilt once the panel is on screen.
+    var glassRefreshToken: Int {
+        get { self[GlassRefreshTokenKey.self] }
+        set { self[GlassRefreshTokenKey.self] = newValue }
+    }
+}
+
 struct GlassSurfaceBackground: View {
     let cornerRadius: CGFloat
     var tint: NSColor?
@@ -68,6 +81,8 @@ struct GlassSurfaceBackground: View {
     private var reduceTransparency
     @Environment(\.colorSchemeContrast)
     private var contrast
+    @Environment(\.glassRefreshToken)
+    private var refreshToken
 
     private var transparency: GlassTransparency {
         GlassTransparency(rawValue: transparencyRaw) ?? .clear
@@ -99,6 +114,7 @@ struct GlassSurfaceBackground: View {
                 tint: adjustedTint,
                 style: transparency.usesClearStyle ? 1 : 0
             )
+            .id(refreshToken)
         } else {
             fallbackView
         }
@@ -139,6 +155,7 @@ private struct AppKitGlassBackground: NSViewRepresentable {
 
     func updateNSView(_ view: NSView, context: Context) {
         configure(view)
+        view.needsDisplay = true
     }
 
     private func configure(_ view: NSView) {
