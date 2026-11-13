@@ -106,10 +106,11 @@ final class ClipboardShelfController: NSObject {
             height: detailFrame.height
         )
 
+        panel.setFrame(union, display: false)
         shelfHostingView.autoresizingMask = []
         shelfHostingView.frame = localShelf
+        overlayHost.autoresizingMask = []
         overlayHost.frame = NSRect(origin: .zero, size: union.size)
-        panel.setFrame(union, display: false)
 
         let overlay = ShelfOverlayHostingView(rootView: content)
         overlay.sizingOptions = []
@@ -130,6 +131,8 @@ final class ClipboardShelfController: NSObject {
         resetOverlayState()
     }
 
+
+
     private func resetOverlayState() {
         overlayContentView?.removeFromSuperview()
         overlayContentView = nil
@@ -137,10 +140,16 @@ final class ClipboardShelfController: NSObject {
 
         guard let shelfFrame = shelfFrameWithoutOverlay else { return }
         shelfFrameWithoutOverlay = nil
-        shelfHostingView.frame = NSRect(origin: .zero, size: shelfFrame.size)
-        shelfHostingView.autoresizingMask = [.width, .height]
-        overlayHost.frame = NSRect(origin: .zero, size: shelfFrame.size)
         panel.setFrame(shelfFrame, display: false)
+        panel.contentView?.layoutSubtreeIfNeeded()
+        let bounds = panel.contentView?.bounds
+            ?? NSRect(origin: .zero, size: shelfFrame.size)
+        shelfHostingView.autoresizingMask = []
+        shelfHostingView.frame = NSRect(origin: .zero, size: bounds.size)
+        overlayHost.autoresizingMask = []
+        overlayHost.frame = NSRect(origin: .zero, size: bounds.size)
+        shelfHostingView.autoresizingMask = [.width, .height]
+        overlayHost.autoresizingMask = [.width, .height]
         forcePanelDisplay()
     }
 
@@ -760,6 +769,19 @@ final class ClipboardShelfController: NSObject {
         let frame = ClipboardShelfLayout.panelFrame(on: screen, edge: edge)
         if panel.frame != frame {
             panel.setFrame(frame, display: false)
+        }
+        if overlayContentView == nil {
+            let bounds = panel.contentView?.bounds
+                ?? NSRect(origin: .zero, size: frame.size)
+            shelfHostingView.autoresizingMask = []
+            shelfHostingView.frame = NSRect(
+                origin: .zero,
+                size: bounds.size
+            )
+            overlayHost.autoresizingMask = []
+            overlayHost.frame = NSRect(origin: .zero, size: bounds.size)
+            shelfHostingView.autoresizingMask = [.width, .height]
+            overlayHost.autoresizingMask = [.width, .height]
         }
     }
 

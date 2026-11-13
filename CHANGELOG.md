@@ -7,7 +7,7 @@
 - 在 macOS 26 上为挂架卡片、筛选条、划词翻译卡片和连续粘贴 HUD 接入系统 Liquid Glass 材质。
 - 主面板改为整块玻璃，搜索 / 筛选 / 底栏位于玻璃上，每条历史记录也改为玻璃卡片；搜索框保持磨砂。
 - 预览、翻译、OCR 弹层改为挂架同窗口内的浮层，挂架保持 key window，弹层整体使用活跃 Liquid Glass。
-- 修复挂架弹层出现后无法点击、以及后续挂架内容错位/无法交互的问题。
+- 修复挂架弹层出现后无法点击、以及关闭弹层后挂架高度被压成 0、后续条目错位/无法交互的问题。
 - 修复主面板玻璃行卡片左右边缘的暗边，让圆角过渡更平滑。
 - 挂架筛选条保持紧凑宽度，通过更大的玻璃背板裁切实现通透效果；选中项使用半透明强调色；挂架操作条改为玻璃。
 - 设置 → 通用 → 外观新增「Liquid Glass 效果」开关，默认开启；关闭后回退到现有轻量磨砂材质，降低 GPU 占用。
@@ -25,7 +25,7 @@
 - Adopted system Liquid Glass on macOS 26 for shelf cards, the filter bar, the selection translation card, and the paste-stack HUD.
 - The main panel is now one glass surface with search, filters, and footer on glass; each history row is also a glass card, and the search field stays frosted.
 - Preview, translation, and OCR popups now live inside the shelf window, so the shelf stays key and the whole popup uses active Liquid Glass.
-- Fixed unresponsive shelf popups and the follow-up empty/misaligned shelf state.
+- Fixed unresponsive shelf popups and the follow-up shelf collapsing to zero height after closing a popup.
 - Fixed dark edge bands on the glass history cards for smoother rounded edges.
 - The shelf filter keeps its compact width and uses a larger clipped glass backing for a clearer glass look; the selected pill is translucent, and the shelf action bar uses glass.
 - Added a **Liquid Glass Effect** switch in Settings → General → Appearance, on by default. Turning it off falls back to the existing lightweight frosted material and reduces GPU usage.
