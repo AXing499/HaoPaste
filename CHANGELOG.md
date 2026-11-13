@@ -11,6 +11,7 @@
 - 旧版 macOS 自动使用现有材质，不影响兼容性；截图渲染固定使用回退材质以保证基线稳定。
 - 修复挂架首次出现时玻璃材质未立即生效、需要移动鼠标才刷新的问题。
 - 挂架新增「展开时激活 HaoPaste」开关，默认开启；启用 Liquid Glass 时会在展开瞬间激活应用，让玻璃立即使用活跃外观，收起后自动恢复原应用。
+- 挂架保持展开时，复制卡片后会立即把键盘焦点还给原应用，方便直接粘贴。
 - 128 个 XCTest。
 
 ### English
@@ -22,6 +23,7 @@
 - Older macOS versions keep the existing material automatically; screenshot rendering uses the fallback for stable baselines.
 - Fixed the first shelf reveal keeping a stale material render until the pointer moved.
 - Added an **Activate on Shelf Reveal** switch (on by default). With Liquid Glass enabled, the shelf activates HaoPaste immediately so glass uses its active appearance, then restores the previous app when hidden.
+- When the shelf stays open after copying, keyboard focus returns to the previous app so users can paste immediately.
 - 128 XCTest cases.
 
 

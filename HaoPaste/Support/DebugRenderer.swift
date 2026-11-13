@@ -243,7 +243,8 @@ enum DebugRenderer {
                 onPreviewItem: { _ in },
                 onTranslateItem: { _ in },
                 onMaxScrollOffsetChanged: { _ in },
-                onHideShelf: {}
+                onHideShelf: {},
+                onRestoreFocus: {}
             )
         }
         .frame(width: size.width, height: size.height)

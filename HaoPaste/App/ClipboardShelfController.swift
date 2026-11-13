@@ -98,6 +98,9 @@ final class ClipboardShelfController: NSObject {
             },
             onHideShelf: {
                 actionRelay.onHideShelf?()
+            },
+            onRestoreFocus: {
+                actionRelay.onRestoreFocus?()
             }
         )
         let hostingView = ShelfHostingView(rootView: rootView)
@@ -127,6 +130,9 @@ final class ClipboardShelfController: NSObject {
         }
         actionRelay.onHideShelf = { [weak self] in
             self?.hide()
+        }
+        actionRelay.onRestoreFocus = { [weak self] in
+            self?.restoreFocusAfterShelfCopy()
         }
         hostingView.onScrollWheel = { [weak self] event in
             self?.handleScrollWheel(event) ?? false
@@ -453,6 +459,20 @@ final class ClipboardShelfController: NSObject {
         app.activate(options: [])
     }
 
+    /// The glass workaround activates HaoPaste while the shelf is open. If a
+    /// card is copied and the shelf stays open, give focus back immediately so
+    /// the user can paste into the previous app without an extra click.
+    private func restoreFocusAfterShelfCopy() {
+        guard settings.shelfCopyBehavior == .stayOpen,
+              isRevealed,
+              let app = activationRestoreApp else {
+            return
+        }
+        activationRestoreApp = nil
+        panel.resignKey()
+        app.activate(options: [])
+    }
+
     private func updatePointerCursor(_ wantsPointer: Bool) {
         if wantsPointer {
             if !isPointerHandPushed {
@@ -726,6 +746,7 @@ private final class ShelfActionRelay {
     var onTranslate: ((ClipboardItem) -> Void)?
     var onMaxScrollOffset: ((CGFloat) -> Void)?
     var onHideShelf: (() -> Void)?
+    var onRestoreFocus: (() -> Void)?
 }
 
 /// The shelf is shown while another app is active, so the first click must

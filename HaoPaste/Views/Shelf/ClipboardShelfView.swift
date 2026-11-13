@@ -63,6 +63,7 @@ struct ClipboardShelfView: View {
     let onTranslateItem: (ClipboardItem) -> Void
     let onMaxScrollOffsetChanged: (CGFloat) -> Void
     let onHideShelf: () -> Void
+    let onRestoreFocus: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var filter: ClipboardShelfFilter = .all
@@ -454,7 +455,9 @@ struct ClipboardShelfView: View {
     private func applyCopyBehavior() {
         switch settings.shelfCopyBehavior {
         case .stayOpen:
-            break
+            // If the shelf activated HaoPaste for Liquid Glass, hand focus
+            // back after copying so the user can paste immediately.
+            onRestoreFocus()
         case .hideImmediately:
             onHideShelf()
         case .hideAfterDelay:
