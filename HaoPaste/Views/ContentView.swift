@@ -120,13 +120,6 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 header
                 contentList
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background {
-                        Theme.cardShape
-                            .fill(.regularMaterial)
-                    }
-                    .clipShape(Theme.cardShape)
                 PanelFooterView(
                     isPaused: manager.isMonitoringPaused,
                     itemCount: isSnippetMode

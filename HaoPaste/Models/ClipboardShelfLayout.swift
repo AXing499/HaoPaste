@@ -51,7 +51,7 @@ enum ClipboardShelfLayout {
     static let sideClipInset: CGFloat = 7
     static let sideRevealDepth: CGFloat = 9
     static let filterBarHeight: CGFloat = 40
-    static let filterBarBottom: CGFloat = 12
+    static let filterBarBottom: CGFloat = 24
     static let minSag: CGFloat = 16
     static let maxSag: CGFloat = 36
 

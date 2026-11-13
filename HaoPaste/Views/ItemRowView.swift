@@ -54,8 +54,13 @@ struct ItemRowView: View {
         .padding(.vertical, 8)
         .frame(minHeight: 60)
         .background {
-            Theme.cardShape
-                .fill(backgroundColor)
+            ZStack {
+                Theme.cardShape
+                    .fill(.regularMaterial)
+
+                Theme.cardShape
+                    .fill(backgroundColor)
+            }
         }
         .overlay {
             Theme.cardShape

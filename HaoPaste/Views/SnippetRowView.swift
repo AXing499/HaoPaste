@@ -87,8 +87,13 @@ struct SnippetRowView: View {
         .focusable(false)
         .pointingHandCursor()
         .background {
-            Theme.cardShape
-                .fill(backgroundColor)
+            ZStack {
+                Theme.cardShape
+                    .fill(.regularMaterial)
+
+                Theme.cardShape
+                    .fill(backgroundColor)
+            }
         }
         .overlay {
             Theme.cardShape

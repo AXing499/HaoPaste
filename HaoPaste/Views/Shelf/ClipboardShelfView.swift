@@ -243,6 +243,7 @@ struct ClipboardShelfView: View {
 
                 if count == 0 {
                     emptyState
+                        .id(interaction.glassRefreshToken)
                         .position(
                             x: width / 2,
                             y: isSide ? height / 2 - 40 : 102
@@ -363,6 +364,7 @@ struct ClipboardShelfView: View {
                         interaction.scrollOffset = 0
                     }
                 )
+                .id(interaction.glassRefreshToken)
                 .shelfHitArea(.filterBar)
                 .position(x: width / 2, y: filterY)
                 .zIndex(300)
@@ -916,18 +918,18 @@ private struct ShelfFilterBar: View {
                 .padding(.leading, 4)
                 .padding(.trailing, 2)
         }
-        .padding(.horizontal, 12)
-        .frame(minWidth: edge.isSide ? 190 : 300)
+        .padding(.horizontal, 14)
         .frame(height: ClipboardShelfLayout.filterBarHeight)
         .background {
-            ZStack {
-                GlassSurfaceBackground(
-                    cornerRadius: ClipboardShelfLayout.filterBarHeight / 2,
-                    fallback: .material
-                )
-                .allowsHitTesting(false)
-            }
+            GlassSurfaceBackground(
+                cornerRadius: 36,
+                fallback: .material
+            )
+            .frame(height: 72)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .allowsHitTesting(false)
         }
+        .clipShape(Capsule())
         .overlay {
             Capsule()
                 .strokeBorder(

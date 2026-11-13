@@ -17,6 +17,7 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
 
     private var anchor: NSRect?
     private var edge: ClipboardShelfEdge = .top
+    private var keepsShelfKey = false
 
     var onTranslateText: ((
         String,
@@ -47,6 +48,7 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
     ) {
         self.anchor = anchor
         self.edge = edge
+        self.keepsShelfKey = keepShelfKey
         panel.allowsKey = !keepShelfKey
 
         service.onAutoTranslate = { [weak self] text, title in
@@ -133,6 +135,7 @@ final class ShelfOCRPanelController: NSObject, NSWindowDelegate {
     }
 
     func windowDidResignKey(_ notification: Notification) {
+        guard !keepsShelfKey else { return }
         hide()
     }
 }

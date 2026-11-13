@@ -26,6 +26,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
     private var deactivationObserver: NSObjectProtocol?
     private var previousApplication: NSRunningApplication?
     private var isHiding = false
+    private var keepsShelfKey = false
 
     enum PresentationSource {
         case hotKey
@@ -157,6 +158,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
         animated: Bool,
         keepShelfKey: Bool = false
     ) {
+        self.keepsShelfKey = keepShelfKey
         panel.allowsKey = !keepShelfKey
         onWillPresent?(source)
         presentationSource = source
@@ -524,6 +526,7 @@ final class QuickTranslationPanelController: NSObject, NSWindowDelegate {
     }
 
     func windowDidResignKey(_ notification: Notification) {
+        guard !keepsShelfKey else { return }
         hide()
     }
 }

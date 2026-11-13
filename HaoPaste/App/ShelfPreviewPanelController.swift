@@ -16,6 +16,7 @@ final class ShelfPreviewPanelController: NSObject, NSWindowDelegate {
 
     private var anchor: NSRect?
     private var edge: ClipboardShelfEdge = .top
+    private var keepsShelfKey = false
 
     var onTranslateText: ((
         String,
@@ -48,6 +49,7 @@ final class ShelfPreviewPanelController: NSObject, NSWindowDelegate {
     ) {
         self.anchor = anchor
         self.edge = edge
+        self.keepsShelfKey = keepShelfKey
         panel.allowsKey = !keepShelfKey
 
         let imageURL = manager.imageURL(for: item)
@@ -157,6 +159,7 @@ final class ShelfPreviewPanelController: NSObject, NSWindowDelegate {
     }
 
     func windowDidResignKey(_ notification: Notification) {
+        guard !keepsShelfKey else { return }
         hide()
     }
 }
