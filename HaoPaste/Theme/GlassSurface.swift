@@ -74,7 +74,7 @@ struct GlassSurfaceBackground: View {
     var fallback: GlassSurfaceFallback = .material
 
     @AppStorage(AppSettings.liquidGlassDefaultsKey)
-    private var enabled = true
+    private var enabled = false
     @AppStorage(AppSettings.liquidGlassTransparencyDefaultsKey)
     private var transparencyRaw = GlassTransparency.clear.rawValue
     @Environment(\.accessibilityReduceTransparency)

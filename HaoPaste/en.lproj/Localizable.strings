@@ -565,6 +565,9 @@
 "外观" = "Appearance";
 "Liquid Glass 效果" = "Liquid Glass Effect";
 "使用 macOS 26 的系统玻璃材质；关闭后使用轻量磨砂材质，可降低 GPU 占用" = "Use the system Liquid Glass material on macOS 26. Turn off for the lighter frosted material and lower GPU usage.";
+"Liquid Glass 需要 macOS 26 或更高版本，当前系统会继续使用磨砂材质" = "Liquid Glass requires macOS 26 or later. This Mac will keep using the frosted material.";
+"当前系统无法开启 Liquid Glass" = "Liquid Glass Is Not Available";
+"Liquid Glass 需要 macOS 26 或更高版本；当前系统会继续使用磨砂材质。" = "Liquid Glass requires macOS 26 or later. This Mac will keep using the frosted material.";
 "玻璃通透度" = "Glass Transparency";
 "磨砂" = "Frosted";
 "标准" = "Standard";

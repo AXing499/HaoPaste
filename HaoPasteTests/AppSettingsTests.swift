@@ -25,7 +25,7 @@ final class AppSettingsTests: XCTestCase {
             .screenshotTranslationDefault
         )
         XCTAssertTrue(settings.copyTranslationWhenReplacing)
-        XCTAssertTrue(settings.liquidGlassEnabled)
+        XCTAssertFalse(settings.liquidGlassEnabled)
         XCTAssertEqual(settings.glassTransparency, .clear)
         XCTAssertFalse(settings.autoTranslateLatestOnOpen)
         XCTAssertTrue(settings.shelfEnabled)
@@ -67,7 +67,7 @@ final class AppSettingsTests: XCTestCase {
             carbonModifiers: UInt32(cmdKey | controlKey)
         )
         settings.copyTranslationWhenReplacing = false
-        settings.liquidGlassEnabled = false
+        settings.liquidGlassEnabled = true
         settings.glassTransparency = .frosted
         settings.autoTranslateLatestOnOpen = false
         settings.shelfEnabled = false
@@ -90,7 +90,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(reloaded.pasteStackHotKey.displayString, "⌃⌘B")
         XCTAssertEqual(reloaded.screenshotHotKey.displayString, "⌃⌘4")
         XCTAssertFalse(reloaded.copyTranslationWhenReplacing)
-        XCTAssertFalse(reloaded.liquidGlassEnabled)
+        XCTAssertTrue(reloaded.liquidGlassEnabled)
         XCTAssertEqual(reloaded.glassTransparency, .frosted)
         XCTAssertFalse(reloaded.autoTranslateLatestOnOpen)
         XCTAssertFalse(reloaded.shelfEnabled)

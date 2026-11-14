@@ -70,6 +70,7 @@ struct SettingsView: View {
     @State private var showClearAllAlert = false
     @State private var snippetEditor: SnippetEditorContext?
     @State private var isCheckingForUpdates = false
+    @State private var showGlassUnavailableAlert = false
     private let showsWindowChrome: Bool
 
     init(
@@ -97,6 +98,35 @@ struct SettingsView: View {
 
     private var languageNeedsRestart: Bool {
         AppLanguage.code != AppLanguage.resolvedCode(for: settings.appLanguage)
+    }
+
+    private var isGlassSupported: Bool {
+        guard #available(macOS 26.0, *) else { return false }
+        return NSClassFromString("NSGlassEffectView") != nil
+    }
+
+    private var liquidGlassSubtitle: String {
+        if isGlassSupported {
+            return L(
+                "使用 macOS 26 的系统玻璃材质；关闭后使用轻量磨砂材质，可降低 GPU 占用"
+            )
+        }
+        return L(
+            "Liquid Glass 需要 macOS 26 或更高版本，当前系统会继续使用磨砂材质"
+        )
+    }
+
+    private var liquidGlassBinding: Binding<Bool> {
+        Binding(
+            get: { isGlassSupported && settings.liquidGlassEnabled },
+            set: { newValue in
+                guard isGlassSupported else {
+                    showGlassUnavailableAlert = true
+                    return
+                }
+                settings.liquidGlassEnabled = newValue
+            }
+        )
     }
 
     private func relaunchApp() {
@@ -323,43 +353,48 @@ struct SettingsView: View {
             }
         }
 
-        if #available(macOS 26.0, *) {
-            SettingsCard(L("外观")) {
-                SettingsRow(
-                    L("Liquid Glass 效果"),
-                    subtitle: L(
-                        "使用 macOS 26 的系统玻璃材质；关闭后使用轻量磨砂材质，可降低 GPU 占用"
-                    )
-                ) {
-                    Toggle(
-                        "",
-                        isOn: $settings.liquidGlassEnabled
-                    )
+        SettingsCard(L("外观")) {
+            SettingsRow(
+                L("Liquid Glass 效果"),
+                subtitle: liquidGlassSubtitle
+            ) {
+                Toggle("", isOn: liquidGlassBinding)
                     .labelsHidden()
                     .toggleStyle(.switch)
                     .controlSize(.small)
                     .tint(Color.accentColor)
-                }
-
-                SettingsDivider()
-
-                SettingsRow(
-                    L("玻璃通透度"),
-                    subtitle: L(
-                        "磨砂更稳重，通透更接近系统玻璃；仅影响 Liquid Glass 区域"
-                    )
-                ) {
-                    Picker("", selection: $settings.glassTransparency) {
-                        ForEach(GlassTransparency.allCases) { option in
-                            Text(option.title).tag(option)
-                        }
-                    }
-                    .labelsHidden()
-                    .pickerStyle(.segmented)
-                    .frame(width: 210)
-                    .disabled(!settings.liquidGlassEnabled)
-                }
             }
+
+            SettingsDivider()
+
+            SettingsRow(
+                L("玻璃通透度"),
+                subtitle: L(
+                    "磨砂更稳重，通透更接近系统玻璃；仅影响 Liquid Glass 区域"
+                )
+            ) {
+                Picker("", selection: $settings.glassTransparency) {
+                    ForEach(GlassTransparency.allCases) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .frame(width: 210)
+                .disabled(!isGlassSupported || !settings.liquidGlassEnabled)
+            }
+        }
+        .alert(
+            L("当前系统无法开启 Liquid Glass"),
+            isPresented: $showGlassUnavailableAlert
+        ) {
+            Button(L("好"), role: .cancel) {}
+        } message: {
+            Text(
+                L(
+                    "Liquid Glass 需要 macOS 26 或更高版本；当前系统会继续使用磨砂材质。"
+                )
+            )
         }
 
 

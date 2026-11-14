@@ -465,7 +465,7 @@ final class AppSettings {
             )
         }
         if defaults.object(forKey: Keys.liquidGlassEnabled) == nil {
-            self.liquidGlassEnabled = true
+            self.liquidGlassEnabled = false
         } else {
             self.liquidGlassEnabled = defaults.bool(
                 forKey: Keys.liquidGlassEnabled

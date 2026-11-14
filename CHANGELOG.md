@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.17.0 — 2026-11-13
+## 0.17.0 — 2026-11-14
 
 ### 中文
 
@@ -15,10 +15,11 @@
 - 分情况处理应用失焦：没有弹层时，挂架保留系统非活跃磨砂外观并按正常鼠标移开逻辑收回；预览 / 翻译 / OCR 弹层打开时，点击其他应用会立即收起挂架和全部弹层。
 - 预览 / 翻译 / OCR 弹层的关闭、复制、翻译等按钮也统一为手型光标。
 - 挂架筛选条保持紧凑宽度，通过更大的玻璃背板裁切实现通透效果；选中项使用半透明强调色；挂架操作条改为玻璃。
-- 设置 → 通用 → 外观新增「Liquid Glass 效果」开关，默认开启；关闭后回退到现有轻量磨砂材质，降低 GPU 占用。
+- 设置 → 通用 → 外观新增「Liquid Glass 效果」开关，默认关闭；开启后使用系统玻璃，关闭时继续使用轻量磨砂材质以降低 GPU 占用。
 - 新增「玻璃通透度」三档设置：磨砂 / 标准 / 通透，默认通透；可调整玻璃的磨砂程度和透明感。
 - 自动尊重「减弱透明度」与「提高对比度」辅助功能设置。
-- 旧版 macOS 自动使用现有材质，不影响兼容性；截图渲染固定使用回退材质以保证基线稳定。
+- 旧版 macOS 自动使用现有材质；在 macOS 26 以下尝试开启 Liquid Glass 会提示当前系统无法开启。
+- 截图渲染固定使用回退材质以保证基线稳定。
 - 修复挂架首次出现时玻璃材质未立即生效、需要移动鼠标才刷新的问题。
 - 启用 Liquid Glass 时，挂架展开会自动激活 HaoPaste，使玻璃立即使用活跃外观；收起后恢复原应用，不增加额外的用户开关。
 - 修复打开预览、翻译或 OCR 详情面板后挂架玻璃变回磨砂的问题；详情面板不再抢占挂架的 key window。
@@ -39,10 +40,11 @@
 - Split app-deactivation behavior: without a popup the shelf keeps the system's inactive material and retracts through the normal mouse-away flow; with a preview, translation, or OCR popup open, switching apps dismisses the shelf and every popup immediately.
 - Popup close/copy/translate buttons use the pointing hand cursor.
 - The shelf filter keeps its compact width and uses a larger clipped glass backing for a clearer glass look; the selected pill is translucent, and the shelf action bar uses glass.
-- Added a **Liquid Glass Effect** switch in Settings → General → Appearance, on by default. Turning it off falls back to the existing lightweight frosted material and reduces GPU usage.
+- Added a **Liquid Glass Effect** switch in Settings → General → Appearance, off by default. Turning it on uses system glass; leaving it off keeps the lightweight frosted material and lowers GPU usage.
 - Added a three-level **Glass Transparency** setting: Frosted, Standard, and Clear (default). It controls how frosted or transparent the glass surfaces appear.
 - Automatically respects Reduce Transparency and Increase Contrast accessibility settings.
-- Older macOS versions keep the existing material automatically; screenshot rendering uses the fallback for stable baselines.
+- Older macOS versions keep the existing material automatically, and trying to enable Liquid Glass below macOS 26 explains that the system cannot enable it.
+- Screenshot rendering uses the fallback for stable baselines.
 - Fixed the first shelf reveal keeping a stale material render until the pointer moved.
 - With Liquid Glass enabled, the shelf activates HaoPaste on reveal so glass uses its active appearance, then restores the previous app when hidden. No extra user-facing switch is added.
 - Fixed the shelf glass reverting to frosted material while preview, translation, or OCR panels are open; those panels no longer take the key window from the shelf.
