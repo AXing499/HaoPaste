@@ -25,4 +25,9 @@ final class ShelfInteractionState {
     /// update happens to refresh SwiftUI.
     var glassRefreshToken = 0
 
+    /// Pinned item whose clip was clicked and is awaiting a delete/unpin
+    /// decision. Cleared when the shelf hides so the confirmation never
+    /// reappears on the next reveal.
+    var pendingPinnedDeleteID: UUID?
+
 }

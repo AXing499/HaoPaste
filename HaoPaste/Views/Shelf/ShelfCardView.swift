@@ -25,6 +25,7 @@ struct ShelfCardView: View {
     let onCopyText: (String) -> Void
     let onCopyPlainText: () -> Void
     let onTogglePin: () -> Void
+    let onRequestPinnedDelete: () -> Void
     let onDelete: () -> Void
     let onPreview: () -> Void
     let onTranslate: () -> Void
@@ -37,7 +38,6 @@ struct ShelfCardView: View {
     }
     @State private var isClipDropping = false
     @State private var copyPulse = false
-    @State private var showPinnedDeleteConfirmation = false
 
     private static let bodyOffset = ClipboardShelfLayout.bodyOffset
 
@@ -108,9 +108,7 @@ struct ShelfCardView: View {
                 isDropping: isClipDropping,
                 dropDuration: clipDropDuration,
                 onRelease: release,
-                onRequestPinnedRelease: {
-                    showPinnedDeleteConfirmation = true
-                }
+                onRequestPinnedRelease: onRequestPinnedDelete
             )
             .frame(maxWidth: .infinity, alignment: clipAlignment)
         }
@@ -128,20 +126,6 @@ struct ShelfCardView: View {
         .help(L("点击复制"))
         .accessibilityLabel("\(item.formatBadge)，\(item.displayTitle)")
         .accessibilityHint(L("复制到剪贴板"))
-        .alert(
-            L("删除置顶记录？"),
-            isPresented: $showPinnedDeleteConfirmation
-        ) {
-            Button(L("取消"), role: .cancel) {}
-            Button(L("取消置顶")) {
-                onTogglePin()
-            }
-            Button(L("删除"), role: .destructive) {
-                release()
-            }
-        } message: {
-            Text(L("这条记录已置顶。取消置顶会保留记录；删除后无法恢复。"))
-        }
         .contextMenu {
             Button {
                 onPreview()
@@ -762,13 +746,13 @@ private struct ShelfClipView: View {
         .onTapGesture(perform: unclip)
         .help(
             isPinned
-                ? L("已置顶 · 点击可删除或取消置顶")
+                ? L("已置顶 · 点击可取消置顶或移到最近删除")
                 : L("点击松开夹子并删除")
         )
         .accessibilityElement()
         .accessibilityLabel(
             isPinned
-                ? L("已置顶，点击可删除或取消置顶")
+                ? L("已置顶，点击可取消置顶或移到最近删除")
                 : L("松开夹子并删除")
         )
         .accessibilityAddTraits(.isButton)

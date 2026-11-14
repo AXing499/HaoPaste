@@ -231,6 +231,14 @@ enum DebugRenderer {
                 .first?
                 .id
         }
+        if ProcessInfo.processInfo.environment[
+            "HAOPASTE_RENDER_SHELF_CONFIRM"
+        ] == "1" {
+            interaction.pendingPinnedDeleteID = manager
+                .filteredItems(query: "", filter: .all)
+                .first(where: \.isPinned)?
+                .id
+        }
 
         let content = ZStack {
             background

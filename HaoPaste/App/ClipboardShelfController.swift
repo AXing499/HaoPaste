@@ -487,6 +487,12 @@ final class ClipboardShelfController: NSObject {
             return
         }
 
+        if interaction.pendingPinnedDeleteID != nil {
+            panel.ignoresMouseEvents = false
+            interaction.hoveredItemID = nil
+            return
+        }
+
         let windowPoint = panel.convertPoint(fromScreen: mouse)
         let local = shelfHostingView.convert(windowPoint, from: nil)
         // NSHostingView is flipped (origin at the top-left), which is the
@@ -652,6 +658,7 @@ final class ClipboardShelfController: NSObject {
         awaySince = nil
         interaction.hoveredItemID = nil
         interaction.scrollOffset = 0
+        interaction.pendingPinnedDeleteID = nil
         startMouseTracking(interval: Timing.visiblePollInterval)
 
         activateForGlassIfNeeded()
@@ -709,6 +716,7 @@ final class ClipboardShelfController: NSObject {
         isHiding = true
         isRevealing = false
         interaction.hoveredItemID = nil
+        interaction.pendingPinnedDeleteID = nil
         // Keep the current scroll position through the collapse animation so
         // the shelf retracts from the cards the user was looking at. `reveal`
         // resets it so the next presentation starts at the first item.
@@ -868,7 +876,12 @@ final class ClipboardShelfController: NSObject {
     }
 
     private func refreshShelfCursor() {
-        guard isRevealed, !isHiding else { return }
+        guard isRevealed,
+              !isHiding,
+              interaction.pendingPinnedDeleteID == nil
+        else {
+            return
+        }
         let mouse = NSEvent.mouseLocation
         let windowPoint = panel.convertPoint(fromScreen: mouse)
         let local = shelfHostingView.convert(windowPoint, from: nil)

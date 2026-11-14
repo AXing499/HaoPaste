@@ -292,6 +292,9 @@ struct ClipboardShelfView: View {
                             copyPlainText(item.plainText, for: item)
                         },
                         onTogglePin: { togglePin(item) },
+                        onRequestPinnedDelete: {
+                            interaction.pendingPinnedDeleteID = item.id
+                        },
                         onDelete: { delete(item) },
                         onPreview: { onPreviewItem(item) },
                         onTranslate: { onTranslateItem(item) }
@@ -355,20 +358,51 @@ struct ClipboardShelfView: View {
                     }
                 }
 
-                ShelfFilterBar(
-                    filter: $filter,
-                    visibleCount: count,
-                    totalCount: filtered.count,
-                    edge: edge,
-                    onSelect: {
-                        interaction.scrollOffset = 0
-                        interaction.hoveredItemID = nil
-                    }
-                )
-                .id(interaction.glassRefreshToken)
-                .shelfHitArea(.filterBar)
-                .position(x: width / 2, y: filterY)
-                .zIndex(300)
+                if let pendingItem = loadedItems.first(where: {
+                    $0.id == interaction.pendingPinnedDeleteID
+                        && $0.isPinned
+                }) {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .frame(width: width, height: height)
+                        .onTapGesture {
+                            interaction.pendingPinnedDeleteID = nil
+                        }
+                        .zIndex(350)
+
+                    PinnedDeleteConfirmationBar(
+                        edge: edge,
+                        panelWidth: width,
+                        onCancel: {
+                            interaction.pendingPinnedDeleteID = nil
+                        },
+                        onUnpin: {
+                            togglePin(pendingItem)
+                            interaction.pendingPinnedDeleteID = nil
+                        },
+                        onDelete: {
+                            delete(pendingItem)
+                            interaction.pendingPinnedDeleteID = nil
+                        }
+                    )
+                    .position(x: width / 2, y: filterY)
+                    .zIndex(400)
+                } else {
+                    ShelfFilterBar(
+                        filter: $filter,
+                        visibleCount: count,
+                        totalCount: filtered.count,
+                        edge: edge,
+                        onSelect: {
+                            interaction.scrollOffset = 0
+                            interaction.hoveredItemID = nil
+                        }
+                    )
+                    .id(interaction.glassRefreshToken)
+                    .shelfHitArea(.filterBar)
+                    .position(x: width / 2, y: filterY)
+                    .zIndex(300)
+                }
             }
             .coordinateSpace(name: "ClipboardShelf")
             .onPreferenceChange(ShelfHitTargetsKey.self) { targets in
@@ -386,6 +420,14 @@ struct ClipboardShelfView: View {
             }
             .onChange(of: scrollOffset) { _, _ in
                 flashScrollHint()
+            }
+            .onChange(of: loadedItems.map(\.id)) { _, ids in
+                guard let pending = interaction.pendingPinnedDeleteID else {
+                    return
+                }
+                if !ids.contains(pending) {
+                    interaction.pendingPinnedDeleteID = nil
+                }
             }
             .animation(animates ? Theme.gentleSpring : nil, value: count)
             // A new generated copy usually replaces the oldest card, so the
@@ -967,3 +1009,142 @@ private struct ShelfFilterBar: View {
 }
 
 
+
+/// Inline confirmation shown in place of the filter bar when a pinned card's
+/// clip is clicked. It deliberately avoids a modal alert so the shelf cards
+/// stay visible, and the controller clears the pending item when the shelf
+/// retracts.
+private struct PinnedDeleteConfirmationBar: View {
+    let edge: ClipboardShelfEdge
+    let panelWidth: CGFloat
+    let onCancel: () -> Void
+    let onUnpin: () -> Void
+    let onDelete: () -> Void
+
+    private var isSide: Bool {
+        edge.isSide
+    }
+
+    private var barWidth: CGFloat {
+        isSide
+            ? max(196, panelWidth - 16)
+            : min(760, panelWidth - 32)
+    }
+
+    private var titleText: String {
+        L("删除置顶记录？")
+    }
+
+    private var messageText: String {
+        L("取消置顶会保留记录；移到最近删除后仍可恢复。")
+    }
+
+    var body: some View {
+        Group {
+            if isSide {
+                VStack(alignment: .leading, spacing: 8) {
+                    header
+                    message
+                    HStack(spacing: 5) {
+                        actionButton(L("取消"), tint: .secondary, compact: true, action: onCancel)
+                        actionButton(L("取消置顶"), tint: Color.accentColor, compact: true, action: onUnpin)
+                        actionButton(L("移到最近删除"), tint: .red, compact: true, action: onDelete)
+                    }
+                }
+            } else {
+                HStack(spacing: 12) {
+                    Image(systemName: "pin.fill")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(titleText)
+                            .font(.system(size: 11.5, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.primary)
+                        message
+                    }
+
+                    Spacer(minLength: 12)
+
+                    actionButton(L("取消"), tint: .secondary, action: onCancel)
+                    actionButton(L("取消置顶"), tint: Color.accentColor, action: onUnpin)
+                    actionButton(L("移到最近删除"), tint: .red, action: onDelete)
+                }
+            }
+        }
+        .padding(.horizontal, isSide ? 11 : 14)
+        .padding(.vertical, isSide ? 10 : 9)
+        .frame(width: barWidth, alignment: .leading)
+        .background {
+            ZStack {
+                GlassSurfaceBackground(
+                    cornerRadius: 17,
+                    fallback: .material
+                )
+                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                    .fill(Color.primary.opacity(0.015))
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 17, style: .continuous)
+                .strokeBorder(Theme.hairlineColor, lineWidth: 0.5)
+        }
+        .shadow(color: .black.opacity(0.20), radius: 14, y: 6)
+    }
+
+    private var header: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "pin.fill")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+            Text(titleText)
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(.primary)
+        }
+    }
+
+    private var message: some View {
+        Text(messageText)
+            .font(.system(size: 9.5, weight: .regular, design: .rounded))
+            .foregroundStyle(.secondary)
+            .lineSpacing(1)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func actionButton(
+        _ title: String,
+        tint: Color,
+        compact: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(
+                    .system(
+                        size: compact ? 9.5 : 10,
+                        weight: .semibold,
+                        design: .rounded
+                    )
+                )
+                .foregroundStyle(tint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, compact ? 7 : 9)
+                .frame(height: 22)
+                .background {
+                    Capsule()
+                        .fill(tint.opacity(0.10))
+                }
+                .overlay {
+                    Capsule()
+                        .strokeBorder(tint.opacity(0.18), lineWidth: 0.5)
+                }
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .pointingHandCursor()
+        .accessibilityLabel(title)
+    }
+}

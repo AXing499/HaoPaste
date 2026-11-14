@@ -5,13 +5,15 @@
 ### 中文
 
 - 修复挂架展开时点击菜单栏其他应用后，挂架收起会把该应用的菜单或弹窗一起关闭的问题；从菜单栏触发的收起不再切回之前的应用。
-- 置顶卡片改为蓝色夹子和蓝色描边；点击置顶卡片的夹子会先询问「取消置顶 / 删除 / 取消」，避免误删置顶记录。
+- 置顶卡片改为蓝色夹子和蓝色描边；点击置顶卡片的夹子会在挂架内显示确认条，可选择取消置顶、移到最近删除或取消，并说明记录仍可从最近删除恢复。
+- 置顶删除确认条不再压暗其他卡片；挂架收起时会自动关闭，下次展开不会残留。
 - 128 个 XCTest。
 
 ### English
 
 - Fixed another app's menu bar popover being dismissed when the shelf retracts after a menu bar click; menu-bar-triggered retraction no longer restores the previous app.
-- Pinned cards now use a blue clip and accent border; clicking a pinned clip asks whether to unpin, delete, or cancel, preventing accidental removal.
+- Pinned cards now use a blue clip and accent border; clicking a pinned clip shows an inline bar with Unpin, Move to Recently Deleted, and Cancel, and explains that the item can still be recovered.
+- The pinned delete confirmation no longer dims the shelf and is cleared automatically when the shelf retracts, so it never reappears on the next reveal.
 - 128 XCTest cases.
 
 ## 0.17.0 — 2026-11-14
