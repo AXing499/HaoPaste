@@ -37,6 +37,7 @@ struct ShelfCardView: View {
     }
     @State private var isClipDropping = false
     @State private var copyPulse = false
+    @State private var showPinnedDeleteConfirmation = false
 
     private static let bodyOffset = ClipboardShelfLayout.bodyOffset
 
@@ -106,7 +107,10 @@ struct ShelfCardView: View {
                 isHovering: isHovering,
                 isDropping: isClipDropping,
                 dropDuration: clipDropDuration,
-                onRelease: release
+                onRelease: release,
+                onRequestPinnedRelease: {
+                    showPinnedDeleteConfirmation = true
+                }
             )
             .frame(maxWidth: .infinity, alignment: clipAlignment)
         }
@@ -124,6 +128,20 @@ struct ShelfCardView: View {
         .help(L("点击复制"))
         .accessibilityLabel("\(item.formatBadge)，\(item.displayTitle)")
         .accessibilityHint(L("复制到剪贴板"))
+        .alert(
+            L("删除置顶记录？"),
+            isPresented: $showPinnedDeleteConfirmation
+        ) {
+            Button(L("取消"), role: .cancel) {}
+            Button(L("取消置顶")) {
+                onTogglePin()
+            }
+            Button(L("删除"), role: .destructive) {
+                release()
+            }
+        } message: {
+            Text(L("这条记录已置顶。取消置顶会保留记录；删除后无法恢复。"))
+        }
         .contextMenu {
             Button {
                 onPreview()
@@ -388,10 +406,14 @@ struct ShelfCardView: View {
         .overlay {
             bodyShape
                 .strokeBorder(
-                    isHovering
-                        ? Color.accentColor.opacity(0.30)
-                        : Theme.hairlineColor,
-                    lineWidth: isHovering ? 0.9 : Theme.hairline
+                    item.isPinned
+                        ? Color.accentColor.opacity(isHovering ? 0.50 : 0.34)
+                        : (
+                            isHovering
+                                ? Color.accentColor.opacity(0.30)
+                                : Theme.hairlineColor
+                        ),
+                    lineWidth: item.isPinned || isHovering ? 0.9 : Theme.hairline
                 )
         }
         .shadow(
@@ -432,6 +454,12 @@ struct ShelfCardView: View {
             )
 
             HStack(spacing: 5) {
+                if item.isPinned {
+                    Image(systemName: "pin.fill")
+                        .font(.system(size: 8, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Color.white.opacity(0.92))
+                }
+
                 Text(item.imageDimensions?.displayText ?? L("图片"))
                     .lineLimit(1)
                 Spacer(minLength: 2)
@@ -468,6 +496,12 @@ struct ShelfCardView: View {
                 .frame(height: Theme.hairline)
 
             HStack(spacing: 5) {
+                if item.isPinned {
+                    Image(systemName: "pin.fill")
+                        .font(.system(size: 8, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Color.accentColor)
+                }
+
                 Image(systemName: item.type.symbolName)
                     .font(.system(size: 9, weight: .semibold, design: .rounded))
                 Text(item.displayTitle)
@@ -640,6 +674,7 @@ private struct ShelfClipView: View {
     let isDropping: Bool
     let dropDuration: TimeInterval
     let onRelease: () -> Void
+    let onRequestPinnedRelease: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isOpen = false
@@ -649,6 +684,17 @@ private struct ShelfClipView: View {
             colors: [
                 Color(red: 0.97, green: 0.75, blue: 0.30),
                 Color(red: 0.86, green: 0.56, blue: 0.10)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    private var pinnedClip: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color(red: 0.52, green: 0.70, blue: 1.00),
+                Color(red: 0.24, green: 0.44, blue: 0.94)
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -666,7 +712,7 @@ private struct ShelfClipView: View {
     var body: some View {
         ZStack {
             BinderClipBody()
-                .fill(gold)
+                .fill(isPinned ? pinnedClip : gold)
 
             BinderClipWire()
                 .stroke(
@@ -689,13 +735,6 @@ private struct ShelfClipView: View {
                 .fill(Color.white.opacity(0.38))
                 .frame(width: 1.4, height: 4.2)
                 .offset(x: -3.6, y: -0.8)
-
-            if isPinned {
-                Circle()
-                    .fill(Color.accentColor)
-                    .frame(width: 2.2, height: 2.2)
-                    .offset(x: -3.4, y: 4.6)
-            }
         }
         .frame(width: 14, height: ClipboardShelfLayout.clipHeight)
         .rotationEffect(
@@ -710,14 +749,28 @@ private struct ShelfClipView: View {
         .offset(y: isDropping ? 42 : 0)
         .opacity(isDropping ? 0 : 1)
         .scaleEffect(isHovering ? 1.06 : 1)
-        .shadow(color: Color.black.opacity(0.18), radius: 1.5, y: 1)
+        .shadow(
+            color: isPinned
+                ? Color.accentColor.opacity(0.52)
+                : Color.black.opacity(0.18),
+            radius: isPinned ? 3 : 1.5,
+            y: 1
+        )
         .contentShape(Rectangle())
         .allowsHitTesting(!isDropping)
         .shelfHitArea(.cardClip(itemID))
         .onTapGesture(perform: unclip)
-        .help(L("点击松开夹子并删除"))
+        .help(
+            isPinned
+                ? L("已置顶 · 点击可删除或取消置顶")
+                : L("点击松开夹子并删除")
+        )
         .accessibilityElement()
-        .accessibilityLabel(L("松开夹子并删除"))
+        .accessibilityLabel(
+            isPinned
+                ? L("已置顶，点击可删除或取消置顶")
+                : L("松开夹子并删除")
+        )
         .accessibilityAddTraits(.isButton)
         .accessibilityAction {
             unclip()
@@ -741,6 +794,10 @@ private struct ShelfClipView: View {
 
     private func unclip() {
         guard !isOpen, !isDropping else { return }
+        if isPinned {
+            onRequestPinnedRelease()
+            return
+        }
         withAnimation(
             reduceMotion
                 ? nil

@@ -5,11 +5,13 @@
 ### 中文
 
 - 修复挂架展开时点击菜单栏其他应用后，挂架收起会把该应用的菜单或弹窗一起关闭的问题；从菜单栏触发的收起不再切回之前的应用。
+- 置顶卡片改为蓝色夹子和蓝色描边；点击置顶卡片的夹子会先询问「取消置顶 / 删除 / 取消」，避免误删置顶记录。
 - 128 个 XCTest。
 
 ### English
 
 - Fixed another app's menu bar popover being dismissed when the shelf retracts after a menu bar click; menu-bar-triggered retraction no longer restores the previous app.
+- Pinned cards now use a blue clip and accent border; clicking a pinned clip asks whether to unpin, delete, or cancel, preventing accidental removal.
 - 128 XCTest cases.
 
 ## 0.17.0 — 2026-11-14

@@ -573,3 +573,7 @@
 "标准" = "Standard";
 "通透" = "Clear";
 "磨砂更稳重，通透更接近系统玻璃；仅影响 Liquid Glass 区域" = "Frosted is more solid; Clear is closer to system glass. Applies only to Liquid Glass surfaces.";
+"删除置顶记录？" = "Delete pinned item?";
+"这条记录已置顶。取消置顶会保留记录；删除后无法恢复。" = "This item is pinned. Unpinning keeps it in history; deleting it can't be undone.";
+"已置顶 · 点击可删除或取消置顶" = "Pinned · Click to delete or unpin";
+"已置顶，点击可删除或取消置顶" = "Pinned. Click to delete or unpin.";
