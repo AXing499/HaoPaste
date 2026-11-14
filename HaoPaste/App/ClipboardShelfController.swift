@@ -598,6 +598,13 @@ final class ClipboardShelfController: NSObject {
 
     private func restoreApplicationAfterShelf() {
         guard let app = activationRestoreApp else { return }
+        // If the shelf was dismissed from the menu bar, do not switch focus
+        // back: another app's status popover may be open, and activating any
+        // app would close it.
+        if menuBarSuppressed {
+            activationRestoreApp = nil
+            return
+        }
         // Do not steal focus back if the user switched away, or if another
         // HaoPaste window (main panel, translation card) is now key.
         guard NSApp.isActive, NSApp.keyWindow == nil else {
@@ -923,6 +930,10 @@ final class ClipboardShelfController: NSObject {
         hotZoneSince = nil
 
         if isRevealed {
+            // The click may have opened another app's menu bar popover.
+            // Restoring the previously frontmost app when the shelf finishes
+            // retracting would switch focus and dismiss that popover.
+            activationRestoreApp = nil
             hide()
         }
     }

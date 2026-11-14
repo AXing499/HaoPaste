@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.17.1 — 2026-11-15
+
+### 中文
+
+- 修复挂架展开时点击菜单栏其他应用后，挂架收起会把该应用的菜单或弹窗一起关闭的问题；从菜单栏触发的收起不再切回之前的应用。
+- 128 个 XCTest。
+
+### English
+
+- Fixed another app's menu bar popover being dismissed when the shelf retracts after a menu bar click; menu-bar-triggered retraction no longer restores the previous app.
+- 128 XCTest cases.
+
 ## 0.17.0 — 2026-11-14
 
 ### 中文
