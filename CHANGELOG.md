@@ -12,7 +12,7 @@
 - 修复挂架命中区域上下颠倒导致的光标跳动、点击穿透和筛选后悬停卡住；卡片主体也使用手型光标。
 - 改用 AppKit cursor rect 管理挂架光标，移除计时器反复强制设置光标造成的快速闪动。
 - 筛选栏直接移入时显示手型光标；修复挂架窗口从忽略鼠标切换为接收鼠标时丢失进入事件、导致光标停留在箭头的问题。
-- 切换到其他应用时立即收起挂架和弹层，避免 macOS 把 Liquid Glass 强制降级为非活跃磨砂外观；挂架复制后不再自动切回原应用。
+- 分情况处理应用失焦：没有弹层时，挂架保留系统非活跃磨砂外观并按正常鼠标移开逻辑收回；预览 / 翻译 / OCR 弹层打开时，点击其他应用会立即收起挂架和全部弹层。
 - 预览 / 翻译 / OCR 弹层的关闭、复制、翻译等按钮也统一为手型光标。
 - 挂架筛选条保持紧凑宽度，通过更大的玻璃背板裁切实现通透效果；选中项使用半透明强调色；挂架操作条改为玻璃。
 - 设置 → 通用 → 外观新增「Liquid Glass 效果」开关，默认开启；关闭后回退到现有轻量磨砂材质，降低 GPU 占用。
@@ -22,7 +22,8 @@
 - 修复挂架首次出现时玻璃材质未立即生效、需要移动鼠标才刷新的问题。
 - 启用 Liquid Glass 时，挂架展开会自动激活 HaoPaste，使玻璃立即使用活跃外观；收起后恢复原应用，不增加额外的用户开关。
 - 修复打开预览、翻译或 OCR 详情面板后挂架玻璃变回磨砂的问题；详情面板不再抢占挂架的 key window。
-- 挂架保持展开时，复制卡片后会立即把键盘焦点还给原应用，方便直接粘贴。
+- 挂架滚动到后面的卡片后，收起动画保持在当前位置，不再先跳回第一张再收起；下次展开仍从第一张开始显示。
+- 设置窗口改为覆盖标题栏的整块 Liquid Glass，侧栏与设置卡片分层显示；标题栏透明并保留原生窗口按钮。
 - 128 个 XCTest。
 
 ### English
@@ -35,7 +36,7 @@
 - Fixed inverted shelf hit testing that caused cursor flicker, click-through, and stuck hover after filtering; card bodies now use the pointing-hand cursor.
 - Switched shelf cursors to AppKit cursor rects, removing timer-driven cursor reassertion that caused rapid flicker.
 - The filter bar now shows the pointing hand when entered directly; fixed the lost enter event when the shelf panel switches from ignoring to accepting mouse events.
-- Switching to another app now dismisses the shelf and popups immediately so macOS never shows the subdued inactive glass; the shelf no longer steals focus back after a stay-open copy.
+- Split app-deactivation behavior: without a popup the shelf keeps the system's inactive material and retracts through the normal mouse-away flow; with a preview, translation, or OCR popup open, switching apps dismisses the shelf and every popup immediately.
 - Popup close/copy/translate buttons use the pointing hand cursor.
 - The shelf filter keeps its compact width and uses a larger clipped glass backing for a clearer glass look; the selected pill is translucent, and the shelf action bar uses glass.
 - Added a **Liquid Glass Effect** switch in Settings → General → Appearance, on by default. Turning it off falls back to the existing lightweight frosted material and reduces GPU usage.
@@ -45,7 +46,8 @@
 - Fixed the first shelf reveal keeping a stale material render until the pointer moved.
 - With Liquid Glass enabled, the shelf activates HaoPaste on reveal so glass uses its active appearance, then restores the previous app when hidden. No extra user-facing switch is added.
 - Fixed the shelf glass reverting to frosted material while preview, translation, or OCR panels are open; those panels no longer take the key window from the shelf.
-- When the shelf stays open after copying, keyboard focus returns to the previous app so users can paste immediately.
+- Preserved the shelf scroll position through the retract animation so it no longer jumps back to the first cards before hiding; each new reveal starts at the first item.
+- The settings window now uses a Liquid Glass sheet that extends behind a transparent titlebar, with layered glass setting cards; the native window buttons remain.
 - 128 XCTest cases.
 
 

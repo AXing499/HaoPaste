@@ -305,7 +305,6 @@ final class ClipboardShelfController: NSObject {
     }
 
     func edgeDidChange() {
-        interaction.scrollOffset = 0
         hide()
         if let screen = ClipboardShelfLayout.screenUnderPointer() {
             placePanel(on: screen)
@@ -703,7 +702,9 @@ final class ClipboardShelfController: NSObject {
         isHiding = true
         isRevealing = false
         interaction.hoveredItemID = nil
-        interaction.scrollOffset = 0
+        // Keep the current scroll position through the collapse animation so
+        // the shelf retracts from the cards the user was looking at. `reveal`
+        // resets it so the next presentation starts at the first item.
         startMouseTracking(interval: Timing.hiddenPollInterval)
         manualOpen = false
         manualVisited = false
@@ -725,6 +726,7 @@ final class ClipboardShelfController: NSObject {
             self.panel.orderOut(nil)
             self.panel.alphaValue = 1
             self.panel.setFrame(target, display: false)
+            self.interaction.scrollOffset = 0
             self.isHiding = false
             self.restoreApplicationAfterShelf()
             self.onVisibilityChanged?()
@@ -813,9 +815,10 @@ final class ClipboardShelfController: NSObject {
 
     // MARK: - Menu bar clicks
 
-    /// Liquid Glass turns into the system's subdued material as soon as the
-    /// app stops being active. Avoid showing that state by dismissing the
-    /// shelf and any shelf popups immediately when the user switches apps.
+    /// When a popup is hosted in, or attached to, the shelf, clicking another
+    /// app should dismiss the shelf and all popups immediately. Without a
+    /// popup the shelf is allowed to lose focus, turn into the system's
+    /// inactive material, and retract through the normal mouse-away timer.
     private func observeDeactivation() {
         deactivationObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didResignActiveNotification,
@@ -823,9 +826,15 @@ final class ClipboardShelfController: NSObject {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
-                guard let self, self.isRevealed, !self.isHiding else {
+                guard let self,
+                      self.isRevealed,
+                      !self.isHiding
+                else {
                     return
                 }
+                let hasPopup = self.overlayContentView != nil
+                    || self.isRetractBlocked?() == true
+                guard hasPopup else { return }
                 self.hide(animated: false)
             }
         }

@@ -70,17 +70,20 @@ struct SettingsView: View {
     @State private var showClearAllAlert = false
     @State private var snippetEditor: SnippetEditorContext?
     @State private var isCheckingForUpdates = false
+    private let showsWindowChrome: Bool
 
     init(
         settings: AppSettings,
         manager: ClipboardManager,
         translationService: TranslationService,
-        initialTab: SettingsTab = .general
+        initialTab: SettingsTab = .general,
+        showsWindowChrome: Bool = false
     ) {
         self._settings = Bindable(wrappedValue: settings)
         self.manager = manager
         self.translationService = translationService
         self._selectedTab = State(initialValue: initialTab)
+        self.showsWindowChrome = showsWindowChrome
     }
 
     private var appVersion: String {
@@ -118,8 +121,26 @@ struct SettingsView: View {
                 .overlay(Color.primary.opacity(0.06))
             content
         }
-        .frame(width: 720, height: 480)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .frame(
+            minWidth: 720,
+            maxWidth: showsWindowChrome ? .infinity : 720,
+            minHeight: 480,
+            maxHeight: showsWindowChrome ? .infinity : 480
+        )
+        .background {
+            SettingsWindowBackground(
+                cornerRadius: showsWindowChrome ? 12 : 0
+            )
+            .ignoresSafeArea()
+        }
+        .overlay {
+            if showsWindowChrome {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
+        }
         .alert(L("清空未置顶记录？"), isPresented: $showClearUnpinnedAlert) {
             Button(L("清空"), role: .destructive) {
                 manager.clearUnpinnedItems()
@@ -213,7 +234,10 @@ struct SettingsView: View {
             .padding(16)
         }
         .frame(width: 184)
-        .background(Color.primary.opacity(0.028))
+        .background {
+            Color.primary.opacity(0.028)
+                .ignoresSafeArea(edges: .top)
+        }
     }
 
     // MARK: - Content
@@ -1440,6 +1464,34 @@ private struct SidebarTabButton: View {
     }
 }
 
+/// The settings window uses one Liquid Glass sheet beneath the sidebar and
+/// content. Cards add their own lighter glass surfaces for hierarchy.
+private struct SettingsWindowBackground: View {
+    let cornerRadius: CGFloat
+
+    var body: some View {
+        ZStack {
+            GlassSurfaceBackground(
+                cornerRadius: cornerRadius,
+                fallback: .material
+            )
+
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(0.045),
+                    Color.clear,
+                    Color.primary.opacity(0.012)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+        .clipShape(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        )
+    }
+}
+
 struct SettingsCard<Content: View>: View {
     let title: String?
     let content: Content
@@ -1462,11 +1514,21 @@ struct SettingsCard<Content: View>: View {
                 content
             }
             .background {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.primary.opacity(0.035))
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.primary.opacity(0.026))
+
+                    GlassSurfaceBackground(
+                        cornerRadius: 12,
+                        fallback: .material
+                    )
+                }
+                .clipShape(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                )
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
             }
         }

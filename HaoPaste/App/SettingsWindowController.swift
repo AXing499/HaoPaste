@@ -22,7 +22,8 @@ final class SettingsWindowController: NSWindowController {
             settings: settings,
             manager: manager,
             translationService: translationService,
-            initialTab: initialTab
+            initialTab: initialTab,
+            showsWindowChrome: true
         )
         .environment(snippetManager)
         .environment(ocrService)
@@ -30,16 +31,33 @@ final class SettingsWindowController: NSWindowController {
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 720, height: 480),
-            styleMask: [.titled, .closable, .miniaturizable],
+            styleMask: [
+                .titled,
+                .closable,
+                .miniaturizable,
+                .fullSizeContentView
+            ],
             backing: .buffered,
             defer: false
         )
         window.title = L("HaoPaste 设置")
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.hasShadow = true
         window.contentViewController = hostingController
+        hostingController.view.wantsLayer = true
+        hostingController.view.layer?.backgroundColor = NSColor.clear.cgColor
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed
         window.center()
         window.setFrameAutosaveName("HaoPasteSettingsWindow")
+        // The autosaved frame may come from the pre-glass window, whose
+        // titlebar added 32 pt. Keep the content at the design size while
+        // preserving the remembered window origin.
+        window.setContentSize(NSSize(width: 720, height: 480))
 
         super.init(window: window)
     }
