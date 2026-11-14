@@ -37,6 +37,7 @@ final class ClipboardShelfController: NSObject {
     private var mouseMoveMonitor: Any?
     private var spaceChangeObserver: NSObjectProtocol?
     private var screenChangeObserver: NSObjectProtocol?
+    private var deactivationObserver: NSObjectProtocol?
 
     private var isRevealed = false
     private var isHiding = false
@@ -261,6 +262,7 @@ final class ClipboardShelfController: NSObject {
         installMenuBarClickMonitors()
         installShelfCursorMonitor()
         observeSpaceAndScreenChanges()
+        observeDeactivation()
 
         if settings.shelfEnabled {
             startMouseTracking(interval: Timing.hiddenPollInterval)
@@ -280,6 +282,9 @@ final class ClipboardShelfController: NSObject {
         }
         if let screenChangeObserver {
             NotificationCenter.default.removeObserver(screenChangeObserver)
+        }
+        if let deactivationObserver {
+            NotificationCenter.default.removeObserver(deactivationObserver)
         }
     }
 
@@ -689,7 +694,7 @@ final class ClipboardShelfController: NSObject {
         panel.displayIfNeeded()
     }
 
-    private func hide() {
+    private func hide(animated: Bool = true) {
         guard isRevealed, !isHiding else { return }
 
         onWillHide?()
@@ -725,7 +730,7 @@ final class ClipboardShelfController: NSObject {
             self.onVisibilityChanged?()
         }
 
-        guard !reduceMotion else {
+        guard animated, !reduceMotion else {
             finish()
             return
         }
@@ -807,6 +812,24 @@ final class ClipboardShelfController: NSObject {
     }
 
     // MARK: - Menu bar clicks
+
+    /// Liquid Glass turns into the system's subdued material as soon as the
+    /// app stops being active. Avoid showing that state by dismissing the
+    /// shelf and any shelf popups immediately when the user switches apps.
+    private func observeDeactivation() {
+        deactivationObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: NSApp,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.isRevealed, !self.isHiding else {
+                    return
+                }
+                self.hide(animated: false)
+            }
+        }
+    }
 
     private func installShelfCursorMonitor() {
         mouseMoveMonitor = NSEvent.addLocalMonitorForEvents(

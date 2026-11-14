@@ -12,6 +12,7 @@
 - 修复挂架命中区域上下颠倒导致的光标跳动、点击穿透和筛选后悬停卡住；卡片主体也使用手型光标。
 - 改用 AppKit cursor rect 管理挂架光标，移除计时器反复强制设置光标造成的快速闪动。
 - 筛选栏直接移入时显示手型光标；修复挂架窗口从忽略鼠标切换为接收鼠标时丢失进入事件、导致光标停留在箭头的问题。
+- 切换到其他应用时立即收起挂架和弹层，避免 macOS 把 Liquid Glass 强制降级为非活跃磨砂外观；挂架复制后不再自动切回原应用。
 - 预览 / 翻译 / OCR 弹层的关闭、复制、翻译等按钮也统一为手型光标。
 - 挂架筛选条保持紧凑宽度，通过更大的玻璃背板裁切实现通透效果；选中项使用半透明强调色；挂架操作条改为玻璃。
 - 设置 → 通用 → 外观新增「Liquid Glass 效果」开关，默认开启；关闭后回退到现有轻量磨砂材质，降低 GPU 占用。
@@ -34,6 +35,7 @@
 - Fixed inverted shelf hit testing that caused cursor flicker, click-through, and stuck hover after filtering; card bodies now use the pointing-hand cursor.
 - Switched shelf cursors to AppKit cursor rects, removing timer-driven cursor reassertion that caused rapid flicker.
 - The filter bar now shows the pointing hand when entered directly; fixed the lost enter event when the shelf panel switches from ignoring to accepting mouse events.
+- Switching to another app now dismisses the shelf and popups immediately so macOS never shows the subdued inactive glass; the shelf no longer steals focus back after a stay-open copy.
 - Popup close/copy/translate buttons use the pointing hand cursor.
 - The shelf filter keeps its compact width and uses a larger clipped glass backing for a clearer glass look; the selected pill is translucent, and the shelf action bar uses glass.
 - Added a **Liquid Glass Effect** switch in Settings → General → Appearance, on by default. Turning it off falls back to the existing lightweight frosted material and reduces GPU usage.

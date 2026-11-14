@@ -459,9 +459,7 @@ struct ClipboardShelfView: View {
     private func applyCopyBehavior() {
         switch settings.shelfCopyBehavior {
         case .stayOpen:
-            // If the shelf activated HaoPaste for Liquid Glass, hand focus
-            // back after copying so the user can paste immediately.
-            onRestoreFocus()
+            break
         case .hideImmediately:
             onHideShelf()
         case .hideAfterDelay:
