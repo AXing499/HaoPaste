@@ -659,6 +659,7 @@ final class ClipboardShelfController: NSObject {
         interaction.hoveredItemID = nil
         interaction.scrollOffset = 0
         interaction.pendingPinnedDeleteID = nil
+        interaction.pinnedDeleteAnimationID = nil
         startMouseTracking(interval: Timing.visiblePollInterval)
 
         activateForGlassIfNeeded()
@@ -717,6 +718,7 @@ final class ClipboardShelfController: NSObject {
         isRevealing = false
         interaction.hoveredItemID = nil
         interaction.pendingPinnedDeleteID = nil
+        interaction.pinnedDeleteAnimationID = nil
         // Keep the current scroll position through the collapse animation so
         // the shelf retracts from the cards the user was looking at. `reveal`
         // resets it so the next presentation starts at the first item.

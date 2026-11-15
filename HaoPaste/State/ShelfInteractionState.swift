@@ -30,4 +30,8 @@ final class ShelfInteractionState {
     /// reappears on the next reveal.
     var pendingPinnedDeleteID: UUID?
 
+    /// Item that should run its normal card-drop animation before being
+    /// deleted. The matching card clears this after starting the animation.
+    var pinnedDeleteAnimationID: UUID?
+
 }

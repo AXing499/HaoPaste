@@ -295,6 +295,13 @@ struct ClipboardShelfView: View {
                         onRequestPinnedDelete: {
                             interaction.pendingPinnedDeleteID = item.id
                         },
+                        isDeleteAnimationRequested:
+                            interaction.pinnedDeleteAnimationID == item.id,
+                        onDeleteAnimationHandled: {
+                            if interaction.pinnedDeleteAnimationID == item.id {
+                                interaction.pinnedDeleteAnimationID = nil
+                            }
+                        },
                         onDelete: { delete(item) },
                         onPreview: { onPreviewItem(item) },
                         onTranslate: { onTranslateItem(item) }
@@ -381,7 +388,7 @@ struct ClipboardShelfView: View {
                             interaction.pendingPinnedDeleteID = nil
                         },
                         onDelete: {
-                            delete(pendingItem)
+                            interaction.pinnedDeleteAnimationID = pendingItem.id
                             interaction.pendingPinnedDeleteID = nil
                         }
                     )
@@ -1090,7 +1097,6 @@ private struct PinnedDeleteConfirmationBar: View {
             RoundedRectangle(cornerRadius: 17, style: .continuous)
                 .strokeBorder(Theme.hairlineColor, lineWidth: 0.5)
         }
-        .shadow(color: .black.opacity(0.20), radius: 14, y: 6)
     }
 
     private var header: some View {

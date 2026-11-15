@@ -26,6 +26,8 @@ struct ShelfCardView: View {
     let onCopyPlainText: () -> Void
     let onTogglePin: () -> Void
     let onRequestPinnedDelete: () -> Void
+    let isDeleteAnimationRequested: Bool
+    let onDeleteAnimationHandled: () -> Void
     let onDelete: () -> Void
     let onPreview: () -> Void
     let onTranslate: () -> Void
@@ -126,6 +128,12 @@ struct ShelfCardView: View {
         .help(L("点击复制"))
         .accessibilityLabel("\(item.formatBadge)，\(item.displayTitle)")
         .accessibilityHint(L("复制到剪贴板"))
+        .onAppear {
+            handleDeleteAnimationRequest(isDeleteAnimationRequested)
+        }
+        .onChange(of: isDeleteAnimationRequested) { _, requested in
+            handleDeleteAnimationRequest(requested)
+        }
         .contextMenu {
             Button {
                 onPreview()
@@ -583,6 +591,12 @@ struct ShelfCardView: View {
 
     private var clipDropDuration: TimeInterval {
         min(0.4, max(0.2, fallDuration * 0.6))
+    }
+
+    private func handleDeleteAnimationRequest(_ requested: Bool) {
+        guard requested, !isFalling else { return }
+        onDeleteAnimationHandled()
+        release()
     }
 
     private func release() {
