@@ -2,7 +2,7 @@
 
 English | [简体中文](README.md)
 
-Current version: **v0.17.1**
+Current version: **v0.17.2**
 
 A native, fast, keyboard-first clipboard manager for macOS. Press `⌃⌥V` in any app to open a borderless floating panel, then search, select, and copy without breaking your flow.
 
@@ -22,11 +22,11 @@ A native, fast, keyboard-first clipboard manager for macOS. Press `⌃⌥V` in a
 
    ```bash
    make dmg
-   # dist/HaoPaste-0.17.1.dmg
-   # dist/HaoPaste-0.17.1.dmg.sha256
+   # dist/HaoPaste-0.17.2.dmg
+   # dist/HaoPaste-0.17.2.dmg.sha256
    ```
 
-2. Open `HaoPaste-0.17.1.dmg`, then drag **HaoPaste** into **Applications**.
+2. Open `HaoPaste-0.17.2.dmg`, then drag **HaoPaste** into **Applications**.
 3. If macOS says the developer cannot be verified:
    - Open **System Settings → Privacy & Security**
    - Under **Security**, find **HaoPaste**
@@ -113,7 +113,7 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 
 ![HaoPaste quick translation](Docs/screenshot-quick-translation-en.png)
 
-- Copy text in any app and press `⌥⌘T` to open a translation card without the main panel.
+- Copy text in any app and press `⌃⌥T` to open a translation card without the main panel.
 - The source language is detected automatically. Press `↵` to copy the translation and close, `esc` to close, or `⌘C` to copy.
 - The menu bar menu also offers **Translate Clipboard**.
 - Hover a text item to translate. Hover an image item to extract text; then use **Translate** in the OCR window.
@@ -123,8 +123,8 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
 
 ### Sequential Paste and Screenshot Translation
 
-- **Sequential Paste**: select multiple items in the panel and click **Paste Sequentially** at the bottom. Items are copied and pasted in order; press `⌃⌘V` for the next item. HaoPaste sends `⌘V` automatically when Accessibility is available, otherwise it asks you to paste manually.
-- **Screenshot Translation**: press `⌃⌘S` or use **Screenshot Translation** in the menu bar, then drag to select a screen area. Edit the local OCR result and click Translate. Requires Screen Recording permission.
+- **Sequential Paste**: select multiple items in the panel and click **Paste Sequentially** at the bottom. Items are copied and pasted in order; press `⌃⌥N` for the next item. HaoPaste sends `⌘V` automatically when Accessibility is available, otherwise it asks you to paste manually.
+- **Screenshot Translation**: press `⌃⌥S` or use **Screenshot Translation** in the menu bar, then drag to select a screen area. Edit the local OCR result and click Translate. Requires Screen Recording permission.
 - **Replace Selection**: in the selection translation card, click **Replace Selection** to paste the translation back into the source app. The translation is kept on the clipboard by default; turn this off in Settings → Smart.
 - **Shortcuts**: Settings → Shortcuts manages the panel, quick translation, paste-stack next item, and screenshot translation shortcuts.
 
@@ -190,7 +190,7 @@ Open the **Snippets** tab in the panel and click **New Snippet**, or right-click
   | `⌘1` – `⌘9` | Copy the item at that position |
   | `⌘P` | Pin / unpin |
   | `⌘Y` | Open / close preview |
-  | `⌥⌘T` | Translate the current clipboard text globally |
+  | `⌃⌥T` | Translate the current clipboard text globally |
   | `⌘T` | Translate selected text; OCR on an image; close the translation panel |
   | `⌘R` | Recognize text in the selected image |
   | `⌘⌫` | Delete selected item |

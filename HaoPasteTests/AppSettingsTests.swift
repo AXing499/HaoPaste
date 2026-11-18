@@ -42,24 +42,72 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertNil(settings.screenshotHotKeyRegistrationError)
     }
 
-    func testLegacyDefaultHotKeyMigrates() throws {
+    func testLegacyShortcutDefaultsMigrate() throws {
         let suiteName = "HaoPasteTests.settings.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
         defaults.set(Int(kVK_ANSI_V), forKey: "settings.hotKeyCode")
         defaults.set(Int(cmdKey | optionKey), forKey: "settings.hotKeyModifiers")
+        defaults.set(Int(kVK_ANSI_T), forKey: "settings.translationHotKeyCode")
+        defaults.set(
+            Int(cmdKey | optionKey),
+            forKey: "settings.translationHotKeyModifiers"
+        )
+        defaults.set(Int(kVK_ANSI_V), forKey: "settings.pasteStackHotKeyCode")
+        defaults.set(
+            Int(cmdKey | controlKey),
+            forKey: "settings.pasteStackHotKeyModifiers"
+        )
+        defaults.set(Int(kVK_ANSI_S), forKey: "settings.screenshotHotKeyCode")
+        defaults.set(
+            Int(cmdKey | controlKey),
+            forKey: "settings.screenshotHotKeyModifiers"
+        )
 
         let settings = AppSettings(defaults: defaults)
         XCTAssertEqual(settings.hotKey, .default)
+        XCTAssertEqual(settings.translationHotKey, .translationDefault)
+        XCTAssertEqual(settings.pasteStackHotKey, .pasteStackNextDefault)
         XCTAssertEqual(
-            defaults.integer(forKey: "settings.hotKeyCode"),
-            Int(kVK_ANSI_V)
+            settings.screenshotHotKey,
+            .screenshotTranslationDefault
         )
         XCTAssertEqual(
             defaults.integer(forKey: "settings.hotKeyModifiers"),
             Int(controlKey | optionKey)
         )
+        XCTAssertEqual(
+            defaults.integer(forKey: "settings.translationHotKeyModifiers"),
+            Int(controlKey | optionKey)
+        )
+        XCTAssertEqual(
+            defaults.integer(forKey: "settings.pasteStackHotKeyModifiers"),
+            Int(controlKey | optionKey)
+        )
+        XCTAssertEqual(
+            defaults.integer(forKey: "settings.screenshotHotKeyModifiers"),
+            Int(controlKey | optionKey)
+        )
+    }
+
+    func testLegacyShortcutMigrationPreservesCustomShortcut() throws {
+        let suiteName = "HaoPasteTests.settings.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let custom = HotKeyConfiguration(
+            keyCode: UInt32(kVK_ANSI_L),
+            carbonModifiers: UInt32(controlKey | optionKey)
+        )
+        defaults.set(Int(custom.keyCode), forKey: "settings.translationHotKeyCode")
+        defaults.set(
+            Int(custom.carbonModifiers),
+            forKey: "settings.translationHotKeyModifiers"
+        )
+
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertEqual(settings.translationHotKey, custom)
     }
 
     func testSettingsPersistence() throws {

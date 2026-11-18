@@ -61,6 +61,7 @@ final class AppSettings {
         static let autoTranslateLatestOnOpen = "settings.autoTranslateLatestOnOpen"
         static let autoTranslateDefaultOffMigrated = "settings.autoTranslateDefaultOffMigrated"
         static let hotKeyDefaultMigrated = "settings.hotKeyDefaultMigrated"
+        static let shortcutDefaultsMigratedV2 = "settings.shortcutDefaultsMigratedV2"
         static let trashRetentionDays = "settings.trashRetentionDays"
         static let shelfCardFallDuration = "settings.shelfCardFallDuration"
         static let updateFeedURL = "settings.updateFeedURL"
@@ -378,28 +379,6 @@ final class AppSettings {
             keyCode: UInt32(clamping: storedKeyCode),
             carbonModifiers: UInt32(clamping: storedModifiers)
         )
-        let migratedHotKey: HotKeyConfiguration
-        if !defaults.bool(forKey: Keys.hotKeyDefaultMigrated) {
-            if storedHotKey == .legacyOptionCommandV {
-                migratedHotKey = .default
-                defaults.set(
-                    Int(migratedHotKey.keyCode),
-                    forKey: Keys.hotKeyCode
-                )
-                defaults.set(
-                    Int(migratedHotKey.carbonModifiers),
-                    forKey: Keys.hotKeyModifiers
-                )
-            } else {
-                migratedHotKey = storedHotKey.isValid
-                    ? storedHotKey
-                    : .default
-            }
-            defaults.set(true, forKey: Keys.hotKeyDefaultMigrated)
-        } else {
-            migratedHotKey = storedHotKey.isValid ? storedHotKey : .default
-        }
-        self.hotKey = migratedHotKey
 
         let storedTranslationKeyCode = defaults.integer(
             forKey: Keys.translationHotKeyCode
@@ -411,9 +390,6 @@ final class AppSettings {
             keyCode: UInt32(clamping: storedTranslationKeyCode),
             carbonModifiers: UInt32(clamping: storedTranslationModifiers)
         )
-        self.translationHotKey = storedTranslationHotKey.isValid
-            ? storedTranslationHotKey
-            : .translationDefault
 
         let storedPasteStackKeyCode = defaults.integer(
             forKey: Keys.pasteStackHotKeyCode
@@ -425,9 +401,6 @@ final class AppSettings {
             keyCode: UInt32(clamping: storedPasteStackKeyCode),
             carbonModifiers: UInt32(clamping: storedPasteStackModifiers)
         )
-        self.pasteStackHotKey = storedPasteStackHotKey.isValid
-            ? storedPasteStackHotKey
-            : .pasteStackNextDefault
 
         let storedScreenshotKeyCode = defaults.integer(
             forKey: Keys.screenshotHotKeyCode
@@ -439,9 +412,86 @@ final class AppSettings {
             keyCode: UInt32(clamping: storedScreenshotKeyCode),
             carbonModifiers: UInt32(clamping: storedScreenshotModifiers)
         )
-        self.screenshotHotKey = storedScreenshotHotKey.isValid
-            ? storedScreenshotHotKey
-            : .screenshotTranslationDefault
+
+        // Shortcut defaults from older builds conflicted with common macOS
+        // app shortcuts (⌥⌘V, ⌥⌘T, ⌃⌘S). Migrate only the old defaults once;
+        // keep anything the user customized.
+        let needsShortcutMigration = !defaults.bool(
+            forKey: Keys.shortcutDefaultsMigratedV2
+        )
+        let migrateShortcut: (
+            HotKeyConfiguration,
+            HotKeyConfiguration,
+            HotKeyConfiguration
+        ) -> HotKeyConfiguration = { stored, legacy, newDefault in
+            guard stored.isValid else { return newDefault }
+            if needsShortcutMigration, stored == legacy {
+                return newDefault
+            }
+            return stored
+        }
+
+        let migratedHotKey = migrateShortcut(
+            storedHotKey,
+            .legacyOptionCommandV,
+            .default
+        )
+        let migratedTranslationHotKey = migrateShortcut(
+            storedTranslationHotKey,
+            .legacyTranslationDefault,
+            .translationDefault
+        )
+        let migratedPasteStackHotKey = migrateShortcut(
+            storedPasteStackHotKey,
+            .legacyPasteStackNextDefault,
+            .pasteStackNextDefault
+        )
+        let migratedScreenshotHotKey = migrateShortcut(
+            storedScreenshotHotKey,
+            .legacyScreenshotTranslationDefault,
+            .screenshotTranslationDefault
+        )
+
+        self.hotKey = migratedHotKey
+        self.translationHotKey = migratedTranslationHotKey
+        self.pasteStackHotKey = migratedPasteStackHotKey
+        self.screenshotHotKey = migratedScreenshotHotKey
+
+        if needsShortcutMigration {
+            defaults.set(
+                Int(migratedHotKey.keyCode),
+                forKey: Keys.hotKeyCode
+            )
+            defaults.set(
+                Int(migratedHotKey.carbonModifiers),
+                forKey: Keys.hotKeyModifiers
+            )
+            defaults.set(
+                Int(migratedTranslationHotKey.keyCode),
+                forKey: Keys.translationHotKeyCode
+            )
+            defaults.set(
+                Int(migratedTranslationHotKey.carbonModifiers),
+                forKey: Keys.translationHotKeyModifiers
+            )
+            defaults.set(
+                Int(migratedPasteStackHotKey.keyCode),
+                forKey: Keys.pasteStackHotKeyCode
+            )
+            defaults.set(
+                Int(migratedPasteStackHotKey.carbonModifiers),
+                forKey: Keys.pasteStackHotKeyModifiers
+            )
+            defaults.set(
+                Int(migratedScreenshotHotKey.keyCode),
+                forKey: Keys.screenshotHotKeyCode
+            )
+            defaults.set(
+                Int(migratedScreenshotHotKey.carbonModifiers),
+                forKey: Keys.screenshotHotKeyModifiers
+            )
+            defaults.set(true, forKey: Keys.shortcutDefaultsMigratedV2)
+        }
 
         // Auto-translation used to default on. Turn it off once for existing
         // installs as well as fresh ones, then respect the user's choice.

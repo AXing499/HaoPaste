@@ -14,6 +14,32 @@ final class HotKeyConfigurationTests: XCTestCase {
         XCTAssertEqual(configuration.displayString, "⌃⌥V")
     }
 
+    func testDefaultShortcutFamily() {
+        XCTAssertEqual(HotKeyConfiguration.default.displayString, "⌃⌥V")
+        XCTAssertEqual(HotKeyConfiguration.translationDefault.displayString, "⌃⌥T")
+        XCTAssertEqual(
+            HotKeyConfiguration.pasteStackNextDefault.displayString,
+            "⌃⌥N"
+        )
+        XCTAssertEqual(
+            HotKeyConfiguration.screenshotTranslationDefault.displayString,
+            "⌃⌥S"
+        )
+    }
+
+    func testDefaultShortcutsAreUnique() {
+        let defaults = [
+            HotKeyConfiguration.default,
+            HotKeyConfiguration.translationDefault,
+            HotKeyConfiguration.pasteStackNextDefault,
+            HotKeyConfiguration.screenshotTranslationDefault
+        ]
+        XCTAssertEqual(
+            Set(defaults.map { "\($0.keyCode)-\($0.carbonModifiers)" }).count,
+            defaults.count
+        )
+    }
+
     func testConfigurationRequiresPrimaryModifier() {
         let invalid = HotKeyConfiguration(
             keyCode: UInt32(kVK_ANSI_K),

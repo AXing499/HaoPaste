@@ -1,22 +1,24 @@
 # Changelog
 
-## 0.18.0 — 2026-11-18
+## 0.17.2 — 2026-11-18
 
 ### 中文
 
 - 历史记录支持批量删除：多选后可直接删除所选记录，`⌘⌫` 也会删除全部选中项；记录会进入「最近删除」。
 - 「最近删除」支持批量选择、批量恢复和批量彻底删除；批量永久删除只需要确认一次。
-- 默认呼出快捷键从 `⌥⌘V` 改为 `⌃⌥V`，避免与系统或应用的「粘贴并匹配样式」冲突。
-- 旧版本保存的默认 `⌥⌘V` 会自动迁移到 `⌃⌥V`；用户自定义的快捷键保持不变。
-- 130 个 XCTest。
+- 默认快捷键统一改为 `⌃⌥` 组合：呼出 `⌃⌥V`、快捷翻译 `⌃⌥T`、连续粘贴下一项 `⌃⌥N`、截图翻译 `⌃⌥S`。
+- 避开 `⌥⌘V`、`⌥⌘T`、`⌃⌘S` 等系统或常用应用快捷键，也不使用会与「复制样式」冲突的 `⌥⌘C`。
+- 旧版本保存的默认快捷键会自动迁移到新默认值；用户自定义的快捷键保持不变。
+- 133 个 XCTest。
 
 ### English
 
 - History now supports batch delete: select multiple entries and remove them together, including with `⌘⌫`; deleted entries move to Recently Deleted.
 - Recently Deleted now supports multi-selection, batch restore, and batch permanent delete with a single confirmation.
-- Changed the default open-panel shortcut from `⌥⌘V` to `⌃⌥V` to avoid conflicts with system or app "Paste and Match Style" shortcuts.
-- Existing installs using the old default migrate to `⌃⌥V` automatically; custom shortcuts are preserved.
-- 130 XCTest cases.
+- Unified the default shortcuts under `⌃⌥`: panel `⌃⌥V`, quick translation `⌃⌥T`, next paste-stack item `⌃⌥N`, and screenshot translation `⌃⌥S`.
+- Avoided system and common app shortcuts such as `⌥⌘V`, `⌥⌘T`, and `⌃⌘S`, and avoided `⌥⌘C`, which conflicts with "Copy Style".
+- Existing installs using the old defaults migrate automatically; custom shortcuts are preserved.
+- 133 XCTest cases.
 
 ## 0.17.1 — 2026-11-15
 

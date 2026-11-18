@@ -98,7 +98,7 @@ ContentView / ItemRowView / SnippetRowView (SwiftUI)
 | `PanelController.swift` | 无边框悬浮面板的创建 / 定位 / 显隐动画、键盘事件、焦点恢复、自动翻译最新记录、主面板复制后行为 |
 | `OnboardingWindowController.swift` | 首次启动欢迎引导，可从设置 → 关于再次打开 |
 | `UpdateChecker.swift` | 读取 JSON 更新清单、版本比较和更新提示 |
-| `QuickTranslationPanelController.swift` | `⌥⌘T` 快捷翻译卡片：读取剪贴板、定位、键盘与焦点恢复；也支持从挂架传入文本与锚点 |
+| `QuickTranslationPanelController.swift` | `⌃⌥T` 快捷翻译卡片：读取剪贴板、定位、键盘与焦点恢复；也支持从挂架传入文本与锚点 |
 | `ShelfPreviewPanelController.swift` | 屏幕中央的预览卡片：复用预览内容，使用原生窗口阴影 |
 | `ShelfOCRPanelController.swift` | 屏幕中央的识图卡片：独立 OCR 服务、翻译回调与片段保存 |
 | `ShelfDetailPanel.swift` | 预览 / 识图卡片使用的透明非激活浮动面板 |
@@ -288,7 +288,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 文本按 Provider 的 `maxCharactersPerRequest` 分段翻译，再按换行拼接；翻译结果只做内存 LRU 缓存（50 条）。
 - 本地用 `NLLanguageRecognizer` 检测源语言；若原文已是目标语言，本次翻译会尝试切换中英方向。
 - 复制译文复用 `ClipboardManager.copyTextToPasteboard`，同步 `changeCount`，不会生成历史记录。
-- 快捷翻译卡片 `QuickTranslationPanelController` 使用独立的 `TranslationService` 状态，但共享 `TranslationSettingsStore` 与 Keychain 凭证；读取 `NSPasteboard.general` 当前纯文本，`⌥⌘T` / 菜单栏均可触发。
+- 快捷翻译卡片 `QuickTranslationPanelController` 使用独立的 `TranslationService` 状态，但共享 `TranslationSettingsStore` 与 Keychain 凭证；读取 `NSPasteboard.general` 当前纯文本，`⌃⌥T` / 菜单栏均可触发。
 - 面板打开时可自动翻译最新记录：默认关闭；`AutoTranslationPolicy.latestItem` 按 `createdAt` 选出真正的最新记录（固定条目只在列表排序中靠前，不会冒充最新），再检查签名、可翻译类型、检测语言与目标语言；每条记录只自动触发一次，图片与同语言文本跳过。旧版本默认开启，升级时做一次性关闭迁移，之后尊重用户选择。
 - Google / Bing 使用非官方 HTTP 接口；DeepL 非官方为实验性 JSON-RPC 通道。官方适配使用各家标准 HTTPS API。
 - API 凭证保存在 Keychain；导出备份、日志与 UserDefaults 不包含密钥。
@@ -340,7 +340,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 - 方向键：更新 `PanelViewState.selectedID`；按住 `⇧` 时扩展多选范围；
 - `⌘⇧A`：全选当前可见结果；
 - 回车：复制选中项；多选时合并复制并关闭；
-- `⌘P` / `⌘Y` / `⌘T` / `⌘R` / `⌘⌫` / `⌘W` / `⌘1–9`；全局 `⌥⌘T` 由独立的 Carbon hotkey 打开快捷翻译卡片。
+- `⌘P` / `⌘Y` / `⌘T` / `⌘R` / `⌘⌫` / `⌘W` / `⌘1–9`；全局 `⌃⌥T` 由独立的 Carbon hotkey 打开快捷翻译卡片。
 - `esc`：取消多选；清空搜索；预览中关闭预览；翻译中关闭翻译；识图中关闭识图；否则关闭面板。
 - 预览打开时，方向键切换预览条目，回车 / `⌘C` 复制并关闭，其他命令快捷键被忽略。
 

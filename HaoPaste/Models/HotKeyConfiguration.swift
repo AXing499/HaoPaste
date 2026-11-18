@@ -27,20 +27,35 @@ struct HotKeyConfiguration: Equatable, Sendable {
 
     static let translationDefault = HotKeyConfiguration(
         keyCode: UInt32(kVK_ANSI_T),
+        carbonModifiers: UInt32(controlKey | optionKey)
+    )
+
+    static let legacyTranslationDefault = HotKeyConfiguration(
+        keyCode: UInt32(kVK_ANSI_T),
         carbonModifiers: UInt32(cmdKey | optionKey)
     )
 
     static let pasteStackNextDefault = HotKeyConfiguration(
+        keyCode: UInt32(kVK_ANSI_N),
+        carbonModifiers: UInt32(controlKey | optionKey)
+    )
+
+    static let legacyPasteStackNextDefault = HotKeyConfiguration(
         keyCode: UInt32(kVK_ANSI_V),
         carbonModifiers: UInt32(cmdKey | controlKey)
     )
 
     static let pasteStackNextFallback = HotKeyConfiguration(
         keyCode: UInt32(kVK_ANSI_B),
-        carbonModifiers: UInt32(cmdKey | controlKey)
+        carbonModifiers: UInt32(controlKey | optionKey)
     )
 
     static let screenshotTranslationDefault = HotKeyConfiguration(
+        keyCode: UInt32(kVK_ANSI_S),
+        carbonModifiers: UInt32(controlKey | optionKey)
+    )
+
+    static let legacyScreenshotTranslationDefault = HotKeyConfiguration(
         keyCode: UInt32(kVK_ANSI_S),
         carbonModifiers: UInt32(cmdKey | controlKey)
     )
