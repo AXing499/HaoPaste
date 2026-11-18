@@ -253,14 +253,24 @@ final class ClipboardManager {
     }
 
     func delete(_ item: ClipboardItem) {
-        guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
-        let removed = items.remove(at: index)
-        trashedItems.removeAll { $0.id == removed.id }
+        delete([item])
+    }
+
+    func delete(_ items: [ClipboardItem]) {
+        guard !items.isEmpty else { return }
+        let ids = Set(items.map(\.id))
+        let removed = self.items.filter { ids.contains($0.id) }
+        guard !removed.isEmpty else { return }
+
+        self.items.removeAll { ids.contains($0.id) }
+        trashedItems.removeAll { ids.contains($0.id) }
         trashedItems.insert(
-            TrashedClipboardItem(item: removed, deletedAt: .now),
+            contentsOf: removed.map {
+                TrashedClipboardItem(item: $0, deletedAt: .now)
+            },
             at: 0
         )
-        store.scheduleSave(items)
+        store.scheduleSave(self.items)
         store.scheduleSaveTrash(trashedItems)
     }
 
@@ -277,23 +287,33 @@ final class ClipboardManager {
     }
 
     func restore(_ entry: TrashedClipboardItem) {
-        guard let index = trashedItems.firstIndex(where: { $0.id == entry.id }) else {
-            return
-        }
-        let removed = trashedItems.remove(at: index)
+        restore([entry])
+    }
 
-        // If the same content is already back in history, just clear the
-        // duplicate trash entry instead of inserting a second copy.
-        if items.contains(where: { $0.contentHash == removed.item.contentHash }) {
-            store.removeAssets(for: [removed.item])
-        } else {
-            var restored = removed.item
-            restored.createdAt = .now
-            items.insert(restored, at: 0)
+    func restore(_ entries: [TrashedClipboardItem]) {
+        guard !entries.isEmpty else { return }
+        let ids = Set(entries.map(\.id))
+        let selected = trashedItems.filter { ids.contains($0.id) }
+        guard !selected.isEmpty else { return }
 
-            let trimmed = trimHistory()
-            if !trimmed.isEmpty {
-                store.removeAssets(for: trimmed)
+        trashedItems.removeAll { ids.contains($0.id) }
+
+        // Restore in reverse so the most recently deleted entry stays at the
+        // top of the history, matching the order of the trash list.
+        for removed in selected.reversed() {
+            // If the same content is already back in history, just clear the
+            // duplicate trash entry instead of inserting a second copy.
+            if items.contains(where: { $0.contentHash == removed.item.contentHash }) {
+                store.removeAssets(for: [removed.item])
+            } else {
+                var restored = removed.item
+                restored.createdAt = .now
+                items.insert(restored, at: 0)
+
+                let trimmed = trimHistory()
+                if !trimmed.isEmpty {
+                    store.removeAssets(for: trimmed)
+                }
             }
         }
 
@@ -302,11 +322,17 @@ final class ClipboardManager {
     }
 
     func permanentlyDelete(_ entry: TrashedClipboardItem) {
-        guard let index = trashedItems.firstIndex(where: { $0.id == entry.id }) else {
-            return
-        }
-        let removed = trashedItems.remove(at: index)
-        store.removeAssets(for: [removed.item])
+        permanentlyDelete([entry])
+    }
+
+    func permanentlyDelete(_ entries: [TrashedClipboardItem]) {
+        guard !entries.isEmpty else { return }
+        let ids = Set(entries.map(\.id))
+        let removed = trashedItems.filter { ids.contains($0.id) }
+        guard !removed.isEmpty else { return }
+
+        trashedItems.removeAll { ids.contains($0.id) }
+        store.removeAssets(for: removed.map(\.item))
         store.scheduleSaveTrash(trashedItems)
     }
 

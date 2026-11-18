@@ -38,6 +38,45 @@ final class TrashTests: XCTestCase {
         XCTAssertEqual(manager.trashedItems.count, 0)
     }
 
+    func testBatchDeleteRestoreAndPermanentDelete() throws {
+        let directory = try TestFixtures.temporaryDirectory()
+        defer { TestFixtures.remove(directory) }
+
+        let store = ClipboardStore(baseURL: directory)
+        let first = TestFixtures.makeTextItem("first")
+        let second = TestFixtures.makeTextItem("second")
+        let third = TestFixtures.makeTextItem("third")
+        store.saveNow([first, second, third])
+
+        let manager = ClipboardManager(
+            store: store,
+            monitor: ClipboardMonitor(
+                pasteboard: TestFixtures.makeCustomPasteboard()
+            )
+        )
+        manager.start()
+        defer { manager.shutdown() }
+
+        manager.delete([first, second])
+        XCTAssertEqual(manager.items.count, 1)
+        XCTAssertEqual(manager.items.first?.plainText, "third")
+        XCTAssertEqual(manager.trashedItems.count, 2)
+
+        manager.restore(manager.trashedItems)
+        XCTAssertEqual(manager.items.count, 3)
+        XCTAssertTrue(manager.trashedItems.isEmpty)
+
+        let restored = manager.items.filter {
+            $0.plainText == "first" || $0.plainText == "second"
+        }
+        manager.delete(restored)
+        let trashed = manager.trashedItems
+        XCTAssertEqual(trashed.count, 2)
+
+        manager.permanentlyDelete(trashed)
+        XCTAssertTrue(manager.trashedItems.isEmpty)
+    }
+
     func testExpiredTrashIsPurgedOnStart() throws {
         let directory = try TestFixtures.temporaryDirectory()
         defer { TestFixtures.remove(directory) }

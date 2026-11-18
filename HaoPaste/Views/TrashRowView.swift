@@ -10,6 +10,8 @@ import SwiftUI
 struct TrashRowView: View {
     let entry: TrashedClipboardItem
     let retentionDays: Int
+    let isSelected: Bool
+    let onRowClick: () -> Void
     let onRestore: () -> Void
     let onDelete: () -> Void
 
@@ -31,6 +33,19 @@ struct TrashRowView: View {
                         style: .continuous
                     )
                     .fill(Color.primary.opacity(0.05))
+                }
+                .overlay {
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, Color.accentColor)
+                            .background {
+                                Circle()
+                                    .fill(.background)
+                                    .frame(width: 11, height: 11)
+                            }
+                    }
                 }
 
             VStack(alignment: .leading, spacing: 3) {
@@ -117,15 +132,24 @@ struct TrashRowView: View {
 
                 Theme.cardShape
                     .fill(
-                        Color.primary.opacity(isHovering ? 0.055 : 0.03)
+                        isSelected
+                            ? Color.accentColor.opacity(0.09)
+                            : Color.primary.opacity(isHovering ? 0.055 : 0.03)
                     )
             }
             .clipShape(Theme.cardShape)
         }
         .overlay {
             Theme.cardShape
-                .strokeBorder(Theme.hairlineColor, lineWidth: Theme.hairline)
+                .strokeBorder(
+                    isSelected
+                        ? Color.accentColor.opacity(0.34)
+                        : Theme.hairlineColor,
+                    lineWidth: isSelected ? 0.9 : Theme.hairline
+                )
         }
+        .contentShape(Theme.cardShape)
+        .onTapGesture(perform: onRowClick)
         .onHover { hovering in
             isHovering = hovering
         }

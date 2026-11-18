@@ -23,7 +23,7 @@ brew install xcodegen
 open HaoPaste.xcodeproj
 ```
 
-选择 `HaoPaste` scheme，`Run` 即可。应用为菜单栏驻留应用，启动后不会出现 Dock 图标；按 `⌥⌘V` 或点击菜单栏图标打开面板。
+选择 `HaoPaste` scheme，`Run` 即可。应用为菜单栏驻留应用，启动后不会出现 Dock 图标；按 `⌃⌥V` 或点击菜单栏图标打开面板。
 
 ### 命令行
 

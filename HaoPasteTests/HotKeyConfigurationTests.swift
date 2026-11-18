@@ -11,7 +11,7 @@ final class HotKeyConfigurationTests: XCTestCase {
     func testDefaultConfiguration() {
         let configuration = HotKeyConfiguration.default
         XCTAssertTrue(configuration.isValid)
-        XCTAssertEqual(configuration.displayString, "⌥⌘V")
+        XCTAssertEqual(configuration.displayString, "⌃⌥V")
     }
 
     func testConfigurationRequiresPrimaryModifier() {

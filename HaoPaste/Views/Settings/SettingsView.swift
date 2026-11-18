@@ -915,7 +915,7 @@ struct SettingsView: View {
         SettingsCard(L("使用提示")) {
             SettingsRow(
                 L("面板快速访问"),
-                subtitle: L("按 ⌥⌘V 打开面板，切换到「片段」标签，用方向键选择后按 ↵ 复制。")
+                subtitle: L("按 ⌃⌥V 打开面板，切换到「片段」标签，用方向键选择后按 ↵ 复制。")
             ) {
                 Image(systemName: "keyboard")
                     .symbolRenderingMode(.hierarchical)

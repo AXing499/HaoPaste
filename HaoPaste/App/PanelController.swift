@@ -869,6 +869,16 @@ final class PanelController: NSObject, NSWindowDelegate {
 
     private func deleteSelectedItem() {
         let items = currentVisibleItems
+
+        if state.isMultiSelecting {
+            let selected = state.selectedItems(in: items)
+            guard !selected.isEmpty else { return }
+            manager.delete(selected)
+            _ = state.clearMultiSelection()
+            state.ensureSelection(in: currentVisibleItems)
+            return
+        }
+
         guard
             let item = state.selectedItem(in: items),
             let index = items.firstIndex(where: { $0.id == item.id })

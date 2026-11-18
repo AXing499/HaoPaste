@@ -75,7 +75,7 @@ NSApplication (accessory / LSUIElement)
 │   │   └── NSStatusItem + NSMenu
 │   │
 │   ├── GlobalHotKey
-│   │   └── Carbon RegisterEventHotKey (default ⌥⌘V, configurable)
+│   │   └── Carbon RegisterEventHotKey (default ⌃⌥V, configurable)
 │   │
 │   └── SettingsWindowController
 │       └── SettingsView (general / history / snippets / privacy / about)
@@ -346,7 +346,7 @@ struct ClipboardItem: Identifiable, Codable, Hashable {
 
 其余按键原样交还 AppKit / 输入法，因此搜索框和中文输入法保持正常工作。
 
-全局呼出快捷键由 `AppSettings` 持有，默认 `⌥⌘V`。设置窗口中的 `ShortcutRecorderView` 用本地 key monitor 捕获新组合，要求至少包含 ⌘ / ⌥ / ⌃；`AppDelegate` 解绑旧 Carbon hotkey 后注册新组合，失败会恢复上一个可用配置并在设置页显示错误。
+全局呼出快捷键由 `AppSettings` 持有，默认 `⌃⌥V`。设置窗口中的 `ShortcutRecorderView` 用本地 key monitor 捕获新组合，要求至少包含 ⌘ / ⌥ / ⌃；`AppDelegate` 解绑旧 Carbon hotkey 后注册新组合，失败会恢复上一个可用配置并在设置页显示错误。
 
 ## 7. 界面设计规范
 

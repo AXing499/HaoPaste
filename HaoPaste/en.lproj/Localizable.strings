@@ -246,8 +246,8 @@
 "拖拽到其他应用，双击在 Finder 中显示" = "Drag to another app; double-click to show in Finder";
 "拖拽图片到其他应用" = "Drag images to other apps";
 "挂架复制后" = "After Copying from Shelf";
-"按 ⌥⌘V 打开面板，也可以点击菜单栏图标。" = "Press ⌥⌘V to open the panel, or click the menu bar icon.";
-"按 ⌥⌘V 打开面板，切换到「片段」标签，用方向键选择后按 ↵ 复制。" = "Press ⌥⌘V, open the Snippets tab, choose a snippet with the arrow keys, and press ↵ to copy.";
+"按 ⌃⌥V 打开面板，也可以点击菜单栏图标。" = "Press ⌃⌥V to open the panel, or click the menu bar icon.";
+"按 ⌃⌥V 打开面板，切换到「片段」标签，用方向键选择后按 ↵ 复制。" = "Press ⌃⌥V, open the Snippets tab, choose a snippet with the arrow keys, and press ↵ to copy.";
 "按下新的快捷键，按 esc 取消" = "Press a new shortcut, or esc to cancel";
 "按应用名称匹配" = "Match by app name";
 "换个关键词再试试。" = "Try a different keyword.";
@@ -578,3 +578,9 @@
 "移到最近删除" = "Move to Recently Deleted";
 "已置顶 · 点击可取消置顶或移到最近删除" = "Pinned · Click to unpin or move to Recently Deleted";
 "已置顶，点击可取消置顶或移到最近删除" = "Pinned. Click to unpin or move to Recently Deleted.";
+"删除选中记录" = "Delete selected items";
+"恢复选中的记录" = "Restore selected items";
+"彻底删除选中的记录" = "Permanently delete selected items";
+"退出批量选择" = "Exit batch selection";
+"批量选择最近删除" = "Select recently deleted items";
+"彻底删除选中的 %d 条记录？" = "Permanently delete the %d selected items?";

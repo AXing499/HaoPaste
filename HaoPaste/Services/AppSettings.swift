@@ -60,6 +60,7 @@ final class AppSettings {
         static let screenshotHotKeyModifiers = "settings.screenshotHotKeyModifiers"
         static let autoTranslateLatestOnOpen = "settings.autoTranslateLatestOnOpen"
         static let autoTranslateDefaultOffMigrated = "settings.autoTranslateDefaultOffMigrated"
+        static let hotKeyDefaultMigrated = "settings.hotKeyDefaultMigrated"
         static let trashRetentionDays = "settings.trashRetentionDays"
         static let shelfCardFallDuration = "settings.shelfCardFallDuration"
         static let updateFeedURL = "settings.updateFeedURL"
@@ -377,7 +378,28 @@ final class AppSettings {
             keyCode: UInt32(clamping: storedKeyCode),
             carbonModifiers: UInt32(clamping: storedModifiers)
         )
-        self.hotKey = storedHotKey.isValid ? storedHotKey : .default
+        let migratedHotKey: HotKeyConfiguration
+        if !defaults.bool(forKey: Keys.hotKeyDefaultMigrated) {
+            if storedHotKey == .legacyOptionCommandV {
+                migratedHotKey = .default
+                defaults.set(
+                    Int(migratedHotKey.keyCode),
+                    forKey: Keys.hotKeyCode
+                )
+                defaults.set(
+                    Int(migratedHotKey.carbonModifiers),
+                    forKey: Keys.hotKeyModifiers
+                )
+            } else {
+                migratedHotKey = storedHotKey.isValid
+                    ? storedHotKey
+                    : .default
+            }
+            defaults.set(true, forKey: Keys.hotKeyDefaultMigrated)
+        } else {
+            migratedHotKey = storedHotKey.isValid ? storedHotKey : .default
+        }
+        self.hotKey = migratedHotKey
 
         let storedTranslationKeyCode = defaults.integer(
             forKey: Keys.translationHotKeyCode

@@ -21,6 +21,12 @@ final class PanelViewState {
     var selectedIDs: Set<UUID> = []
     var selectionAnchorID: UUID?
 
+    /// Selection used by the Recently Deleted tab. It is kept separate from
+    /// history selection because the available batch actions differ.
+    var selectedTrashIDs: Set<UUID> = []
+    var trashSelectionAnchorID: UUID?
+    var isTrashSelectionMode = false
+
     /// History item shown in the quick preview overlay, if any.
     var previewingItemID: UUID?
 
@@ -52,6 +58,9 @@ final class PanelViewState {
         selectedSnippetID = nil
         selectedIDs.removeAll()
         selectionAnchorID = nil
+        selectedTrashIDs.removeAll()
+        trashSelectionAnchorID = nil
+        isTrashSelectionMode = false
         previewingItemID = nil
         isEditingSnippet = false
         focusToken &+= 1
@@ -160,6 +169,96 @@ final class PanelViewState {
             selectedID = remaining
         }
         return true
+    }
+
+    // MARK: - Recently deleted selection
+
+    func isTrashSelected(_ id: UUID) -> Bool {
+        selectedTrashIDs.contains(id)
+    }
+
+    func beginTrashSelection(in entries: [TrashedClipboardItem]) {
+        isTrashSelectionMode = true
+        if selectedTrashIDs.isEmpty, let first = entries.first {
+            selectedTrashIDs = [first.id]
+            trashSelectionAnchorID = first.id
+        }
+    }
+
+    func selectTrash(
+        _ entry: TrashedClipboardItem,
+        in entries: [TrashedClipboardItem],
+        extending: Bool = false
+    ) {
+        isTrashSelectionMode = true
+        if extending {
+            extendTrashSelection(to: entry, in: entries)
+            return
+        }
+
+        selectedTrashIDs = [entry.id]
+        trashSelectionAnchorID = entry.id
+    }
+
+    func toggleTrashSelection(
+        _ entry: TrashedClipboardItem,
+        in entries: [TrashedClipboardItem]
+    ) {
+        let ids = Set(entries.map(\.id))
+        guard ids.contains(entry.id) else { return }
+
+        isTrashSelectionMode = true
+        if selectedTrashIDs.contains(entry.id) {
+            selectedTrashIDs.remove(entry.id)
+            if selectedTrashIDs.isEmpty {
+                trashSelectionAnchorID = nil
+            }
+        } else {
+            if selectedTrashIDs.isEmpty {
+                trashSelectionAnchorID = entry.id
+            }
+            selectedTrashIDs.insert(entry.id)
+        }
+    }
+
+    func extendTrashSelection(
+        to entry: TrashedClipboardItem,
+        in entries: [TrashedClipboardItem]
+    ) {
+        guard let targetIndex = entries.firstIndex(where: { $0.id == entry.id }) else {
+            return
+        }
+        isTrashSelectionMode = true
+
+        let anchorID = trashSelectionAnchorID ?? selectedTrashIDs.first ?? entry.id
+        guard let anchorIndex = entries.firstIndex(where: { $0.id == anchorID }) else {
+            selectedTrashIDs = [entry.id]
+            trashSelectionAnchorID = entry.id
+            return
+        }
+
+        let lower = min(anchorIndex, targetIndex)
+        let upper = max(anchorIndex, targetIndex)
+        selectedTrashIDs = Set(entries[lower...upper].map(\.id))
+    }
+
+    func clearTrashSelection() {
+        selectedTrashIDs.removeAll()
+        trashSelectionAnchorID = nil
+        isTrashSelectionMode = false
+    }
+
+    func ensureTrashSelection(in entries: [TrashedClipboardItem]) {
+        let ids = Set(entries.map(\.id))
+        selectedTrashIDs.formIntersection(ids)
+
+        if let trashSelectionAnchorID, !ids.contains(trashSelectionAnchorID) {
+            self.trashSelectionAnchorID = nil
+        }
+        if selectedTrashIDs.isEmpty {
+            isTrashSelectionMode = false
+            trashSelectionAnchorID = nil
+        }
     }
 
     // MARK: - Preview

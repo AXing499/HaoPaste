@@ -72,6 +72,10 @@ struct ContentView: View {
         visibleItems.filter { state.isItemSelected($0.id) }
     }
 
+    private var selectedTrashEntries: [TrashedClipboardItem] {
+        visibleTrash.filter { state.isTrashSelected($0.id) }
+    }
+
     private var mergedSelection: MergedClipboardContent {
         MergedContentBuilder.make(from: selectedHistoryItems)
     }
@@ -307,6 +311,10 @@ struct ContentView: View {
             guard isSnippetMode else { return }
             state.ensureSnippetSelection(in: visibleSnippets)
         }
+        .onChange(of: visibleTrash.map(\.id)) { _, _ in
+            guard isTrashMode else { return }
+            state.ensureTrashSelection(in: visibleTrash)
+        }
     }
 
     // MARK: - Header
@@ -340,6 +348,39 @@ struct ContentView: View {
                 }
 
                 if isTrashMode {
+                    Button {
+                        withAnimation(reduceMotion ? nil : Theme.spring) {
+                            if state.isTrashSelectionMode {
+                                state.clearTrashSelection()
+                            } else {
+                                state.beginTrashSelection(in: visibleTrash)
+                            }
+                        }
+                    } label: {
+                        Label(
+                            state.isTrashSelectionMode ? L("取消") : L("选择"),
+                            systemImage: state.isTrashSelectionMode
+                                ? "xmark"
+                                : "checklist"
+                        )
+                        .font(.system(size: 10.5, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Color.secondary)
+                        .padding(.horizontal, 9)
+                        .frame(height: 22)
+                        .background {
+                            Capsule()
+                                .fill(Color.primary.opacity(0.05))
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .pointingHandCursor()
+                    .disabled(visibleTrash.isEmpty)
+                    .help(
+                        state.isTrashSelectionMode
+                            ? L("退出批量选择")
+                            : L("批量选择最近删除")
+                    )
+
                     Button {
                         confirmEmptyTrash()
                     } label: {
@@ -567,6 +608,9 @@ struct ContentView: View {
                         onRecognizeText: canBatchRecognizeImages ? {
                             ocrService.presentBatch(items: selectedImageItems)
                         } : nil,
+                        onDelete: {
+                            deleteSelectedHistoryItems()
+                        },
                         onClear: {
                             withAnimation(reduceMotion ? nil : Theme.spring) {
                                 _ = state.clearMultiSelection()
@@ -603,11 +647,33 @@ struct ContentView: View {
                     TrashRowView(
                         entry: entry,
                         retentionDays: manager.trashRetentionDays,
+                        isSelected: state.isTrashSelected(entry.id),
+                        onRowClick: {
+                            if NSEvent.modifierFlags.contains(.command) {
+                                withAnimation(reduceMotion ? nil : Theme.spring) {
+                                    state.toggleTrashSelection(entry, in: visibleTrash)
+                                }
+                            } else if NSEvent.modifierFlags.contains(.shift) {
+                                withAnimation(reduceMotion ? nil : Theme.spring) {
+                                    state.extendTrashSelection(to: entry, in: visibleTrash)
+                                }
+                            } else {
+                                withAnimation(reduceMotion ? nil : Theme.spring) {
+                                    if state.isTrashSelectionMode {
+                                        state.toggleTrashSelection(entry, in: visibleTrash)
+                                    } else {
+                                        state.selectTrash(entry, in: visibleTrash)
+                                    }
+                                }
+                            }
+                        },
                         onRestore: {
                             restoreTrash(entry)
+                            state.ensureTrashSelection(in: visibleTrash)
                         },
                         onDelete: {
                             confirmDeleteTrash(entry)
+                            state.ensureTrashSelection(in: visibleTrash)
                         }
                     )
                     .transition(
@@ -620,10 +686,27 @@ struct ContentView: View {
             }
             .padding(.horizontal, Theme.contentPadding)
             .padding(.top, 2)
-            .padding(.bottom, 6)
+            .padding(.bottom, state.isTrashSelectionMode ? 56 : 6)
             .animation(reduceMotion ? nil : Theme.gentleSpring, value: visibleTrash.map(\.id))
         }
         .scrollIndicators(.never)
+        .overlay(alignment: .bottom) {
+            if state.isTrashSelectionMode {
+                TrashSelectionBar(
+                    count: selectedTrashEntries.count,
+                    onRestore: restoreSelectedTrash,
+                    onDelete: confirmDeleteSelectedTrash,
+                    onClear: {
+                        withAnimation(reduceMotion ? nil : Theme.spring) {
+                            state.clearTrashSelection()
+                        }
+                    }
+                )
+                .padding(.horizontal, 14)
+                .padding(.bottom, 10)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
         .overlay {
             if visibleTrash.isEmpty {
                 TrashEmptyStateView(
@@ -716,11 +799,14 @@ struct ContentView: View {
 
     private func ensureSelectionForCurrentMode() {
         if isSnippetMode {
+            state.clearTrashSelection()
             state.ensureSnippetSelection(in: visibleSnippets)
         } else if isTrashMode {
             state.selectedID = nil
             state.clearMultiSelection()
+            state.ensureTrashSelection(in: visibleTrash)
         } else {
+            state.clearTrashSelection()
             state.ensureSelection(in: visibleItems)
         }
     }
@@ -728,6 +814,45 @@ struct ContentView: View {
     private func restoreTrash(_ entry: TrashedClipboardItem) {
         withAnimation(reduceMotion ? nil : Theme.gentleSpring) {
             manager.restore(entry)
+        }
+    }
+
+    private func deleteSelectedHistoryItems() {
+        let items = selectedHistoryItems
+        guard !items.isEmpty else { return }
+        withAnimation(reduceMotion ? nil : Theme.gentleSpring) {
+            manager.delete(items)
+            _ = state.clearMultiSelection()
+        }
+        state.ensureSelection(in: visibleItems)
+    }
+
+    private func restoreSelectedTrash() {
+        let entries = selectedTrashEntries
+        guard !entries.isEmpty else { return }
+        withAnimation(reduceMotion ? nil : Theme.gentleSpring) {
+            manager.restore(entries)
+            state.clearTrashSelection()
+        }
+    }
+
+    private func confirmDeleteSelectedTrash() {
+        let entries = selectedTrashEntries
+        guard !entries.isEmpty else { return }
+
+        let alert = NSAlert()
+        alert.messageText = entries.count == 1
+            ? L("彻底删除这条记录？")
+            : L("彻底删除选中的 %d 条记录？", entries.count)
+        alert.informativeText = L("此操作无法撤销。")
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: L("彻底删除"))
+        alert.addButton(withTitle: L("取消"))
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        withAnimation(reduceMotion ? nil : Theme.gentleSpring) {
+            manager.permanentlyDelete(entries)
+            state.clearTrashSelection()
         }
     }
 

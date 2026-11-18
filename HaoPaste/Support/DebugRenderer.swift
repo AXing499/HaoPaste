@@ -44,6 +44,24 @@ enum DebugRenderer {
             state.selectionAnchorID = selected.first?.id
         }
 
+        if ProcessInfo.processInfo.environment[
+            "HAOPASTE_RENDER_TRASH_SELECT"
+        ] == "1" {
+            if manager.trashedItems.isEmpty {
+                manager.delete(
+                    Array(
+                        manager.filteredItems(query: "", filter: .all)
+                            .prefix(3)
+                    )
+                )
+            }
+            state.filter = .trash
+            state.beginTrashSelection(in: manager.trashedItems)
+            state.selectedTrashIDs = Set(
+                manager.trashedItems.prefix(2).map(\.id)
+            )
+        }
+
         switch ProcessInfo.processInfo.environment["HAOPASTE_RENDER_TRANSLATION"] {
         case "1", "success":
             translationService.seedPreview(

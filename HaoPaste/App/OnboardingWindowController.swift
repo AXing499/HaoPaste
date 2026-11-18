@@ -88,7 +88,7 @@ private struct OnboardingView: View {
                 OnboardingRow(
                     symbol: "keyboard",
                     title: L("随时呼出"),
-                    text: L("按 ⌥⌘V 打开面板，也可以点击菜单栏图标。")
+                    text: L("按 ⌃⌥V 打开面板，也可以点击菜单栏图标。")
                 )
                 OnboardingRow(
                     symbol: "rectangle.topthird.inset.filled",

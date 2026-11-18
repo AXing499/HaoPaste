@@ -42,6 +42,26 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertNil(settings.screenshotHotKeyRegistrationError)
     }
 
+    func testLegacyDefaultHotKeyMigrates() throws {
+        let suiteName = "HaoPasteTests.settings.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        defaults.set(Int(kVK_ANSI_V), forKey: "settings.hotKeyCode")
+        defaults.set(Int(cmdKey | optionKey), forKey: "settings.hotKeyModifiers")
+
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertEqual(settings.hotKey, .default)
+        XCTAssertEqual(
+            defaults.integer(forKey: "settings.hotKeyCode"),
+            Int(kVK_ANSI_V)
+        )
+        XCTAssertEqual(
+            defaults.integer(forKey: "settings.hotKeyModifiers"),
+            Int(controlKey | optionKey)
+        )
+    }
+
     func testSettingsPersistence() throws {
         let suiteName = "HaoPasteTests.settings.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

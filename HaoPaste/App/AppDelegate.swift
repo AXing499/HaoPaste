@@ -820,7 +820,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // A menu-bar-only app can look like it did not start. Show the panel
-        // once on first launch, then rely on ⌥⌘V and the status item afterwards.
+        // once on first launch, then rely on ⌃⌥V and the status item afterwards.
         defaults.set(true, forKey: LaunchDefaults.hasCompletedFirstLaunch)
         schedulePanelPresentation()
     }

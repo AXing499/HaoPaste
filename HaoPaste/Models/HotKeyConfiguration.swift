@@ -14,6 +14,14 @@ struct HotKeyConfiguration: Equatable, Sendable {
 
     static let `default` = HotKeyConfiguration(
         keyCode: UInt32(kVK_ANSI_V),
+        carbonModifiers: UInt32(controlKey | optionKey)
+    )
+
+    /// Previous default that conflicts with the system-wide paste-and-match
+    /// shortcut. Used for a one-time migration of settings written by older
+    /// versions.
+    static let legacyOptionCommandV = HotKeyConfiguration(
+        keyCode: UInt32(kVK_ANSI_V),
         carbonModifiers: UInt32(cmdKey | optionKey)
     )
 
